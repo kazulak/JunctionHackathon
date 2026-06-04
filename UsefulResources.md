@@ -9,7 +9,7 @@ IQM Resonance is our quantum computing cloud platform that gives you access to I
 
 **[Check out our client side libraries here - Dynamical Decoupling and many more!](https://resonance.iqm.tech/docs#quantum-development)**
 
-**[Check out the IQM PulLA documentation here](https://docs.iqm.tech/iqm-pulla/)**
+**[Check out the IQM PulLA documentation here](https://docs.iqm.tech/iqm-pulla/)** - **To access PulLA you need to be a part of a paid organisation, please approach your mentors about this!**
 
 ## iqm_utils 
 
