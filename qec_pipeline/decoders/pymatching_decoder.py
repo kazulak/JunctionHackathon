@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-from qec_pipeline.config import DecoderConfig
-from qec_pipeline.types import CircuitBundle, DecoderResult, SyndromeBundle
+from typing import Any
+
+from qec_pipeline.types import CircuitResult, DecodeResult, SyndromeResult
 
 
 def decode_with_pymatching(
-    decoder: DecoderConfig,
-    circuit: CircuitBundle,
-    syndromes: SyndromeBundle,
-) -> DecoderResult:
+    decoder: dict[str, Any],
+    circuit: CircuitResult,
+    syndromes: SyndromeResult,
+) -> DecodeResult:
     """Decode detector events with PyMatching/MWPM.
 
     Input:
         decoder: PyMatching options.
-        circuit: CircuitBundle with detector_model.
+        circuit: (stim_circuit, detector_model, measurement_order, circuit_info)
         syndromes: detection events and observed logical flips.
 
     Output:
-        DecoderResult with predicted logical corrections, logical failures,
-        LER, uncertainty, and decoder metadata.
+        (predicted_observables, logical_failures, ler, uncertainty, decoder_info)
     """
     raise NotImplementedError("PyMatching decoder")

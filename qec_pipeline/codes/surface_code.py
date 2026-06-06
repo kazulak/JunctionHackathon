@@ -1,64 +1,65 @@
 from __future__ import annotations
 
-from qec_pipeline.config import CodeConfig, NoiseConfig
-from qec_pipeline.types import CircuitBundle
+from typing import Any
+
+import stim
+
+from qec_pipeline.types import CircuitResult
 
 
 def build_surface_code_circuit(
-    code: CodeConfig,
-    noise: NoiseConfig | None = None,
-) -> CircuitBundle:
-    """Build a rotated surface-code memory experiment.
+    code: dict[str, Any],
+    noise: dict[str, Any],
+    basis: str,
+) -> CircuitResult:
+    """Build one Stim rotated surface-code memory circuit.
 
     Input:
-        code: distance, rounds, memory basis, reset mode.
-        noise: optional noise model config for simulator/decoder graph.
+        code: `config["code"]`
+        noise: `config["noise"]`
+        basis: "memory_z" or "memory_x"
 
-    Output:
-        CircuitBundle with:
-        - source_circuit: Stim circuit with coordinates, detectors, observables.
-        - hardware_circuit: Qiskit circuit for IQM after conversion.
-        - detector_model: Stim detector error model for decoder construction.
-        - metadata: qubit counts, detector counts, logical observable info.
-
-    Implementation notes:
-        Start from Stim generated circuits for MVP. Later replace or extend with
-        custom schedules, no-reset variants, and IQM-native optimizations.
+    Output tuple:
+        (stim_circuit, detector_model, measurement_order, circuit_info)
     """
-    if code.distance < 3 or code.distance % 2 == 0:
-        raise ValueError("Toy surface-code demo expects an odd distance >= 3.")
-    if code.rounds < 1:
-        raise ValueError("rounds must be positive")
+    task = {
+        "memory_z": "surface_code:rotated_memory_z",
+        "memory_x": "surface_code:rotated_memory_x",
+    }[basis]
 
-    data_qubits = code.distance * code.distance
-    ancilla_qubits = data_qubits - 1
-    num_measurements = ancilla_qubits * code.rounds + data_qubits
-    num_detectors = ancilla_qubits * code.rounds
-    num_observables = 1
-
-    source_circuit = {
-        "kind": "toy_surface_code",
-        "family": code.family,
-        "distance": code.distance,
-        "rounds": code.rounds,
-        "basis": code.basis,
-        "reset_mode": code.reset_mode,
-        "noise": None if noise is None else noise.model,
+    stim_circuit = stim.Circuit.generated(
+        task,
+        distance=int(code["distance"]),
+        rounds=int(code["rounds"]),
+        **_stim_noise_parameters(noise),
+    )
+    detector_model = stim_circuit.detector_error_model(decompose_errors=True)
+    measurement_order = tuple(range(stim_circuit.num_measurements))
+    circuit_info = {
+        "basis": basis,
+        "stim_task": task,
+        "num_qubits": stim_circuit.num_qubits,
+        "num_measurements": stim_circuit.num_measurements,
+        "num_detectors": stim_circuit.num_detectors,
+        "num_observables": stim_circuit.num_observables,
+        "num_ticks": sum(1 for instruction in stim_circuit if instruction.name == "TICK"),
+        "noise_model": noise["model"],
     }
 
-    return CircuitBundle(
-        source_circuit=source_circuit,
-        hardware_circuit=None,
-        detector_model=None,
-        measurement_order=tuple(range(num_measurements)),
-        metadata={
-            "is_toy_demo": True,
-            "num_data_qubits": data_qubits,
-            "num_ancilla_qubits": ancilla_qubits,
-            "num_qubits": data_qubits + ancilla_qubits,
-            "num_measurements": num_measurements,
-            "num_detectors": num_detectors,
-            "num_observables": num_observables,
-            "note": "Toy no-noise circuit metadata only; not a real Stim/Qiskit circuit.",
-        },
-    )
+    return stim_circuit, detector_model, measurement_order, circuit_info
+
+
+def _stim_noise_parameters(noise: dict[str, Any]) -> dict[str, float]:
+    if noise["model"] in {"none", "no_noise"}:
+        return {}
+
+    if noise["model"] != "simple_depolarizing":
+        raise NotImplementedError(f"{noise['model']} Stim noise parameters")
+
+    parameters = noise.get("parameters", {})
+    return {
+        "after_clifford_depolarization": float(parameters.get("one_qubit_error", 0.0)),
+        "after_reset_flip_probability": float(parameters.get("reset_error", 0.0)),
+        "before_measure_flip_probability": float(parameters.get("measurement_error", 0.0)),
+        "before_round_data_depolarization": float(parameters.get("idle_error", 0.0)),
+    }

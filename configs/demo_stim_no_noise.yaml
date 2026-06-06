@@ -1,25 +1,27 @@
 experiment:
-  name: demo_no_noise
-  description: "Toy end-to-end pipeline check with deterministic zero measurements."
+  name: demo_stim_no_noise
+  description: "Real Stim circuit, Stim simulator, provided syndrome extraction, no noise."
   seed: 1
 
 code:
   family: surface_code
   distance: 3
   rounds: 1
-  basis: memory_z
+  basis: both
   reset_mode: reset
 
 backend:
   name: simulator
-  shots: 16
+  shots: 32
+  options:
+    seed: 1
 
 noise:
   model: no_noise
   parameters: {}
 
 decoder:
-  name: trivial
+  name: observable_rate
   options: {}
 
 mapping:

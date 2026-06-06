@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-from qec_pipeline.types import CircuitBundle
+from qec_pipeline.types import CircuitResult
 
 
-def convert_source_to_hardware_circuit(circuit: CircuitBundle) -> CircuitBundle:
+def convert_source_to_hardware_circuit(circuit: CircuitResult) -> CircuitResult:
     """Convert the canonical circuit into a backend-ready circuit.
 
     Input:
-        CircuitBundle with source_circuit set. For MVP this is expected to be
-        a Stim circuit.
+        (stim_circuit, detector_model, measurement_order, circuit_info)
 
     Output:
-        CircuitBundle with hardware_circuit, measurement_order, and conversion
-        diagnostics populated.
+        Same tuple shape. Hardware conversion will be added later.
 
     Implementation notes:
         For the first MVP, wrap the existing Stim-to-Qiskit converter. Later

@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from qec_pipeline.config import BackendConfig
-from qec_pipeline.types import CircuitBundle, RawMeasurementBundle
+from typing import Any
+
+from qec_pipeline.types import CircuitResult, RawResult
 
 
 def run_iqm_hardware_backend(
-    backend: BackendConfig,
-    circuit: CircuitBundle,
-) -> RawMeasurementBundle:
+    backend: dict[str, Any],
+    circuit: CircuitResult,
+) -> RawResult:
     """Run a Qiskit circuit on IQM Resonance.
 
     Input:
         backend: IQM backend name, shots, token/server options.
-        circuit: CircuitBundle with hardware_circuit and measurement order.
+        circuit: (stim_circuit, detector_model, measurement_order, circuit_info)
 
     Output:
-        RawMeasurementBundle with expanded raw measurements, counts, job ID,
-        transpilation metrics, backend name, and calibration snapshot if used.
+        (measurements, counts, raw_info)
     """
     raise NotImplementedError("IQM hardware backend")

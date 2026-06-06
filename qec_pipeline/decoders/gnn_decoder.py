@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from qec_pipeline.config import DecoderConfig
-from qec_pipeline.types import CircuitBundle, DecoderResult, SyndromeBundle
+from typing import Any
+
+from qec_pipeline.types import CircuitResult, DecodeResult, SyndromeResult
 
 
 def train_gnn_decoder(
-    decoder: DecoderConfig,
-    circuit: CircuitBundle,
-    training_syndromes: SyndromeBundle,
+    decoder: dict[str, Any],
+    circuit: CircuitResult,
+    training_syndromes: SyndromeResult,
 ) -> object:
     """Train a GNN decoder candidate.
 
@@ -21,16 +22,16 @@ def train_gnn_decoder(
 
     Implementation notes:
         This should be a separate experiment path. Keep inference compatible
-        with the same DecoderResult interface as PyMatching.
+        with the same tuple output as the other decoders.
     """
     raise NotImplementedError("GNN decoder training")
 
 
 def decode_with_gnn(
-    decoder: DecoderConfig,
-    circuit: CircuitBundle,
-    syndromes: SyndromeBundle,
-) -> DecoderResult:
+    decoder: dict[str, Any],
+    circuit: CircuitResult,
+    syndromes: SyndromeResult,
+) -> DecodeResult:
     """Decode detector events using a trained GNN.
 
     Input:
@@ -39,6 +40,6 @@ def decode_with_gnn(
         syndromes: detection events and observed logical flips.
 
     Output:
-        DecoderResult with the same contract as other decoders.
+        (predicted_observables, logical_failures, ler, uncertainty, decoder_info)
     """
     raise NotImplementedError("GNN decoder inference")

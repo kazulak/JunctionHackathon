@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from qec_pipeline.config import DecoderConfig
-from qec_pipeline.types import CircuitBundle, DecoderResult, SyndromeBundle
+from typing import Any
+
+from qec_pipeline.types import CircuitResult, DecodeResult, SyndromeResult
 
 
 def decode_with_ising(
-    decoder: DecoderConfig,
-    circuit: CircuitBundle,
-    syndromes: SyndromeBundle,
-) -> DecoderResult:
+    decoder: dict[str, Any],
+    circuit: CircuitResult,
+    syndromes: SyndromeResult,
+) -> DecodeResult:
     """Decode or predecode via NVIDIA Ising tooling.
 
     Input:
@@ -17,7 +18,7 @@ def decode_with_ising(
         syndromes: detection events and observed logical flips.
 
     Output:
-        DecoderResult compatible with PyMatching/GNN comparison.
+        (predicted_observables, logical_failures, ler, uncertainty, decoder_info)
 
     Implementation notes:
         This likely needs a separate circuit-generation path around the Ising

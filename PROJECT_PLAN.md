@@ -6,11 +6,13 @@ Build a modular offline QEC pipeline that minimizes logical error rate (LER) on 
 
 ## Current Demo
 
-- Code: toy distance-3 surface-code metadata.
-- Backend: deterministic simulator.
+- Code: real Stim distance-3 rotated surface-code memory circuits.
+- Basis: memory-Z and memory-X in the same run.
+- Backend: Stim local sampler.
 - Noise: none.
-- Decoder: trivial no-error decoder.
-- Output: LER = 0, uncertainty = 0, short report.
+- Syndrome extraction: provided `extract_syndromes.py`.
+- Decoder: observable flip rate only, not a real decoder.
+- Output: circuit, raw measurement head, syndromes, LER = 0, short report.
 
 ## First Real Baseline
 
@@ -46,13 +48,13 @@ Build a modular offline QEC pipeline that minimizes logical error rate (LER) on 
 
 ## Run
 
-Dry-run the toy pipeline:
+Dry-run the Stim no-noise pipeline:
 
 ```bash
 python main.py --dry-run --print-config
 ```
 
-Run the toy pipeline:
+Run the Stim no-noise pipeline:
 
 ```bash
 python main.py

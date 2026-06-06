@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from qec_pipeline.config import MappingConfig
-from qec_pipeline.types import CircuitBundle
+from typing import Any
+
+from qec_pipeline.types import CircuitResult
 
 
 def apply_emerald_mapping(
-    mapping: MappingConfig,
-    circuit: CircuitBundle,
-) -> CircuitBundle:
+    mapping: dict[str, Any],
+    circuit: CircuitResult,
+) -> CircuitResult:
     """Map logical/code qubits onto an IQM Emerald hardware patch.
 
     Input:
         mapping: patch name, origin, orientation, and strategy.
-        circuit: CircuitBundle with code coordinates and hardware circuit.
+        circuit: (stim_circuit, detector_model, measurement_order, circuit_info)
 
     Output:
-        CircuitBundle with initial layout, native-pair diagnostics, SWAP count
-        target, and transpilation metadata.
+        Same circuit tuple, with mapping metadata added later.
     """
     raise NotImplementedError("Emerald custom mapping")

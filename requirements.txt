@@ -1,18 +1,22 @@
-# QEC Pipeline — requirements
-# Pinned to versions verified working together in the converter test session
-# (Stim -> Qiskit conversion, Aer simulation, PyMatching decoding).
- 
-# --- Core: circuit generation, simulation, decoding (TESTED together) ---
-qiskit==2.4.1
-qiskit-aer==0.17.2
+# QEC Pipeline requirements
+
+# Core: Stim circuit generation, local sampling, syndromes, decoding.
 stim==1.16.0
-pymatching==2.4.0
-numpy==2.4.4
-iqm-qubit-selector
-pyyaml>=6.0.2
- 
-# --- Hardware execution on IQM Garnet via IQM Resonance ---
-# Provides `from iqm.qiskit_iqm import IQMProvider`.
-# Latest release; NOT exercised in the simulation test environment.
+numpy==2.4.6
+PyYAML==6.0.3
+PyMatching==2.4.0
+
+# Qiskit/IQM path, used after the local Stim simulator path is understood.
+qiskit==1.2.4
+qiskit-aer==0.15.1
 iqm-client==34.0.3
- 
+iqm-qubit-selector
+
+# Analysis and future GNN experiments.
+networkx==3.6.1
+scipy==1.17.1
+pandas==3.0.3
+matplotlib==3.10.9
+tqdm==4.68.1
+jax==0.7.1
+jaxlib==0.7.1

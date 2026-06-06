@@ -1,36 +1,31 @@
 from __future__ import annotations
 
-from qec_pipeline.config import BackendConfig
-from qec_pipeline.types import CircuitBundle, RawMeasurementBundle
+from typing import Any
+
+from qec_pipeline.types import CircuitResult, RawResult
 
 
 def run_simulator_backend(
-    backend: BackendConfig,
-    circuit: CircuitBundle,
-) -> RawMeasurementBundle:
-    """Run the canonical circuit on a local simulator.
+    backend: dict[str, Any],
+    circuit: CircuitResult,
+) -> RawResult:
+    """Sample raw measurements from a Stim circuit.
 
     Input:
-        backend: simulator settings, especially shot count and seed.
-        circuit: CircuitBundle containing a Stim or Qiskit circuit.
+        backend: `config["backend"]`
+        circuit: tuple from `build_surface_code_circuit`
 
-    Output:
-        RawMeasurementBundle with shape-compatible raw measurement shots.
-
-    Implementation notes:
-        Prefer Stim sampler for the first baseline because it preserves detector
-        semantics directly. Use Aer only to validate Qiskit conversion.
+    Output tuple:
+        (measurements, counts, raw_info)
     """
-    num_measurements = int(circuit.metadata["num_measurements"])
-    bitstring = "0" * num_measurements
-    measurements = [[False for _ in range(num_measurements)] for _ in range(backend.shots)]
+    stim_circuit, _detector_model, _measurement_order, _circuit_info = circuit
+    sampler = stim_circuit.compile_sampler(seed=backend.get("options", {}).get("seed"))
+    measurements = sampler.sample(shots=int(backend["shots"]))
+    raw_info = {
+        "backend": backend["name"],
+        "shots": int(backend["shots"]),
+        "shape": tuple(measurements.shape),
+        "simulator": "stim.Circuit.compile_sampler",
+    }
 
-    return RawMeasurementBundle(
-        measurements=measurements,
-        counts={bitstring: backend.shots},
-        metadata={
-            "backend": backend.name,
-            "shots": backend.shots,
-            "mode": "deterministic_no_noise",
-        },
-    )
+    return measurements, None, raw_info

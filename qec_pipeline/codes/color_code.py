@@ -1,21 +1,24 @@
 from __future__ import annotations
 
-from qec_pipeline.config import CodeConfig, NoiseConfig
-from qec_pipeline.types import CircuitBundle
+from typing import Any
+
+from qec_pipeline.types import CircuitResult
 
 
 def build_color_code_circuit(
-    code: CodeConfig,
-    noise: NoiseConfig | None = None,
-) -> CircuitBundle:
+    code: dict[str, Any],
+    noise: dict[str, Any],
+    basis: str,
+) -> CircuitResult:
     """Build a color-code memory experiment.
 
     Input:
-        code: distance, rounds, memory basis, reset mode.
-        noise: optional noise model config.
+        code: `config["code"]`
+        noise: `config["noise"]`
+        basis: "memory_z" or "memory_x"
 
     Output:
-        CircuitBundle with the same contract as surface code.
+        (stim_circuit, detector_model, measurement_order, circuit_info)
 
     Implementation notes:
         This is a research branch. Define stabilizers, detector bookkeeping,
