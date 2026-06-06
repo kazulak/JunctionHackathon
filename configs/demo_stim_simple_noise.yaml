@@ -1,0 +1,49 @@
+# First noisy simulator demo.
+#
+# This uses the same pipeline as demo_stim_no_noise.yaml, but asks Stim to insert
+# a simple noise model while generating the circuit.
+#
+# Important: decoder.name is still observable_rate. That means we are counting
+# observed logical flips directly. This is useful for checking that noisy data
+# flows through the pipeline, but it is not the final decoded LER.
+
+experiment:
+  name: demo_stim_simple_noise
+  description: "Stim circuit, Stim noisy simulator, provided syndrome extraction."
+  seed: 1
+
+code:
+  family: surface_code
+  distance: 3
+  rounds: 3
+  basis: both
+  reset_mode: reset
+
+backend:
+  name: simulator
+  shots: 1000
+  options:
+    seed: 1
+
+noise:
+  model: simple_depolarizing
+  parameters:
+    one_qubit_error: 0.003
+    two_qubit_error: 0.003
+    measurement_error: 0.003
+    reset_error: 0.003
+    idle_error: 0.003
+
+decoder:
+  name: observable_rate
+  options: {}
+
+mapping:
+  strategy: none
+  hardware_patch: null
+
+artifacts:
+  root: results
+  save_raw_measurements: true
+  save_syndromes: true
+  save_report: true

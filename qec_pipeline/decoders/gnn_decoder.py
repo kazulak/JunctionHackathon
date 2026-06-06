@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from qec_pipeline.types import CircuitResult, DecodeResult, SyndromeResult
-
 
 def train_gnn_decoder(
     decoder: dict[str, Any],
-    circuit: CircuitResult,
-    training_syndromes: SyndromeResult,
+    circuit: tuple,
+    training_syndromes: tuple,
 ) -> object:
     """Train a GNN decoder candidate.
 
@@ -29,9 +27,9 @@ def train_gnn_decoder(
 
 def decode_with_gnn(
     decoder: dict[str, Any],
-    circuit: CircuitResult,
-    syndromes: SyndromeResult,
-) -> DecodeResult:
+    circuit: tuple,
+    syndromes: tuple,
+) -> tuple:
     """Decode detector events using a trained GNN.
 
     Input:

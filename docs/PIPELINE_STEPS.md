@@ -6,6 +6,12 @@ Run:
 python main.py --config configs/demo_stim_no_noise.yaml
 ```
 
+Run the first noisy simulator check:
+
+```bash
+python main.py configs/demo_stim_simple_noise.yaml
+```
+
 Equivalent forms:
 
 ```bash
@@ -23,9 +29,53 @@ python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
 5. `qec_pipeline/decoders/observable_decoder.py` computes LER from observable flips.
 6. `qec_pipeline/analysis/reports.py` writes inspectable artifacts.
 
+## Simple Config Choices
+
+Use YAML files in `configs/` to choose the experiment. For now these choices
+work:
+
+```yaml
+code:
+  basis: memory_z   # only Z
+  basis: memory_x   # only X
+  basis: both       # Z and X in one run
+
+noise:
+  model: no_noise
+```
+
+or:
+
+```yaml
+noise:
+  model: simple_depolarizing
+  parameters:
+    one_qubit_error: 0.003
+    two_qubit_error: 0.003
+    measurement_error: 0.003
+    reset_error: 0.003
+    idle_error: 0.003
+```
+
+The simulator is always Stim for these configs:
+
+```yaml
+backend:
+  name: simulator
+```
+
+The current decoder is:
+
+```yaml
+decoder:
+  name: observable_rate
+```
+
+This counts observed logical flips directly. PyMatching and GNN come next.
+
 ## Data Flow
 
-The pipeline sends one result object into the next function:
+The pipeline sends one tuple into the next function:
 
 ```text
 config

@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from qec_pipeline.types import CircuitResult, RawResult
-
 
 def run_simulator_backend(
     backend: dict[str, Any],
-    circuit: CircuitResult,
-) -> RawResult:
+    circuit: tuple,
+) -> tuple:
     """Sample raw measurements from a Stim circuit.
 
     Input:

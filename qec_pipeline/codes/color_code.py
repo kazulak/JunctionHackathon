@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from qec_pipeline.types import CircuitResult
-
 
 def build_color_code_circuit(
     code: dict[str, Any],
     noise: dict[str, Any],
     basis: str,
-) -> CircuitResult:
+) -> tuple:
     """Build a color-code memory experiment.
 
     Input:

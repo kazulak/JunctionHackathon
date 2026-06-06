@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from qec_pipeline.types import CircuitResult, DecodeResult, SyndromeResult
-
 
 def decode_with_pymatching(
     decoder: dict[str, Any],
-    circuit: CircuitResult,
-    syndromes: SyndromeResult,
-) -> DecodeResult:
+    circuit: tuple,
+    syndromes: tuple,
+) -> tuple:
     """Decode detector events with PyMatching/MWPM.
 
     Input:

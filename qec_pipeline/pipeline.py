@@ -8,7 +8,6 @@ from qec_pipeline.backends.simulator import run_simulator_backend
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.syndromes import extract_detection_events
-from qec_pipeline.types import BasisRunResult, PipelineResult
 
 
 def describe_pipeline(config: dict[str, Any]) -> list[str]:
@@ -28,7 +27,7 @@ def describe_pipeline(config: dict[str, Any]) -> list[str]:
     ]
 
 
-def run_pipeline(config: dict[str, Any]) -> PipelineResult:
+def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
     """Run the configured experiment.
 
     For `code.basis: both`, this runs memory-Z and memory-X in the same job.
@@ -38,7 +37,7 @@ def run_pipeline(config: dict[str, Any]) -> PipelineResult:
     """
     run_dir = prepare_run_directory(config)
     notes = []
-    basis_results: list[BasisRunResult] = []
+    basis_results: list[tuple] = []
 
     for basis in _basis_list(config["code"]["basis"]):
         circuit = build_surface_code_circuit(config["code"], config["noise"], basis)

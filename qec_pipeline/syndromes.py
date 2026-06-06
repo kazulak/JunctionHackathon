@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from qec_pipeline.types import CircuitResult, RawResult, SyndromeResult
-
 
 def extract_detection_events(
-    circuit: CircuitResult,
-    raw: RawResult,
-) -> SyndromeResult:
+    circuit: tuple,
+    raw: tuple,
+) -> tuple:
     """Convert raw measurements into decoder-ready data.
 
     Input:

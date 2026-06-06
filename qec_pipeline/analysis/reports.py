@@ -4,13 +4,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from qec_pipeline.types import BasisRunResult, CircuitResult, RawResult, SyndromeResult
-
 
 def write_run_summary(
     run_dir: Path,
     config: dict[str, Any],
-    basis_results: list[BasisRunResult],
+    basis_results: list[tuple],
     notes: list[str],
 ) -> None:
     """Write `summary.md` for the whole experiment."""
@@ -54,9 +52,9 @@ def write_run_summary(
 
 def write_run_artifacts(
     run_dir: Path,
-    circuit: CircuitResult,
-    raw: RawResult,
-    syndromes: SyndromeResult,
+    circuit: tuple,
+    raw: tuple,
+    syndromes: tuple,
     metrics: dict[str, Any],
 ) -> None:
     """Write inspectable files for one basis run."""

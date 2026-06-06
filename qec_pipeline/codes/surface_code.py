@@ -4,14 +4,12 @@ from typing import Any
 
 import stim
 
-from qec_pipeline.types import CircuitResult
-
 
 def build_surface_code_circuit(
     code: dict[str, Any],
     noise: dict[str, Any],
     basis: str,
-) -> CircuitResult:
+) -> tuple:
     """Build one Stim rotated surface-code memory circuit.
 
     Input:

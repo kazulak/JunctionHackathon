@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from qec_pipeline.types import CircuitResult
 
-
-def convert_source_to_hardware_circuit(circuit: CircuitResult) -> CircuitResult:
+def convert_source_to_hardware_circuit(circuit: tuple) -> tuple:
     """Convert the canonical circuit into a backend-ready circuit.
 
     Input:

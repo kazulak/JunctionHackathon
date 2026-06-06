@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from qec_pipeline.types import CircuitResult, RawResult
-
 
 def run_iqm_hardware_backend(
     backend: dict[str, Any],
-    circuit: CircuitResult,
-) -> RawResult:
+    circuit: tuple,
+) -> tuple:
     """Run a Qiskit circuit on IQM Resonance.
 
     Input:

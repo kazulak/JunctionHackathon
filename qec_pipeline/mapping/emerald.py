@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from qec_pipeline.types import CircuitResult
-
 
 def apply_emerald_mapping(
     mapping: dict[str, Any],
-    circuit: CircuitResult,
-) -> CircuitResult:
+    circuit: tuple,
+) -> tuple:
     """Map logical/code qubits onto an IQM Emerald hardware patch.
 
     Input:

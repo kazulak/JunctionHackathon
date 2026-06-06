@@ -3,14 +3,13 @@ from __future__ import annotations
 from typing import Any
 
 from qec_pipeline.analysis.metrics import binomial_standard_error
-from qec_pipeline.types import CircuitResult, DecodeResult, SyndromeResult
 
 
 def decode_observable_rate(
     decoder: dict[str, Any],
-    circuit: CircuitResult,
-    syndromes: SyndromeResult,
-) -> DecodeResult:
+    circuit: tuple,
+    syndromes: tuple,
+) -> tuple:
     """Use observable flips as logical failures.
 
     This is not a real decoder. It is the first sanity check:

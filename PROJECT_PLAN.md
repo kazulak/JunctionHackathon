@@ -14,6 +14,13 @@ Build a modular offline QEC pipeline that minimizes logical error rate (LER) on 
 - Decoder: observable flip rate only, not a real decoder.
 - Output: circuit, raw measurement head, syndromes, LER = 0, short report.
 
+## First Noisy Check
+
+- Config: `configs/demo_stim_simple_noise.yaml`.
+- Noise: Stim `simple_depolarizing` parameters from YAML.
+- Purpose: confirm noisy samples produce nonzero syndromes/logical flips.
+- Decoder: still `observable_rate`, so this is not final decoded LER yet.
+
 ## First Real Baseline
 
 - Code: distance-3 rotated surface code with Stim.
@@ -58,6 +65,12 @@ Run the Stim no-noise pipeline:
 
 ```bash
 python main.py
+```
+
+Run the noisy simulator check:
+
+```bash
+python main.py configs/demo_stim_simple_noise.yaml
 ```
 
 Or use:
