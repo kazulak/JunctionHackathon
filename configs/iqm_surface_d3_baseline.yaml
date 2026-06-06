@@ -14,13 +14,13 @@ experiment:
 code:
   family: surface_code
   distance: 3
-  rounds: 1
+  rounds: 15
   basis: both
   reset_mode: reset
 
 backend:
   name: iqm_hardware
-  shots: 100
+  shots: 500
   options:
     server_url: https://resonance.meetiqm.com
     quantum_computer: emerald

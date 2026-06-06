@@ -19,12 +19,11 @@ def extract_detection_events(
     stim_circuit, _detector_model, _measurement_order, _circuit_info = circuit
     measurements, _counts, _raw_info = raw
 
-    from extract_syndromes import extract_syndromes
+    from qec_pipeline.syndrome_extraction import extract_syndromes
 
     result = extract_syndromes(
-        raw_meas=measurements,
-        stim_circuit_noisy=stim_circuit,
-        print_summary=False,
+        measurements,
+        stim_circuit,
     )
 
     syndrome_info = {

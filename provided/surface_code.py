@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from internal_helpers import *
+from provided.internal_helpers import *
 
 """
 surface_code_stim.py

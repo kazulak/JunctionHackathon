@@ -1,6 +1,6 @@
-from surface_code import * 
-from build_emerald_qubit_rotated import *
-from extract_syndromes import *
+from provided.surface_code import *
+from provided.build_emerald_qubit_rotated import *
+from provided.extract_syndromes import *
 
 
 TOKEN = ""

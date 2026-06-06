@@ -56,7 +56,7 @@ memory_x
 | Simulator | `qec_pipeline/backends/simulator.py` | Uses Stim `compile_sampler`. |
 | IQM hardware | `qec_pipeline/backends/iqm_hardware.py` | Converts to Qiskit, transpiles, runs on IQM, converts counts to measurement array. |
 | Conversion | `qec_pipeline/conversion.py` | Minimal Stim-to-Qiskit converter including `RX`, `MX`, `MRX`. |
-| Syndromes | `qec_pipeline/syndromes.py` | Calls provided `extract_syndromes.py`. |
+| Syndromes | `qec_pipeline/syndromes.py` | Calls `qec_pipeline/syndrome_extraction.py`. |
 | Sanity decoder | `qec_pipeline/decoders/observable_decoder.py` | Counts observable flips directly; not a real decoder. |
 | PyMatching | `qec_pipeline/decoders/pymatching_decoder.py` | Builds MWPM decoder from Stim detector error model. |
 | Reports | `qec_pipeline/analysis/reports.py` | Writes circuit, metadata, measurement heads, syndrome heads, metrics, summary. |
@@ -117,7 +117,7 @@ Stim circuit
 -> Qiskit transpile
 -> IQM job
 -> counts
--> internal_helpers.counts_to_measurement_array
+-> qec_pipeline.measurements.counts_to_measurement_array
 -> syndrome extraction
 ```
 

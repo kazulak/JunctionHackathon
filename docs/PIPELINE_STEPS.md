@@ -160,7 +160,7 @@ Stim circuit
 -> Qiskit transpile
 -> IQM backend run
 -> Qiskit counts
--> internal_helpers.counts_to_measurement_array
+-> qec_pipeline.measurements.counts_to_measurement_array
 ```
 
 Important:
@@ -176,7 +176,7 @@ File:
 
 ```text
 qec_pipeline/syndromes.py
-extract_syndromes.py
+qec_pipeline/syndrome_extraction.py
 ```
 
 Function:
@@ -193,7 +193,7 @@ Output:
 
 What it does:
 
-- Uses the provided `extract_syndromes.py`.
+- Uses `qec_pipeline/syndrome_extraction.py`.
 - Calls Stim `compile_m2d_converter()`.
 - Converts raw measurement rows into detector events.
 - Also extracts observable flips.
@@ -343,6 +343,22 @@ Use these to compare:
 - `transpiled_circuit.txt`
 
 The Qiskit converter is `qec_pipeline/conversion.py`. It supports memory-X instructions such as `RX`, `MX`, and `MRX`.
+
+## Translation Tests
+
+Run:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The tests check:
+
+- generated surface-code metadata matches after conversion,
+- Qiskit counts are converted back into Stim measurement order,
+- `MR` and `MRX` reset semantics match Stim,
+- `MX` preserves X-basis post-measurement state when a qubit is reused,
+- unsupported inverted measurement targets fail loudly.
 
 ## Where QPU Calibration Fits
 

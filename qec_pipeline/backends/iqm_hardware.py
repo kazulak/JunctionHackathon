@@ -17,10 +17,10 @@ def run_iqm_hardware_backend(
     Output:
         (measurements, counts, raw_info)
     """
-    # OUR CODE: minimal pipeline wrapper around the challenge-provided helpers.
+    # OUR CODE: minimal pipeline wrapper for IQM hardware execution.
     #
-    # PROVIDED helper used below:
-    # - internal_helpers.counts_to_measurement_array
+    # Pipeline helper used below:
+    # - qec_pipeline.measurements.counts_to_measurement_array
     #
     # OUR ADDITION used below:
     # - qec_pipeline.conversion.stim_to_qiskit_minimal
@@ -29,9 +29,9 @@ def run_iqm_hardware_backend(
     #
     # This intentionally does not implement custom mapping yet. It lets Qiskit/IQM
     # transpilation produce the first hardware baseline.
-    from internal_helpers import counts_to_measurement_array
     from iqm.qiskit_iqm import IQMProvider
     from qec_pipeline.conversion import stim_to_qiskit_minimal
+    from qec_pipeline.measurements import counts_to_measurement_array
     from qiskit import transpile
 
     stim_circuit, _detector_model, _measurement_order, circuit_info = circuit
