@@ -59,14 +59,27 @@ def write_run_artifacts(
 ) -> None:
     """Write inspectable files for one basis run."""
     stim_circuit, _detector_model, _measurement_order, circuit_info = circuit
-    measurements, _counts, raw_info = raw
+    measurements, counts, raw_info = raw
     detection_events, observable_flips, syndrome_info = syndromes
 
     (run_dir / "circuit.stim").write_text(str(stim_circuit), encoding="utf-8")
     _write_json(run_dir / "circuit_metadata.json", circuit_info)
-    _write_json(run_dir / "raw_metadata.json", raw_info)
+    raw_info_for_json = dict(raw_info)
+    qiskit_circuit_text = raw_info_for_json.pop("qiskit_circuit_text", None)
+    transpiled_circuit_text = raw_info_for_json.pop("transpiled_circuit_text", None)
+
+    _write_json(run_dir / "raw_metadata.json", raw_info_for_json)
     _write_json(run_dir / "syndrome_metadata.json", syndrome_info)
     _write_json(run_dir / "metrics.json", metrics)
+    if counts is not None:
+        _write_json(run_dir / "counts.json", counts)
+    if qiskit_circuit_text is not None:
+        (run_dir / "qiskit_circuit.txt").write_text(qiskit_circuit_text, encoding="utf-8")
+    if transpiled_circuit_text is not None:
+        (run_dir / "transpiled_circuit.txt").write_text(
+            transpiled_circuit_text,
+            encoding="utf-8",
+        )
 
     _write_table_head(run_dir / "raw_measurements_head.csv", measurements, max_rows=10)
     _write_table_head(run_dir / "detection_events_head.csv", detection_events, max_rows=10)

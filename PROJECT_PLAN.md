@@ -21,12 +21,19 @@ Build a modular offline QEC pipeline that minimizes logical error rate (LER) on 
 - Purpose: confirm noisy samples produce nonzero syndromes/logical flips.
 - Decoder: still `observable_rate`, so this is not final decoded LER yet.
 
-## First Real Baseline
+## First Decoded Simulator Baseline
+
+- Config: `configs/demo_stim_simple_noise_pymatching.yaml`.
+- Decoder: PyMatching.
+- Purpose: check the same noisy simulator data with an actual decoder.
+
+## First IQM Baseline
 
 - Code: distance-3 rotated surface code with Stim.
-- Backend: simulator first, IQM Emerald later.
-- Decoder: PyMatching first.
-- Noise: simple configurable model first; calibration-aware model next.
+- Config: `configs/iqm_surface_d3_baseline.yaml`.
+- Backend: IQM Emerald through Qiskit/IQM.
+- Decoder: PyMatching.
+- Noise: simple configurable model used for decoder graph weights.
 - Output: LER, uncertainty, circuit metrics, syndrome diagnostics, saved artifacts.
 
 ## Approaches To Try
@@ -73,14 +80,14 @@ Run the noisy simulator check:
 python main.py configs/demo_stim_simple_noise.yaml
 ```
 
-Or use:
+Run the decoded simulator baseline:
 
 ```bash
-./scripts/run_demo.sh
+python main.py configs/demo_stim_simple_noise_pymatching.yaml
 ```
 
-Run the first real baseline later:
+Dry-run the IQM baseline:
 
 ```bash
-python main.py --config configs/baseline_surface_d3.yaml
+python main.py --dry-run --print-config configs/iqm_surface_d3_baseline.yaml
 ```

@@ -12,6 +12,18 @@ Run the first noisy simulator check:
 python main.py configs/demo_stim_simple_noise.yaml
 ```
 
+Run the first decoded simulator baseline:
+
+```bash
+python main.py configs/demo_stim_simple_noise_pymatching.yaml
+```
+
+Dry-run the minimal IQM baseline:
+
+```bash
+python main.py --dry-run --print-config configs/iqm_surface_d3_baseline.yaml
+```
+
 Equivalent forms:
 
 ```bash
@@ -64,7 +76,7 @@ backend:
   name: simulator
 ```
 
-The current decoder is:
+Available first-pass decoders:
 
 ```yaml
 decoder:
@@ -72,6 +84,13 @@ decoder:
 ```
 
 This counts observed logical flips directly. PyMatching and GNN come next.
+
+```yaml
+decoder:
+  name: pymatching
+```
+
+This builds an MWPM decoder from the Stim detector error model.
 
 ## Data Flow
 
@@ -124,6 +143,37 @@ Each basis folder contains:
 - `observable_flips_head.csv`: first logical observable rows.
 - `syndrome_metadata.json`: detector counts and syndrome statistics.
 - `metrics.json`: LER, uncertainty, failures, shots.
+
+## Visual Checks
+
+After a run, plot the saved Stim circuit:
+
+```bash
+python scripts/plot_stim_circuit.py results/<experiment>/<timestamp>
+```
+
+This writes `stim_timeline-svg.svg` inside each basis folder.
+
+Convert the same saved Stim circuit to Qiskit and write a text drawing:
+
+```bash
+python scripts/plot_qiskit_translation.py results/<experiment>/<timestamp>
+```
+
+This writes:
+
+- `qiskit_translation.txt`
+- `qiskit_translation_metadata.txt`
+
+Try a PNG Qiskit drawing:
+
+```bash
+python scripts/plot_qiskit_translation.py results/<experiment>/<timestamp> --png
+```
+
+The Qiskit converter used by this script is our small converter in
+`qec_pipeline/conversion.py`. It exists because the provided converter does not
+cover Stim memory-X instructions such as `RX` and `MX`.
 
 ## Where GNN Fits
 

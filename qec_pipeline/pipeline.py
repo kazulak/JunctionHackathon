@@ -4,9 +4,11 @@ from typing import Any
 
 from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory
+from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_backend
 from qec_pipeline.backends.simulator import run_simulator_backend
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
+from qec_pipeline.decoders.pymatching_decoder import decode_with_pymatching
 from qec_pipeline.syndromes import extract_detection_events
 
 
@@ -18,10 +20,10 @@ def describe_pipeline(config: dict[str, Any]) -> list[str]:
         f"basis list -> {bases}",
         "code + noise + basis -> build_surface_code_circuit -> "
         "(stim_circuit, detector_model, measurement_order, circuit_info)",
-        "backend + circuit tuple -> run_simulator_backend -> (measurements, counts, raw_info)",
+        "backend + circuit tuple -> run selected backend -> (measurements, counts, raw_info)",
         "circuit tuple + raw tuple -> extract_detection_events -> "
         "(detection_events, observable_flips, syndrome_info)",
-        "decoder + syndrome tuple -> decode_observable_rate -> "
+        "decoder + syndrome tuple -> run selected decoder -> "
         "(predicted_observables, logical_failures, ler, uncertainty, decoder_info)",
         "all tuples -> write artifacts and summary",
     ]
@@ -41,9 +43,9 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
 
     for basis in _basis_list(config["code"]["basis"]):
         circuit = build_surface_code_circuit(config["code"], config["noise"], basis)
-        raw = run_simulator_backend(config["backend"], circuit)
+        raw = _run_backend(config["backend"], circuit)
         syndromes = extract_detection_events(circuit, raw)
-        decoded = decode_observable_rate(config["decoder"], circuit, syndromes)
+        decoded = _run_decoder(config["decoder"], circuit, syndromes)
 
         _predicted, _failures, ler, uncertainty, decoder_info = decoded
         metrics = {
@@ -71,3 +73,19 @@ def _basis_list(config_basis: str) -> list[str]:
     if config_basis in {"memory_z", "memory_x"}:
         return [config_basis]
     raise ValueError("code.basis must be memory_z, memory_x, or both")
+
+
+def _run_backend(backend: dict[str, Any], circuit: tuple) -> tuple:
+    if backend["name"] == "simulator":
+        return run_simulator_backend(backend, circuit)
+    if backend["name"] == "iqm_hardware":
+        return run_iqm_hardware_backend(backend, circuit)
+    raise ValueError(f"Unknown backend: {backend['name']}")
+
+
+def _run_decoder(decoder: dict[str, Any], circuit: tuple, syndromes: tuple) -> tuple:
+    if decoder["name"] == "observable_rate":
+        return decode_observable_rate(decoder, circuit, syndromes)
+    if decoder["name"] == "pymatching":
+        return decode_with_pymatching(decoder, circuit, syndromes)
+    raise ValueError(f"Unknown decoder: {decoder['name']}")

@@ -5,6 +5,7 @@ Run an experiment by choosing one YAML file:
 ```bash
 python main.py configs/demo_stim_no_noise.yaml
 python main.py configs/demo_stim_simple_noise.yaml
+python main.py configs/demo_stim_simple_noise_pymatching.yaml
 ```
 
 ## Simple Choices
@@ -63,3 +64,26 @@ decoder:
 
 `observable_rate` counts logical observable flips directly. It is a sanity
 check, not the final decoder.
+
+First real decoder:
+
+```yaml
+decoder:
+  name: pymatching
+```
+
+Minimal IQM baseline:
+
+```bash
+python main.py configs/iqm_surface_d3_baseline.yaml
+```
+
+For IQM authentication, prefer an environment variable:
+
+```powershell
+$env:IQM_TOKEN="your-token"
+python main.py configs/iqm_surface_d3_baseline.yaml
+```
+
+Do not set `IQM_TOKEN` and also put `backend.options.token` in YAML at the same
+time. IQM rejects mixed authentication sources.
