@@ -4,7 +4,11 @@ import stim
 from qiskit import QuantumCircuit
 
 
-def stim_to_qiskit_minimal(stim_circuit: stim.Circuit) -> tuple:
+def stim_to_qiskit_minimal(
+    stim_circuit: stim.Circuit,
+    omit_initial_resets: bool = False,
+    omit_repeated_resets: bool = False,
+) -> tuple:
     """Convert our generated Stim memory circuit to Qiskit.
 
     OUR ADDITION.
@@ -19,6 +23,9 @@ def stim_to_qiskit_minimal(stim_circuit: stim.Circuit) -> tuple:
         (qiskit_circuit, stim_to_dense, measurement_order)
     """
     flat = list(stim_circuit.flattened())
+    initial_reset_instruction_indices = (
+        _initial_reset_instruction_indices(flat) if omit_initial_resets else set()
+    )
     future_qubits = _future_executable_qubits(flat)
     all_stim_qubits = sorted(
         {
@@ -43,12 +50,14 @@ def stim_to_qiskit_minimal(stim_circuit: stim.Circuit) -> tuple:
         dense_targets = [stim_to_dense[target] for target in targets]
 
         if name == "R":
-            for qubit in dense_targets:
-                qiskit_circuit.reset(qubit)
+            if instruction_index not in initial_reset_instruction_indices:
+                for qubit in dense_targets:
+                    qiskit_circuit.reset(qubit)
 
         elif name == "RX":
             for qubit in dense_targets:
-                qiskit_circuit.reset(qubit)
+                if instruction_index not in initial_reset_instruction_indices:
+                    qiskit_circuit.reset(qubit)
                 qiskit_circuit.h(qubit)
 
         elif name == "H":
@@ -97,7 +106,8 @@ def stim_to_qiskit_minimal(stim_circuit: stim.Circuit) -> tuple:
                 qiskit_circuit.measure(dense_qubit, measurement_index)
                 measurement_order.append(stim_qubit)
                 measurement_index += 1
-                qiskit_circuit.reset(dense_qubit)
+                if stim_qubit in future_qubits[instruction_index] and not omit_repeated_resets:
+                    qiskit_circuit.reset(dense_qubit)
 
         elif name == "MRX":
             for stim_qubit, dense_qubit in zip(targets, dense_targets):
@@ -105,8 +115,12 @@ def stim_to_qiskit_minimal(stim_circuit: stim.Circuit) -> tuple:
                 qiskit_circuit.measure(dense_qubit, measurement_index)
                 measurement_order.append(stim_qubit)
                 measurement_index += 1
-                qiskit_circuit.reset(dense_qubit)
-                qiskit_circuit.h(dense_qubit)
+                if stim_qubit in future_qubits[instruction_index]:
+                    if omit_repeated_resets:
+                        qiskit_circuit.h(dense_qubit)
+                    else:
+                        qiskit_circuit.reset(dense_qubit)
+                        qiskit_circuit.h(dense_qubit)
 
         else:
             raise NotImplementedError(f"Stim instruction not supported in Qiskit converter: {name}")
@@ -153,6 +167,19 @@ def _future_executable_qubits(instructions: list[stim.CircuitInstruction]) -> li
                 seen_later.add(target.value)
 
     return future
+
+
+def _initial_reset_instruction_indices(instructions: list[stim.CircuitInstruction]) -> set[int]:
+    indices = set()
+    for index, instruction in enumerate(instructions):
+        name = instruction.name
+        if name in _STIM_SKIP:
+            continue
+        if name in {"R", "RX"}:
+            indices.add(index)
+            continue
+        break
+    return indices
 
 
 def _measure_x(

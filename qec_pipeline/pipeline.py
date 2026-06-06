@@ -16,18 +16,28 @@ from qec_pipeline.syndromes import extract_detection_events
 def describe_pipeline(config: dict[str, Any]) -> list[str]:
     """Return a simple input -> function -> output description."""
     bases = ", ".join(_basis_list(config["code"]["basis"]))
-    return [
+    stages = [
         "config YAML -> load normal Python dict",
         f"basis list -> {bases}",
         "code + noise + basis -> build_surface_code_circuit -> "
         "(stim_circuit, detector_model, measurement_order, circuit_info)",
-        "backend + circuit tuple -> run selected backend -> (measurements, counts, raw_info)",
-        "circuit tuple + raw tuple -> extract_detection_events -> "
-        "(detection_events, observable_flips, syndrome_info)",
-        "decoder + syndrome tuple -> run selected decoder -> "
-        "(predicted_observables, logical_failures, ler, uncertainty, decoder_info)",
-        "all tuples -> write artifacts and summary",
     ]
+    mapping_strategy = config["mapping"].get("strategy")
+    if mapping_strategy == "calibration_best_patch":
+        stages.append("mapping calibration file + circuit -> select native patch -> initial_layout")
+    if mapping_strategy == "calibration_routed_layout":
+        stages.append("mapping calibration file + circuit -> select routed layout -> initial_layout")
+    stages.extend(
+        [
+            "backend + circuit tuple -> run selected backend -> (measurements, counts, raw_info)",
+            "circuit tuple + raw tuple -> extract_detection_events -> "
+            "(detection_events, observable_flips, syndrome_info)",
+            "decoder + syndrome tuple -> run selected decoder -> "
+            "(predicted_observables, logical_failures, ler, uncertainty, decoder_info)",
+            "all tuples -> write artifacts and summary",
+        ]
+    )
+    return stages
 
 
 def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
@@ -44,7 +54,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
 
     for basis in _basis_list(config["code"]["basis"]):
         circuit = _build_circuit(config["code"], config["noise"], basis)
-        raw = _run_backend(config["backend"], circuit)
+        raw = _run_backend(config["backend"], config["mapping"], circuit)
         syndromes = extract_detection_events(circuit, raw)
         decoded = _run_decoder(config["decoder"], circuit, syndromes)
 
@@ -56,6 +66,8 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
             "logical_failures": decoder_info["logical_failures"],
             "shots": decoder_info["shots"],
         }
+        if "noise_sweep" in decoder_info:
+            metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]
 
         basis_run_dir = run_dir / basis
         basis_run_dir.mkdir(parents=True, exist_ok=False)
@@ -76,11 +88,11 @@ def _basis_list(config_basis: str) -> list[str]:
     raise ValueError("code.basis must be memory_z, memory_x, or both")
 
 
-def _run_backend(backend: dict[str, Any], circuit: tuple) -> tuple:
+def _run_backend(backend: dict[str, Any], mapping: dict[str, Any], circuit: tuple) -> tuple:
     if backend["name"] == "simulator":
-        return run_simulator_backend(backend, circuit)
+        return run_simulator_backend(backend, circuit, mapping)
     if backend["name"] == "iqm_hardware":
-        return run_iqm_hardware_backend(backend, circuit)
+        return run_iqm_hardware_backend(backend, circuit, mapping)
     raise ValueError(f"Unknown backend: {backend['name']}")
 
 

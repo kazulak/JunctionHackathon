@@ -6,14 +6,38 @@ This document describes the current architecture, not an ideal future system. Th
 
 Get the logical error rate as low as possible for an offline QEC memory experiment on IQM hardware.
 
-Near-term baseline:
+Current baseline:
 
-- Distance-3 rotated surface code.
-- `memory_z` and `memory_x`.
+- Distance-5 rotated surface code.
+- `memory_z` first.
 - Stim as circuit and detector source of truth.
 - IQM hardware through Qiskit/IQM.
 - PyMatching decoder.
 - Saved artifacts so hardware data can be redecoded without rerunning QPU jobs.
+
+Recorded hardware result:
+
+```text
+Run: results/iqm_surface_d3_baseline/20260606T163211Z
+Code: d=5, rounds=5, memory_z
+Shots: 1000
+LER: 0.504 +/- 0.0158
+Mean detector firing rate: 0.488
+Saturated detectors: 115 / 120
+Transpiled depth: 276 vs Qiskit depth 41
+```
+
+This is saturated behavior. It proves the pipeline runs on hardware, but the current automatic mapping/routing is not yet useful error correction.
+
+Mapped d=3 hardware result:
+
+```text
+Run: results/iqm_surface_d3_baseline/20260606T180519Z
+Code: d=3, rounds=5, memory_z + memory_x
+Shots: 100
+memory_z LER: 0.43 +/- 0.0495
+memory_x LER: 0.46 +/- 0.0498
+```
 
 ## Current Pipeline
 
@@ -62,6 +86,7 @@ memory_x
 | Reports | `qec_pipeline/analysis/reports.py` | Writes circuit, metadata, measurement heads, syndrome heads, metrics, summary. |
 | Plots | `scripts/plot_stim_circuit.py`, `scripts/plot_qiskit_translation.py` | Visual inspection helpers. |
 | Sweeps | `scripts/sweep_rounds.py`, `qec_pipeline/sweeps.py` | Runs LER vs rounds sweeps and writes CSV/JSON/PNG. |
+| Patch selection | `qec_pipeline/mapping/patch_selection.py` | Scores full-chip calibration/topology data and selects the best `initial_layout`. |
 
 ## Current Configs
 
@@ -71,7 +96,9 @@ memory_x
 | `configs/demo_stim_simple_noise.yaml` | Noisy simulator sanity check using observable-rate decoder. |
 | `configs/demo_stim_simple_noise_pymatching.yaml` | First real noisy simulator baseline with PyMatching. |
 | `configs/baseline_surface_d3.yaml` | Simulator baseline template. |
-| `configs/iqm_surface_d3_baseline.yaml` | Minimal IQM hardware baseline. |
+| `configs/iqm_surface_d3_baseline.yaml` | Native mapped d=3 IQM hardware baseline. |
+| `configs/iqm_surface_d3_r1_native.yaml` | Shortest native d=3 hardware sanity check. |
+| `configs/iqm_surface_d5_baseline.yaml` | Routed-layout d=5 IQM hardware baseline. |
 | `configs/experiment_matrix.yaml` | Planning matrix only; not currently executed by `main.py`. |
 
 ## Noise Model
@@ -104,7 +131,17 @@ idle_error          -> before_round_data_depolarization
 two_qubit_error     -> not separately used yet
 ```
 
-Next upgrade: add `qec_pipeline/noise/iqm_calibration.py` that turns IQM calibration data into decoder weights or a better Stim detector error model.
+Calibration data now first enters through mapping:
+
+```text
+full QPU per-qubit/per-coupler data
+-> qec_pipeline/mapping/patch_selection.py
+-> PRX/readout/QND/idle/CZ scoring
+-> native patch or routed-layout initial_layout
+-> IQM transpile
+```
+
+Later, the same calibration data should also drive decoder weights or a better detector error model.
 
 ## Hardware Path
 
@@ -124,7 +161,8 @@ Stim circuit
 
 Current hardware limitations:
 
-- No custom layout yet.
+- D3 has native calibration patch selection and now avoids poor QND/T2 qubits.
+- D5 has routed calibration layout selection, not a perfect native patch.
 - No QPU-specific calibration model yet.
 - No pulse-level/PulLA path yet.
 - Measurement order should be checked carefully for every new converter or backend change.
@@ -153,11 +191,12 @@ Done:
 - IQM hardware path runs and saves artifacts.
 - `memory_z` and `memory_x` can run in one config.
 - Rounds sweeps can produce `ler_vs_rounds.png`.
+- Real IQM calibration dumps can drive d=3 native mapping and d=5 routed layout.
 
 Still needed for a stronger submission:
 
-- Explain and verify the hardware circuit visually and numerically.
-- Use QPU-specific calibration data in the decoder model.
+- Run d=5 routed layout on hardware and compare to the saturated d=5 baseline.
+- Use selected layout metadata to reduce transpiled depth further.
 - Compare at least two QPUs or two hardware patches.
-- Add mapping/transpilation diagnostics to the report.
+- Generate calibrated simulator data for GNN training.
 - Document every LER change with one changed variable at a time.

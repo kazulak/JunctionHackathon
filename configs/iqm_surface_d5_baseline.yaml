@@ -2,13 +2,15 @@
 #
 # Requirements:
 # - IQM_TOKEN must be set in your environment, or pass token in backend.options.
-# - This uses Qiskit's default transpilation/routing, not custom Emerald mapping.
+# - The current Emerald calibration dump does not contain a native d=5 surface-code
+#   interaction graph. This config therefore uses a routed calibration layout:
+#   pick a good 49-qubit initial_layout, then let Qiskit route missing edges.
 # - Noise parameters are not sent to hardware. They build the Stim detector error
 #   model used by PyMatching after hardware measurements come back.
 
 experiment:
-  name: iqm_surface_d3_baseline
-  description: "Minimal surface-code memory experiment on IQM hardware."
+  name: iqm_surface_d5_baseline
+  description: "Distance-5 surface-code memory experiment on IQM hardware."
   seed: 1
 
 code:
@@ -44,7 +46,26 @@ decoder:
   options: {}
 
 mapping:
-  strategy: none
+  strategy: calibration_routed_layout
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+    route_distance: 0.2
+  options:
+    seed: 1
+    max_iterations: 5000
+    exclude_qubits:
+      - QB9
+      - QB25
+      - QB41
+      - QB46
+      - QB47
   hardware_patch: null
 
 artifacts:

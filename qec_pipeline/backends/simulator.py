@@ -6,6 +6,7 @@ from typing import Any
 def run_simulator_backend(
     backend: dict[str, Any],
     circuit: tuple,
+    mapping: dict[str, Any] | None = None,
 ) -> tuple:
     """Sample raw measurements from a Stim circuit.
 

@@ -28,6 +28,12 @@ Run IQM hardware config:
 python main.py configs/iqm_surface_d3_baseline.yaml
 ```
 
+Run the shortest native d=3 sanity config:
+
+```bash
+python main.py configs/iqm_surface_d3_r1_native.yaml
+```
+
 ## Stage By Stage
 
 ### 1. Load YAML
@@ -168,7 +174,12 @@ Important:
 - Stim noise instructions are skipped during Qiskit conversion.
 - Real QPU noise comes from hardware, not from YAML.
 - YAML noise is still used by the Stim detector error model for PyMatching.
-- Current mapping is automatic Qiskit/IQM mapping.
+- `MR`/`MRX` resets are kept only when that measured qubit is used again later; terminal unused resets are skipped before hardware execution.
+- `backend.options.omit_initial_resets: true` additionally skips leading explicit Qiskit reset gates for hardware A/B tests; later repeated-round resets remain.
+- `backend.options.omit_repeated_resets: true` skips repeated syndrome reset gates and XOR-converts repeated ancilla records into virtual reset-style measurements before decoding.
+- If `mapping.strategy: calibration_best_patch`, full QPU calibration is used to choose `initial_layout` before transpile.
+- If `mapping.strategy: calibration_routed_layout`, full QPU calibration is used to choose a low-cost routed `initial_layout` before transpile.
+- If `mapping.strategy: none`, Qiskit/IQM chooses layout and routing.
 
 ### 5. Extract detector events
 
@@ -286,6 +297,7 @@ raw_metadata.json
 syndrome_metadata.json
 metrics.json
 diagnostics.json
+measurement_diagnostics.json
 raw_measurements_head.csv
 detection_events_head.csv
 observable_flips_head.csv
@@ -413,18 +425,131 @@ Useful warning signs:
 - transpiled depth much larger than Qiskit depth,
 - many transpiled `cz` or `cx` gates.
 
+Current recorded baseline:
+
+```text
+Run: results/iqm_surface_d3_baseline/20260606T163211Z
+Code: d=5, rounds=5, memory_z
+Shots: 1000
+LER: 0.504 +/- 0.0158
+Mean detector firing rate: 0.488
+Saturated detectors: 115 / 120
+Transpiled depth: 276 vs Qiskit depth 41
+Two-qubit gates after transpilation: 842
+```
+
+This proves the hardware path works, but the syndrome data is nearly random. Treat this as the baseline to beat, not as successful error correction.
+
+## Calibration Mapping
+
+Enable native d=3 patch selection in the normal experiment config:
+
+```yaml
+mapping:
+  strategy: calibration_best_patch
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+  options:
+    exclude_qubits:
+      - QB9
+      - QB25
+      - QB41
+      - QB46
+      - QB47
+```
+
+D5 uses routed layout selection instead:
+
+```yaml
+mapping:
+  strategy: calibration_routed_layout
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+    route_distance: 0.2
+  options:
+    seed: 1
+    max_iterations: 5000
+    exclude_qubits:
+      - QB9
+      - QB25
+      - QB41
+      - QB46
+      - QB47
+```
+
+What happens:
+
+```text
+Stim surface-code circuit
+-> real QPU calibration/topology
+-> score native patches or routed layouts
+-> choose lowest-score initial_layout
+-> pass initial_layout to Qiskit transpile
+```
+
+This is not an average over the QPU. It uses spatial calibration data to find the best region.
+
+Current real files:
+
+```text
+configs/2026-06-06T06_08_52.470451Z.json     54-qubit Emerald-like dump
+configs/2026-06-06T16_44_10.718568Z.json     20-qubit Garnet-like dump
+```
+
+Current native-patch check:
+
+```text
+d=3 on Emerald dump: works, 64 native candidates
+d=3 on Garnet dump: works, 4 native candidates
+d=5 on Emerald dump: no native surface-code graph found
+```
+
+Current routed-layout d=5 Emerald check:
+
+```text
+49 circuit qubits mapped
+excluded bad qubits: QB9, QB25, QB41, QB46, QB47
+50 / 80 unique code interactions are native
+30 / 80 require routing
+max hardware graph route distance: 5
+```
+
+This is not a perfect d=5 patch. It is a better initial layout for Qiskit than blind routing.
+
 ## Where QPU Calibration Fits
 
-Current temporary path:
+Placement path implemented now:
 
 ```text
 IQM QPU calibration numbers
--> YAML noise.parameters
+-> mapping.calibration_file
+-> native patch score or routed layout score
+-> Qiskit initial_layout
+```
+
+Simple decoder-model path implemented now:
+
+```text
+YAML noise.parameters
 -> Stim detector error model
 -> PyMatching weights
 ```
 
-Better path to implement:
+Better decoder-model path to implement:
 
 ```text
 IQM calibration table

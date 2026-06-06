@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from qec_pipeline.analysis.diagnostics import build_run_diagnostics
+from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
 
 
 def write_run_summary(
@@ -79,6 +80,10 @@ def write_run_artifacts(
     _write_json(
         run_dir / "diagnostics.json",
         build_run_diagnostics(circuit_info, raw_info_for_json, syndrome_info, metrics),
+    )
+    _write_json(
+        run_dir / "measurement_diagnostics.json",
+        build_measurement_diagnostics(stim_circuit, measurements, raw_info_for_json),
     )
     if counts is not None:
         _write_json(run_dir / "counts.json", counts)

@@ -21,7 +21,13 @@ python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
 | `demo_stim_simple_noise.yaml` | Noisy simulator sanity check with observable-rate decoder. |
 | `demo_stim_simple_noise_pymatching.yaml` | Noisy simulator baseline with PyMatching. |
 | `baseline_surface_d3.yaml` | Simulator baseline template. |
-| `iqm_surface_d3_baseline.yaml` | Minimal IQM hardware run. |
+| `iqm_surface_d3_baseline.yaml` | IQM hardware run with real Emerald patch selection. |
+| `iqm_surface_d3_r1_native.yaml` | Short one-round d3 hardware sanity run on the corrected native Emerald patch. |
+| `iqm_surface_d3_r1_no_initial_reset.yaml` | Same one-round native patch, but without explicit initial Qiskit reset gates. |
+| `iqm_surface_d5_baseline.yaml` | D5 IQM hardware run with real Emerald routed-layout selection. |
+| `qpu_patch_calibration_example.yaml` | Full-chip calibration/topology input template for patch selection. |
+| `2026-06-06T06_08_52.470451Z.json` | Real 54-qubit IQM observation dump, used as Emerald calibration input. |
+| `2026-06-06T16_44_10.718568Z.json` | Real 20-qubit IQM observation dump, used as Garnet calibration input. |
 | `experiment_matrix.yaml` | Planning file only; not executed by `main.py`. |
 
 ## YAML Sections
@@ -78,6 +84,8 @@ backend:
     server_url: https://resonance.meetiqm.com
     quantum_computer: garnet
     optimization_level: 3
+    omit_initial_resets: false
+    omit_repeated_resets: false
 ```
 
 - `name`: `simulator` or `iqm_hardware`.
@@ -86,6 +94,8 @@ backend:
 - `options.server_url`: IQM Resonance URL.
 - `options.quantum_computer`: QPU name, for example `garnet`.
 - `options.optimization_level`: Qiskit transpiler optimization level.
+- `options.omit_initial_resets`: IQM A/B option. If `true`, leading Stim `R`/`RX` preparations are translated without explicit Qiskit reset gates; later syndrome-round resets are still kept.
+- `options.omit_repeated_resets`: IQM A/B option. If `true`, repeated syndrome reset gates are omitted and raw records are XOR-converted into virtual reset-style measurements before Stim syndrome extraction.
 
 For IQM auth, prefer:
 
@@ -123,24 +133,26 @@ idle_error          -> before_round_data_depolarization
 two_qubit_error     -> present in YAML, not separately used yet
 ```
 
-For QPU calibration values:
+For QPU calibration:
 
-- Put QPU-specific values here for now.
-- Use separate YAML files for separate QPUs.
-- Later, move richer per-qubit/per-coupler data into a dedicated calibration error-model module.
+- Full per-qubit/per-coupler data belongs in `mapping.calibration_file`.
+- Scalar `noise.parameters` remains the simple detector-model approximation for PyMatching.
+- Later, a richer error-model module should use the same calibration data to build better decoder weights.
 
 ### `decoder`
 
 ```yaml
 decoder:
   name: pymatching
-  options: {}
+  options:
+    noise_sweep_probabilities: [0.001, 0.003, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3]
 ```
 
 Available:
 
 - `observable_rate`: sanity check only; counts observed logical flips directly.
 - `pymatching`: real MWPM decoder from the Stim detector error model.
+- `pymatching.options.noise_sweep_probabilities`: optional diagnostic. It redecodes the same detector events with several uniform Stim noise probabilities and saves the sweep in `metrics.json`.
 
 Placeholders:
 
@@ -160,7 +172,66 @@ mapping:
 Current behavior:
 
 - `strategy: none` means Qiskit/IQM chooses layout and routing.
-- Custom hardware patch mapping is not implemented yet.
+- `strategy: calibration_best_patch` selects an exact native hardware patch and passes `initial_layout` to Qiskit.
+- `strategy: calibration_routed_layout` selects a low-cost initial layout when no exact native patch exists, then Qiskit routes missing edges.
+- Real IQM observation dumps are supported directly. If they have no explicit coordinates, the selector uses the measured coupler graph.
+- If no native graph patch exists, use `calibration_routed_layout` or `strategy: none`.
+- IQM scoring uses PRX, readout, QND, idle/T2, and CZ calibration terms.
+- `hardware_patch.stim_to_hardware` pins an exact Stim-qubit-to-QPU-qubit assignment and bypasses graph isomorphism tie-breaking.
+
+Native d=3 patch selection:
+
+```yaml
+mapping:
+  strategy: calibration_best_patch
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+  options:
+    exclude_qubits:
+      - QB9
+      - QB25
+      - QB41
+      - QB46
+      - QB47
+  hardware_patch:
+    stim_to_hardware:
+      "1": QB31
+      "2": QB39
+      "3": QB38
+```
+
+D5 routed layout:
+
+```yaml
+mapping:
+  strategy: calibration_routed_layout
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+    route_distance: 0.2
+  options:
+    seed: 1
+    max_iterations: 5000
+    exclude_qubits:
+      - QB9
+      - QB25
+      - QB41
+      - QB46
+      - QB47
+```
 
 ### `artifacts`
 
@@ -176,6 +247,7 @@ Current behavior:
 
 - `root` controls the output root.
 - The save flags are descriptive for now. The current reporter writes the standard artifact set.
+- New runs include `measurement_diagnostics.json`, which compares each raw measurement bit to ideal Stim one-rates and labels the mapped hardware qubit when available.
 
 ## Recommended QPU Config Pattern
 
@@ -193,12 +265,46 @@ backend:
   options:
     quantum_computer: garnet
 
-noise:
-  parameters:
-    one_qubit_error: <from QPU page>
-    measurement_error: <from QPU page>
-    reset_error: <from QPU page>
-    idle_error: <estimated or from calibration>
+mapping:
+  strategy: calibration_best_patch
+  calibration_file: configs/2026-06-06T16_44_10.718568Z.json
 ```
 
-Keep `two_qubit_error` in the file for documentation, but remember it needs a code upgrade before it influences the detector model separately.
+For d=5 on the current Emerald dump, native patch selection fails because the required surface-code interaction graph is not present. Use `calibration_routed_layout` for the d=5 baseline config.
+
+## QPU Patch Calibration
+
+The selector accepts either:
+
+- the small documented template `qpu_patch_calibration_example.yaml`,
+- the real IQM observation-set JSON files in this directory.
+
+For template files, it uses:
+
+- qubit `row` / `col` coordinates,
+- Qiskit hardware `index`,
+- per-qubit errors,
+- native couplers and their two-qubit errors.
+
+For IQM observation dumps, it extracts:
+
+- one-qubit PRX error from PRX fidelity records, with Clifford fidelity as fallback,
+- measurement error from SSRO records,
+- QND failure from QND records,
+- idle error from T2 echo or T2 records, assuming a 1 us round for scoring,
+- CZ error from IRB CZ fidelity when present, otherwise RB CZ fidelity,
+- native couplers from two-qubit records.
+
+Reset errors are currently left at `0.0` in mapping scores; direct reset calibration should be added when available.
+
+`calibration_best_patch` chooses the lowest-score native region for the generated surface-code interaction graph.
+
+`calibration_routed_layout` chooses a low-cost layout even when some code interactions need routing. Current offline d=5 Emerald check:
+
+```text
+49 circuit qubits mapped
+excluded bad qubits: QB9, QB25, QB41, QB46, QB47
+50 / 80 unique code interactions are native
+30 / 80 require routing
+max hardware graph route distance: 5
+```

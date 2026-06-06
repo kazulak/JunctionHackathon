@@ -1,20 +1,23 @@
-# Minimal IQM hardware baseline.
+# Minimal IQM hardware baseline without explicit reset gates.
 #
 # Requirements:
 # - IQM_TOKEN must be set in your environment, or pass token in backend.options.
 # - This uses the real Emerald calibration dump to choose a native d=3 patch.
 # - Noise parameters are not sent to hardware. They build the Stim detector error
 #   model used by PyMatching after hardware measurements come back.
+# - omit_initial_resets removes leading reset gates.
+# - omit_repeated_resets removes syndrome-round reset gates and converts physical
+#   measurement records into virtual reset-style records before decoding.
 
 experiment:
-  name: iqm_surface_d3_baseline
-  description: "Minimal surface-code memory experiment on IQM hardware."
+  name: iqm_surface_d3_no_reset_virtualized
+  description: "Distance-3 five-round Emerald run with no active resets and virtualized measurement records."
   seed: 1
 
 code:
   family: surface_code
   distance: 3
-  rounds: 5
+  rounds: 1
   basis: both
   reset_mode: reset
 
@@ -25,6 +28,9 @@ backend:
     server_url: https://resonance.meetiqm.com
     quantum_computer: emerald
     optimization_level: 3
+    omit_initial_resets: true
+    omit_repeated_resets: true
+
     # Authentication:
     # Prefer setting IQM_TOKEN in your shell or .env.
     # Do not also put token here when IQM_TOKEN is set.
@@ -41,7 +47,16 @@ noise:
 
 decoder:
   name: pymatching
-  options: {}
+  options:
+    noise_sweep_probabilities:
+      - 0.001
+      - 0.003
+      - 0.01
+      - 0.02
+      - 0.05
+      - 0.1
+      - 0.2
+      - 0.3
 
 mapping:
   strategy: calibration_best_patch
@@ -61,7 +76,27 @@ mapping:
       - QB41
       - QB46
       - QB47
-  hardware_patch: null
+  hardware_patch:
+    # Pinned from the successful one-round no-initial-reset run:
+    # results/iqm_surface_d3_r1_no_initial_reset/20260606T201303Z
+    stim_to_hardware:
+      "1": QB31
+      "2": QB39
+      "3": QB38
+      "5": QB45
+      "8": QB22
+      "9": QB30
+      "10": QB29
+      "11": QB37
+      "12": QB36
+      "13": QB44
+      "14": QB14
+      "15": QB13
+      "16": QB21
+      "17": QB20
+      "18": QB28
+      "19": QB27
+      "25": QB19
 
 artifacts:
   root: results

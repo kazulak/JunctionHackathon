@@ -1,0 +1,3611 @@
+{
+  "created_timestamp": "2026-06-06T16:44:11.387192Z",
+  "describes_id": "d3625a06-f5e6-4430-96bc-96e0d8527153",
+  "dut_label": "M194_F0W2114_P08_B15",
+  "end_timestamp": "2026-06-06T16:44:11.440498Z",
+  "invalid": false,
+  "observation_set_id": "3bf69fb9-14d3-44fc-9f2f-8c7075ee8235",
+  "observation_set_type": "quality-metric-set",
+  "observations": [
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB15.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636776,
+      "uncertainty": 0.0010410819955699925,
+      "unit": "",
+      "value": 0.978
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB3.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636777,
+      "uncertainty": 0.0019233108444554655,
+      "unit": "",
+      "value": 0.0392
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB17.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636778,
+      "uncertainty": 0.0007780251864175088,
+      "unit": "",
+      "value": 0.98805
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB12.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636779,
+      "uncertainty": 0.0020821127123669373,
+      "unit": "",
+      "value": 0.8994
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB11.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636780,
+      "uncertainty": 0.0008348865300147087,
+      "unit": "",
+      "value": 0.9858
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB4.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636781,
+      "uncertainty": 0.0020229202728728603,
+      "unit": "",
+      "value": 0.0432
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB18.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636782,
+      "uncertainty": 0.001068613127329062,
+      "unit": "",
+      "value": 0.97645
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB20.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636783,
+      "uncertainty": 0.0014344350914558676,
+      "unit": "",
+      "value": 0.0212
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB5.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636784,
+      "uncertainty": 0.0017966048281132952,
+      "unit": "",
+      "value": 0.033
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB20.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636785,
+      "uncertainty": 0.0008381999521593883,
+      "unit": "",
+      "value": 0.9856
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB5.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636786,
+      "uncertainty": 0.001039665936250679,
+      "unit": "",
+      "value": 0.9778
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB14.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636787,
+      "uncertainty": 0.0011194311213737094,
+      "unit": "",
+      "value": 0.97415
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB2.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636788,
+      "uncertainty": 0.0008356750351661824,
+      "unit": "",
+      "value": 0.007
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB4.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636789,
+      "uncertainty": 0.001064716532932593,
+      "unit": "",
+      "value": 0.9762
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB17.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636790,
+      "uncertainty": 0.001037844442293738,
+      "unit": "",
+      "value": 0.0106
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB6.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636791,
+      "uncertainty": 0.0014588454655651507,
+      "unit": "",
+      "value": 0.0222
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB7.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636792,
+      "uncertainty": 0.001024948831405744,
+      "unit": "",
+      "value": 0.9779
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB13.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636793,
+      "uncertainty": 0.0013591358982824344,
+      "unit": "",
+      "value": 0.0185
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB10.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636794,
+      "uncertainty": 0.001601740841834282,
+      "unit": "",
+      "value": 0.0271
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB7.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636795,
+      "uncertainty": 0.0018130347587401623,
+      "unit": "",
+      "value": 0.0349
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB11.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636796,
+      "uncertainty": 0.001342793663374982,
+      "unit": "",
+      "value": 0.0186
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB11.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636797,
+      "uncertainty": 0.0009924954657830937,
+      "unit": "",
+      "value": 0.0098
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB10.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636798,
+      "uncertainty": 0.0010495385988137835,
+      "unit": "",
+      "value": 0.011
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB13.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636799,
+      "uncertainty": 0.0014092986589080412,
+      "unit": "",
+      "value": 0.0199
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB6.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636800,
+      "uncertainty": 0.0013556337226552017,
+      "unit": "",
+      "value": 0.0189
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB7.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636801,
+      "uncertainty": 0.0009565486875219684,
+      "unit": "",
+      "value": 0.0093
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB12.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636802,
+      "uncertainty": 0.0017568289240560676,
+      "unit": "",
+      "value": 0.0329
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB8.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636803,
+      "uncertainty": 0.0007684053081544929,
+      "unit": "",
+      "value": 0.98795
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB18.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636804,
+      "uncertainty": 0.001034140372483349,
+      "unit": "",
+      "value": 0.011
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB4.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636805,
+      "uncertainty": 0.0006650404135088333,
+      "unit": "",
+      "value": 0.0044
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB6.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636806,
+      "uncertainty": 0.0009957375259575189,
+      "unit": "",
+      "value": 0.97945
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB19.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636807,
+      "uncertainty": 0.0011445333090827894,
+      "unit": "",
+      "value": 0.0132
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB13.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636808,
+      "uncertainty": 0.0009789500881045984,
+      "unit": "",
+      "value": 0.9808
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB8.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636809,
+      "uncertainty": 0.001367338655929834,
+      "unit": "",
+      "value": 0.0191
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB17.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636810,
+      "uncertainty": 0.0011593841798127132,
+      "unit": "",
+      "value": 0.0133
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB1.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636811,
+      "uncertainty": 0.0008607236977102471,
+      "unit": "",
+      "value": 0.9848
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB5.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636812,
+      "uncertainty": 0.001046820007260083,
+      "unit": "",
+      "value": 0.0114
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB19.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636813,
+      "uncertainty": 0.0008873393496289907,
+      "unit": "",
+      "value": 0.9844
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB9.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636814,
+      "uncertainty": 0.0018170552612400096,
+      "unit": "",
+      "value": 0.0342
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB2.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636815,
+      "uncertainty": 0.002313064162620658,
+      "unit": "",
+      "value": 0.0581
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB19.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636816,
+      "uncertainty": 0.001356292000271328,
+      "unit": "",
+      "value": 0.018
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB20.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636817,
+      "uncertainty": 0.0008675901149736551,
+      "unit": "",
+      "value": 0.0076
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB14.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636818,
+      "uncertainty": 0.001275268428371063,
+      "unit": "",
+      "value": 0.0166
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB3.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636819,
+      "uncertainty": 0.0010089215209816865,
+      "unit": "",
+      "value": 0.97855
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB15.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636820,
+      "uncertainty": 0.001339349876768576,
+      "unit": "",
+      "value": 0.0182
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB2.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636821,
+      "uncertainty": 0.0012296969733231035,
+      "unit": "",
+      "value": 0.96745
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB16.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636822,
+      "uncertainty": 0.0015881417215097636,
+      "unit": "",
+      "value": 0.0259
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB9.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636823,
+      "uncertainty": 0.0010611561869489335,
+      "unit": "",
+      "value": 0.97675
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB18.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636824,
+      "uncertainty": 0.001870371554959065,
+      "unit": "",
+      "value": 0.0361
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB9.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636825,
+      "uncertainty": 0.00109659472459063,
+      "unit": "",
+      "value": 0.0123
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB14.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636826,
+      "uncertainty": 0.0018401615629069095,
+      "unit": "",
+      "value": 0.0351
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB16.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636827,
+      "uncertainty": 0.0012105290744133328,
+      "unit": "",
+      "value": 0.0149
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB1.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636828,
+      "uncertainty": 0.0011969311490641404,
+      "unit": "",
+      "value": 0.0151
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB3.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636829,
+      "uncertainty": 0.0006103817965830894,
+      "unit": "",
+      "value": 0.0037
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB1.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636830,
+      "uncertainty": 0.0012372295500835727,
+      "unit": "",
+      "value": 0.0153
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB10.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636831,
+      "uncertainty": 0.0009574843333966352,
+      "unit": "",
+      "value": 0.98095
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB12.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636832,
+      "uncertainty": 0.003775490103231634,
+      "unit": "",
+      "value": 0.1683
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB16.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636833,
+      "uncertainty": 0.000998445637929276,
+      "unit": "",
+      "value": 0.9796
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB15.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636834,
+      "uncertainty": 0.0015942235707704208,
+      "unit": "",
+      "value": 0.0258
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure.constant.QB8.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636835,
+      "uncertainty": 0.0007015496207681964,
+      "unit": "",
+      "value": 0.005
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB18.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636836,
+      "uncertainty": 0.0010132147016304095,
+      "unit": "",
+      "value": 0.0105
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB9.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636837,
+      "uncertainty": 0.001158206349792645,
+      "unit": "",
+      "value": 0.97255
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB5.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636838,
+      "uncertainty": 0.000938001998931772,
+      "unit": "",
+      "value": 0.0088
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB7.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636839,
+      "uncertainty": 0.001878536046925901,
+      "unit": "",
+      "value": 0.0373
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB9.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636840,
+      "uncertainty": 0.0010383336219154226,
+      "unit": "",
+      "value": 0.0108
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB10.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636841,
+      "uncertainty": 0.0009898726213003368,
+      "unit": "",
+      "value": 0.0099
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB19.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636842,
+      "uncertainty": 0.0009175270286482024,
+      "unit": "",
+      "value": 0.9827
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB3.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636843,
+      "uncertainty": 0.002061043859698286,
+      "unit": "",
+      "value": 0.0435
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB19.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636844,
+      "uncertainty": 0.0014256601283615953,
+      "unit": "",
+      "value": 0.0211
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB6.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636845,
+      "uncertainty": 0.001399880506900501,
+      "unit": "",
+      "value": 0.0192
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB18.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636846,
+      "uncertainty": 0.001041905650910868,
+      "unit": "",
+      "value": 0.97735
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB3.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636847,
+      "uncertainty": 0.0010945160676298915,
+      "unit": "",
+      "value": 0.97555
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB14.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636848,
+      "uncertainty": 0.0009932511871123038,
+      "unit": "",
+      "value": 0.9796
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB12.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636849,
+      "uncertainty": 0.001762801665389502,
+      "unit": "",
+      "value": 0.9322
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB20.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636850,
+      "uncertainty": 0.0008163730007784432,
+      "unit": "",
+      "value": 0.0068
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB16.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636851,
+      "uncertainty": 0.001011666150763185,
+      "unit": "",
+      "value": 0.9792
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB1.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636852,
+      "uncertainty": 0.0009587119123073422,
+      "unit": "",
+      "value": 0.98135
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB9.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636853,
+      "uncertainty": 0.0020706595771396155,
+      "unit": "",
+      "value": 0.0441
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB2.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636854,
+      "uncertainty": 0.002383937278033967,
+      "unit": "",
+      "value": 0.06
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB8.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636855,
+      "uncertainty": 0.0006009136373889346,
+      "unit": "",
+      "value": 0.0036
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB15.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636856,
+      "uncertainty": 0.0015672760160227023,
+      "unit": "",
+      "value": 0.026
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB10.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636857,
+      "uncertainty": 0.0017256586423739788,
+      "unit": "",
+      "value": 0.0301
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB8.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636858,
+      "uncertainty": 0.0007837303055260787,
+      "unit": "",
+      "value": 0.9877
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB4.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636859,
+      "uncertainty": 0.0007269789443993547,
+      "unit": "",
+      "value": 0.0053
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB4.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636860,
+      "uncertainty": 0.0011005081929726837,
+      "unit": "",
+      "value": 0.9747
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB20.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636861,
+      "uncertainty": 0.0007996891965007407,
+      "unit": "",
+      "value": 0.98695
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB2.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636862,
+      "uncertainty": 0.0010282095099735267,
+      "unit": "",
+      "value": 0.0104
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB16.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636863,
+      "uncertainty": 0.0012359441137850854,
+      "unit": "",
+      "value": 0.0151
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB14.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636864,
+      "uncertainty": 0.0013011803281636264,
+      "unit": "",
+      "value": 0.0177
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB13.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636865,
+      "uncertainty": 0.0013335303183655048,
+      "unit": "",
+      "value": 0.0182
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB14.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636866,
+      "uncertainty": 0.0015010401181847206,
+      "unit": "",
+      "value": 0.0231
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB1.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636867,
+      "uncertainty": 0.001369422789937426,
+      "unit": "",
+      "value": 0.0192
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB11.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636868,
+      "uncertainty": 0.0011596396157427522,
+      "unit": "",
+      "value": 0.0135
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB17.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636869,
+      "uncertainty": 0.0010375814136731614,
+      "unit": "",
+      "value": 0.011
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB10.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636870,
+      "uncertainty": 0.0009947041716510496,
+      "unit": "",
+      "value": 0.98
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB13.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636871,
+      "uncertainty": 0.0009165745738345576,
+      "unit": "",
+      "value": 0.98295
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB19.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636872,
+      "uncertainty": 0.0011553859059206134,
+      "unit": "",
+      "value": 0.0135
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB7.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636873,
+      "uncertainty": 0.0009227367449061511,
+      "unit": "",
+      "value": 0.0086
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB16.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636874,
+      "uncertainty": 0.0016019724560678303,
+      "unit": "",
+      "value": 0.0265
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB8.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636875,
+      "uncertainty": 0.001447700095876215,
+      "unit": "",
+      "value": 0.021
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB20.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636876,
+      "uncertainty": 0.0013753350019540698,
+      "unit": "",
+      "value": 0.0193
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB13.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636877,
+      "uncertainty": 0.001257828560496223,
+      "unit": "",
+      "value": 0.0159
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB17.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636878,
+      "uncertainty": 0.001260017230993291,
+      "unit": "",
+      "value": 0.0166
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB1.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636879,
+      "uncertainty": 0.001342086191568932,
+      "unit": "",
+      "value": 0.0181
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB6.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636880,
+      "uncertainty": 0.0014026473917560325,
+      "unit": "",
+      "value": 0.02
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB6.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636881,
+      "uncertainty": 0.0009908437237021795,
+      "unit": "",
+      "value": 0.9804
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB5.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636882,
+      "uncertainty": 0.0018534757436772685,
+      "unit": "",
+      "value": 0.0346
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB12.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636883,
+      "uncertainty": 0.0017503306105990375,
+      "unit": "",
+      "value": 0.0316
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB4.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636884,
+      "uncertainty": 0.002077492417699763,
+      "unit": "",
+      "value": 0.0453
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB11.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636885,
+      "uncertainty": 0.000851049945420361,
+      "unit": "",
+      "value": 0.9852
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB15.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636886,
+      "uncertainty": 0.0014964374969907697,
+      "unit": "",
+      "value": 0.0237
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB17.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636887,
+      "uncertainty": 0.0008161217146357515,
+      "unit": "",
+      "value": 0.9862
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB2.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636888,
+      "uncertainty": 0.001298111295498194,
+      "unit": "",
+      "value": 0.9648
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB18.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636889,
+      "uncertainty": 0.0018208968971361332,
+      "unit": "",
+      "value": 0.0348
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB7.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636890,
+      "uncertainty": 0.0010464631837766667,
+      "unit": "",
+      "value": 0.97705
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB5.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636891,
+      "uncertainty": 0.001038655390685477,
+      "unit": "",
+      "value": 0.9783
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB3.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636892,
+      "uncertainty": 0.0007375363703574218,
+      "unit": "",
+      "value": 0.0054
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB11.error_0_to_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636893,
+      "uncertainty": 0.0012459454241659225,
+      "unit": "",
+      "value": 0.0161
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB15.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636894,
+      "uncertainty": 0.0010834758064673148,
+      "unit": "",
+      "value": 0.97515
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.ssro.measure_fidelity.constant.QB12.error_1_to_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636895,
+      "uncertainty": 0.003060428335968678,
+      "unit": "",
+      "value": 0.104
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB1.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636896,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9793701171875
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB1.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636897,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.8832434285438706
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB1.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636898,
+      "uncertainty": 0.0017722705985939754,
+      "unit": "",
+      "value": 0.9665799140930176
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB1.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636899,
+      "uncertainty": 0.0060286282320323095,
+      "unit": "",
+      "value": 0.7417657375335693
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB2.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636900,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.96728515625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB2.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636901,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9091601054436398
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB2.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636902,
+      "uncertainty": 0.0035590457537008685,
+      "unit": "",
+      "value": 0.9297298192977904
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB2.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636903,
+      "uncertainty": 0.004486358093148963,
+      "unit": "",
+      "value": 0.7939319610595703
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB3.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636904,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9742431640625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB3.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636905,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.944775618299745
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB3.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636906,
+      "uncertainty": 0.0029840825040934405,
+      "unit": "",
+      "value": 0.9516386985778807
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB3.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636907,
+      "uncertainty": 0.0036008560201914335,
+      "unit": "",
+      "value": 0.8525816202163696
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB4.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636908,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9766845703125
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB4.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636909,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.7466566732329706
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB4.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636910,
+      "uncertainty": 0.0033611089997402734,
+      "unit": "",
+      "value": 0.9450056552886964
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB4.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636911,
+      "uncertainty": 0.0071124941242820885,
+      "unit": "",
+      "value": 0.5288183689117432
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB5.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636912,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9822998046875
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB5.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636913,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9574183706757218
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB5.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636914,
+      "uncertainty": 0.002559455703982663,
+      "unit": "",
+      "value": 0.9667835235595704
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB5.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636915,
+      "uncertainty": 0.0033619695059577104,
+      "unit": "",
+      "value": 0.8879814147949219
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB6.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636916,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9835205078125
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB6.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636917,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9594765039296712
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB6.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636918,
+      "uncertainty": 0.001974582085068664,
+      "unit": "",
+      "value": 0.970344066619873
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB6.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636919,
+      "uncertainty": 0.003614478487445124,
+      "unit": "",
+      "value": 0.8933497667312622
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB7.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636920,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9744873046875
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB7.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636921,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9462320450009436
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB7.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636922,
+      "uncertainty": 0.0027512902921940706,
+      "unit": "",
+      "value": 0.956306219100952
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB7.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636923,
+      "uncertainty": 0.003683336218359858,
+      "unit": "",
+      "value": 0.8507950305938721
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB8.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636924,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.988525390625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB8.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636925,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9485457163743118
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB8.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636926,
+      "uncertainty": 0.0020576226459493832,
+      "unit": "",
+      "value": 0.9731338024139404
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB8.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636927,
+      "uncertainty": 0.004175755631204137,
+      "unit": "",
+      "value": 0.8853721618652344
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB9.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636928,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9752197265625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB9.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636929,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.8345845875336769
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB9.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636930,
+      "uncertainty": 0.0026950908547164654,
+      "unit": "",
+      "value": 0.9510749578475952
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB9.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636931,
+      "uncertainty": 0.006545416986787855,
+      "unit": "",
+      "value": 0.6639704704284668
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB10.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636932,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.979736328125
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB10.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636933,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9524929808950172
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB10.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636934,
+      "uncertainty": 0.002358668003416987,
+      "unit": "",
+      "value": 0.961928367614746
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB10.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636935,
+      "uncertainty": 0.0037069682525958225,
+      "unit": "",
+      "value": 0.8748126029968262
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB11.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636936,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.984619140625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB11.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636937,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9692490737898768
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB11.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636938,
+      "uncertainty": 0.0018163769387919892,
+      "unit": "",
+      "value": 0.9746437072753906
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB11.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636939,
+      "uncertainty": 0.003144752240968862,
+      "unit": "",
+      "value": 0.9148571491241456
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB12.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636940,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9190673828125
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB12.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636941,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.8829991169296951
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB12.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636942,
+      "uncertainty": 0.003816078251135728,
+      "unit": "",
+      "value": 0.8637552261352539
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB12.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636943,
+      "uncertainty": 0.004295751915746474,
+      "unit": "",
+      "value": 0.7156496047973633
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB13.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636944,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.981201171875
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB13.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636945,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9718724524167875
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB13.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636946,
+      "uncertainty": 0.0016098391123343509,
+      "unit": "",
+      "value": 0.9691952466964722
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB13.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636947,
+      "uncertainty": 0.0030431826056943603,
+      "unit": "",
+      "value": 0.907280683517456
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB14.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636948,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9783935546875
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB14.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636949,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9771921877043208
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB14.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636950,
+      "uncertainty": 0.0013754573549995082,
+      "unit": "",
+      "value": 0.9713690280914308
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB14.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636951,
+      "uncertainty": 0.0027722297889982736,
+      "unit": "",
+      "value": 0.9111075401306152
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB15.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636952,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.97509765625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB15.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636953,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.967028872308357
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB15.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636954,
+      "uncertainty": 0.0021355262094806433,
+      "unit": "",
+      "value": 0.9596794843673706
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB15.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636955,
+      "uncertainty": 0.0029848267689260226,
+      "unit": "",
+      "value": 0.8870123624801636
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB16.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636956,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9771728515625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB16.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636957,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9573606323873394
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB16.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636958,
+      "uncertainty": 0.0018291276988710407,
+      "unit": "",
+      "value": 0.9625587463378906
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB16.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636959,
+      "uncertainty": 0.0036955383132624303,
+      "unit": "",
+      "value": 0.8728574514389038
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB17.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636960,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9876708984375
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB17.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636961,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9833718304075556
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB17.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636962,
+      "uncertainty": 0.0014659289078340835,
+      "unit": "",
+      "value": 0.9842243194580078
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB17.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636963,
+      "uncertainty": 0.0023010506212440165,
+      "unit": "",
+      "value": 0.9373606443405152
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB18.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636964,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9786376953125
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB18.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636965,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9554651638933512
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB18.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636966,
+      "uncertainty": 0.00255895114797434,
+      "unit": "",
+      "value": 0.9627867937088012
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB18.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636967,
+      "uncertainty": 0.003415816711872009,
+      "unit": "",
+      "value": 0.8771741390228271
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB19.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636968,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.975341796875
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB19.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636969,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9596267679840826
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB19.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636970,
+      "uncertainty": 0.0014990339570585835,
+      "unit": "",
+      "value": 0.9635790586471558
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB19.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636971,
+      "uncertainty": 0.003715890682442472,
+      "unit": "",
+      "value": 0.8794547319412231
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB20.fidelity",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636972,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.9869384765625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB20.repeatability",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636973,
+      "uncertainty": null,
+      "unit": "",
+      "value": 0.948640974251488
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB20.qndness_0",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636974,
+      "uncertainty": 0.0020032114551087245,
+      "unit": "",
+      "value": 0.9750587940216064
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.qndness.measure.constant.QB20.qndness_1",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636975,
+      "uncertainty": 0.004158195857946424,
+      "unit": "",
+      "value": 0.8788995742797852
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB2__QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636976,
+      "uncertainty": 0.0004252984959051917,
+      "unit": "",
+      "value": 0.9693259223656832
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB2__QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636977,
+      "uncertainty": 0.0007668781455770761,
+      "unit": "",
+      "value": 0.9854372100461808
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB9__QB14.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636978,
+      "uncertainty": 0.0003614803301221409,
+      "unit": "",
+      "value": 0.9782287358985308
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB14__QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636979,
+      "uncertainty": 0.0006036005662874715,
+      "unit": "",
+      "value": 0.9933908188132208
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB11__QB16.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636980,
+      "uncertainty": 0.00032924865701562575,
+      "unit": "",
+      "value": 0.9854539279464444
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB16__QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636981,
+      "uncertainty": 0.0005853329832509879,
+      "unit": "",
+      "value": 0.9934046100237064
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB3__QB8.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636982,
+      "uncertainty": 0.00016589035898571615,
+      "unit": "",
+      "value": 0.987451572623373
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB8__QB3.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636983,
+      "uncertainty": 0.0002970773009414262,
+      "unit": "",
+      "value": 0.9941078194419584
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB5__QB10.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636984,
+      "uncertainty": 0.00011250090924384876,
+      "unit": "",
+      "value": 0.98904471898531
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB10__QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636985,
+      "uncertainty": 0.00018614987514020643,
+      "unit": "",
+      "value": 0.996770284137068
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB7__QB12.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636986,
+      "uncertainty": 0.0014685082859481,
+      "unit": "",
+      "value": 0.9613401522581676
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB12__QB7.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636987,
+      "uncertainty": 0.0024972836105295426,
+      "unit": "",
+      "value": 0.9876895043975498
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB14__QB18.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636988,
+      "uncertainty": 0.00011132705539960752,
+      "unit": "",
+      "value": 0.9927484712112896
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB14__QB18.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636989,
+      "uncertainty": 0.00019355191208419368,
+      "unit": "",
+      "value": 0.9972401405194742
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB16__QB20.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636990,
+      "uncertainty": 0.0004650838916229888,
+      "unit": "",
+      "value": 0.9769644441339108
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB16__QB20.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636991,
+      "uncertainty": 0.0008164342655781539,
+      "unit": "",
+      "value": 0.990381048696468
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB1__QB4.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636992,
+      "uncertainty": 0.00048740675262782314,
+      "unit": "",
+      "value": 0.9673081183180848
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB4__QB1.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636993,
+      "uncertainty": 0.0003249378350852154,
+      "unit": "",
+      "value": 0.9782054122120566
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB8__QB13.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636994,
+      "uncertainty": 0.0001261737764000384,
+      "unit": "",
+      "value": 0.989771461230636
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB8__QB13.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636995,
+      "uncertainty": 0.0002213620361365737,
+      "unit": "",
+      "value": 0.9957057381009528
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB10__QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636996,
+      "uncertainty": 0.00011491116572801306,
+      "unit": "",
+      "value": 0.9902362567670292
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB10__QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636997,
+      "uncertainty": 0.0001937061367369314,
+      "unit": "",
+      "value": 0.9967563572962054
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB12__QB17.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636998,
+      "uncertainty": 0.0008537571587283353,
+      "unit": "",
+      "value": 0.9705966158464194
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB12__QB17.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18636999,
+      "uncertainty": 0.0013544263684411564,
+      "unit": "",
+      "value": 0.9949623572949368
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB4__QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637000,
+      "uncertainty": 0.0005780840574296897,
+      "unit": "",
+      "value": 0.9650484215314704
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB4__QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637001,
+      "uncertainty": 0.0008857334872068396,
+      "unit": "",
+      "value": 0.9973484634564178
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB6__QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637002,
+      "uncertainty": 0.0001626900150064176,
+      "unit": "",
+      "value": 0.990418985156438
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB6__QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637003,
+      "uncertainty": 0.00027609993673274695,
+      "unit": "",
+      "value": 0.996685460011512
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB15__QB19.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637004,
+      "uncertainty": 0.0002155243714344041,
+      "unit": "",
+      "value": 0.9883111546007152
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB19__QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637005,
+      "uncertainty": 0.00039274028608593807,
+      "unit": "",
+      "value": 0.994063878804716
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB5__QB6.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637006,
+      "uncertainty": 0.0001322946288999868,
+      "unit": "",
+      "value": 0.990505316042394
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB6__QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637007,
+      "uncertainty": 0.00021395194613662425,
+      "unit": "",
+      "value": 0.9976781210513498
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB8__QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637008,
+      "uncertainty": 0.0003566921746598487,
+      "unit": "",
+      "value": 0.9815174712419708
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB8__QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637009,
+      "uncertainty": 0.000645558638927969,
+      "unit": "",
+      "value": 0.9908908416623629
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB15__QB16.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637010,
+      "uncertainty": 0.00030964389970511007,
+      "unit": "",
+      "value": 0.9876306751687997
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB16__QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637011,
+      "uncertainty": 0.0005237025784870446,
+      "unit": "",
+      "value": 0.9957607937067304
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB1__QB2.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637012,
+      "uncertainty": 0.0007375141612345045,
+      "unit": "",
+      "value": 0.959260037404154
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB2__QB1.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637013,
+      "uncertainty": 0.0011713538369495814,
+      "unit": "",
+      "value": 0.9940666247788454
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB6__QB7.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637014,
+      "uncertainty": 0.0001156920009608995,
+      "unit": "",
+      "value": 0.991556497120747
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB6__QB7.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637015,
+      "uncertainty": 0.00019539269646100057,
+      "unit": "",
+      "value": 0.9972098129170726
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB9__QB10.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637016,
+      "uncertainty": 0.0002581497163959503,
+      "unit": "",
+      "value": 0.9843482571003118
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB10__QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637017,
+      "uncertainty": 0.00044060191670493775,
+      "unit": "",
+      "value": 0.9943503687325204
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB16__QB17.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637018,
+      "uncertainty": 0.00033089024474809416,
+      "unit": "",
+      "value": 0.9850829636751391
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB16__QB17.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637019,
+      "uncertainty": 0.0005621719395031503,
+      "unit": "",
+      "value": 0.9947577662412936
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB18__QB19.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637020,
+      "uncertainty": 0.00008147475061531434,
+      "unit": "",
+      "value": 0.99355445603294
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB19__QB18.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637021,
+      "uncertainty": 0.0001362200622809513,
+      "unit": "",
+      "value": 0.99810549399035
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB3__QB4.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637022,
+      "uncertainty": 0.0003306992417562053,
+      "unit": "",
+      "value": 0.9729209099779682
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB4__QB3.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637023,
+      "uncertainty": 0.0002204661611708035,
+      "unit": "",
+      "value": 0.9819472733186456
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB10__QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637024,
+      "uncertainty": 0.00012766628767165057,
+      "unit": "",
+      "value": 0.9893330658945304
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB10__QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637025,
+      "uncertainty": 0.0002205277497239902,
+      "unit": "",
+      "value": 0.9958711113718846
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB13__QB14.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637026,
+      "uncertainty": 0.00010605280414083818,
+      "unit": "",
+      "value": 0.991145849084759
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB14__QB13.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637027,
+      "uncertainty": 0.0001859271724059712,
+      "unit": "",
+      "value": 0.9963527563672308
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB19__QB20.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637028,
+      "uncertainty": 0.00012339094333312832,
+      "unit": "",
+      "value": 0.9920247679009362
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB19__QB20.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637029,
+      "uncertainty": 0.00021446384252499684,
+      "unit": "",
+      "value": 0.9969131925153332
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB4__QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637030,
+      "uncertainty": 0.00042091490621341,
+      "unit": "",
+      "value": 0.970156391967661
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB4__QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637031,
+      "uncertainty": 0.00028060993747560666,
+      "unit": "",
+      "value": 0.980104261311774
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB11__QB12.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637032,
+      "uncertainty": 0.001012437803136629,
+      "unit": "",
+      "value": 0.9728853041585956
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB12__QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637033,
+      "uncertainty": 0.0016726196993192511,
+      "unit": "",
+      "value": 0.992680760787862
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.uz_cz.QB14__QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637034,
+      "uncertainty": 0.00013860948370317342,
+      "unit": "",
+      "value": 0.9905088590373148
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.irb.cz.slepian_crf.QB14__QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637035,
+      "uncertainty": 0.00023640362749792303,
+      "unit": "",
+      "value": 0.996619390937352
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB1.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637036,
+      "uncertainty": 0.00006788398421820455,
+      "unit": "",
+      "value": 0.9973549212326472
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB1.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637037,
+      "uncertainty": 0.00003133106963917133,
+      "unit": "",
+      "value": 0.998779194415068
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB3.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637038,
+      "uncertainty": 0.00002241411145010755,
+      "unit": "",
+      "value": 0.9988134641861834
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB3.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637039,
+      "uncertainty": 0.000010344974515434255,
+      "unit": "",
+      "value": 0.9994523680859309
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637040,
+      "uncertainty": 0.00003306995479132205,
+      "unit": "",
+      "value": 0.9984769112033404
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB5.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637041,
+      "uncertainty": 0.000015263056057533255,
+      "unit": "",
+      "value": 0.9992970359400032
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB7.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637042,
+      "uncertainty": 0.0002934653718559367,
+      "unit": "",
+      "value": 0.9952072804762012
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB7.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637043,
+      "uncertainty": 0.00013544555624120155,
+      "unit": "",
+      "value": 0.9977879756044006
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637044,
+      "uncertainty": 0.00009351193544942584,
+      "unit": "",
+      "value": 0.9962559579639756
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB9.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637045,
+      "uncertainty": 0.00004315935482281193,
+      "unit": "",
+      "value": 0.998271980598758
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637046,
+      "uncertainty": 0.000022076601485176028,
+      "unit": "",
+      "value": 0.9988204045846965
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB11.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637047,
+      "uncertainty": 0.00001018920068546586,
+      "unit": "",
+      "value": 0.999455571346783
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB13.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637048,
+      "uncertainty": 0.00004015428126063903,
+      "unit": "",
+      "value": 0.9983586033473696
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB13.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637049,
+      "uncertainty": 0.000018532745197218014,
+      "unit": "",
+      "value": 0.9992424323141704
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637050,
+      "uncertainty": 0.0000376008234401416,
+      "unit": "",
+      "value": 0.9988738013438468
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB15.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637051,
+      "uncertainty": 0.000017354226203142277,
+      "unit": "",
+      "value": 0.9994802160048524
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB17.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637052,
+      "uncertainty": 0.00003660318101076596,
+      "unit": "",
+      "value": 0.9987500831226728
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB17.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637053,
+      "uncertainty": 0.000016893775851122753,
+      "unit": "",
+      "value": 0.9994231152873876
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB18.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637054,
+      "uncertainty": 0.00001787251369800923,
+      "unit": "",
+      "value": 0.9990849412145102
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB18.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637055,
+      "uncertainty": 0.000008248852476004261,
+      "unit": "",
+      "value": 0.9995776651759278
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB20.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637056,
+      "uncertainty": 0.00003352112477747813,
+      "unit": "",
+      "value": 0.9989027960637812
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB20.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637057,
+      "uncertainty": 0.00001547128835883606,
+      "unit": "",
+      "value": 0.9994935981832836
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB2.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637058,
+      "uncertainty": 0.0004634565758464689,
+      "unit": "",
+      "value": 0.9873959058913138
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB2.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637059,
+      "uncertainty": 0.0002139030350060626,
+      "unit": "",
+      "value": 0.994182725795991
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB4.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637060,
+      "uncertainty": 0.0005041302164223428,
+      "unit": "",
+      "value": 0.9828771273144916
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB4.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637061,
+      "uncertainty": 0.00023267548450261975,
+      "unit": "",
+      "value": 0.9920971356836116
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB6.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637062,
+      "uncertainty": 0.00006873813557289574,
+      "unit": "",
+      "value": 0.9981506487719904
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB6.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637063,
+      "uncertainty": 0.0000317252933413365,
+      "unit": "",
+      "value": 0.99914645327938
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB8.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637064,
+      "uncertainty": 0.00004029506476338043,
+      "unit": "",
+      "value": 0.9985504573561944
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB8.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637065,
+      "uncertainty": 0.000018597722198483276,
+      "unit": "",
+      "value": 0.9993309803182436
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB10.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637066,
+      "uncertainty": 0.00003513715751230212,
+      "unit": "",
+      "value": 0.9982935756191214
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB10.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637067,
+      "uncertainty": 0.000016217149621062516,
+      "unit": "",
+      "value": 0.9992124195165176
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB12.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637068,
+      "uncertainty": 0.00022055351532871285,
+      "unit": "",
+      "value": 0.9934029929366576
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB12.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637069,
+      "uncertainty": 0.00010179393015171365,
+      "unit": "",
+      "value": 0.9969552275092266
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB14.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637070,
+      "uncertainty": 0.000027231437730040295,
+      "unit": "",
+      "value": 0.9992079399387452
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB14.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637071,
+      "uncertainty": 0.000012568355875403216,
+      "unit": "",
+      "value": 0.9996344338178824
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB16.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637072,
+      "uncertainty": 0.00002549745511810192,
+      "unit": "",
+      "value": 0.9991090247920128
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB16.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637073,
+      "uncertainty": 0.000011768056208354733,
+      "unit": "",
+      "value": 0.9995887806732368
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.clifford.xy_sx.QB19.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637074,
+      "uncertainty": 0.000019281943277401745,
+      "unit": "",
+      "value": 0.9992137056930692
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "metrics.rb.prx.drag_crf_sx.QB19.fidelity:par=d2",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637075,
+      "uncertainty": 0.000008899358435723884,
+      "unit": "",
+      "value": 0.9996370949352626
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB7.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637076,
+      "uncertainty": 0.000005777152857551351,
+      "unit": "s",
+      "value": 0.0000503690651495282
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB20.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637077,
+      "uncertainty": 0.0000014487038575957798,
+      "unit": "s",
+      "value": 0.000023337023050145712
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB13.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637078,
+      "uncertainty": 0.000002449598143105885,
+      "unit": "s",
+      "value": 0.000044997499730401506
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB9.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637079,
+      "uncertainty": 0.0000018546708918255515,
+      "unit": "s",
+      "value": 0.000022312791700093347
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB17.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637080,
+      "uncertainty": 0.000002510639998974448,
+      "unit": "s",
+      "value": 0.00004608053147651918
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB11.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637081,
+      "uncertainty": 0.000003568469980137153,
+      "unit": "s",
+      "value": 0.00005865610832159048
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB1.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637082,
+      "uncertainty": 0.000004188579073683636,
+      "unit": "s",
+      "value": 0.000027612811348068655
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB18.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637083,
+      "uncertainty": 0.0000022575041295352906,
+      "unit": "s",
+      "value": 0.000047999192220599
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB3.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637084,
+      "uncertainty": 0.0000014908046332082616,
+      "unit": "s",
+      "value": 0.0000306684515108691
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB5.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637085,
+      "uncertainty": 0.000001528852651865997,
+      "unit": "s",
+      "value": 0.00003205925877585872
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB15.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637086,
+      "uncertainty": 0.000002001902818962582,
+      "unit": "s",
+      "value": 0.000021020967901424027
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB16.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637087,
+      "uncertainty": 0.0000033428825105052163,
+      "unit": "s",
+      "value": 0.00004607300981169681
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB12.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637088,
+      "uncertainty": 0.000004635314132645985,
+      "unit": "s",
+      "value": 0.00005354649817039579
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB2.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637089,
+      "uncertainty": 0.000003042691689687721,
+      "unit": "s",
+      "value": 0.000028038354554411975
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB19.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637090,
+      "uncertainty": 0.000004709348320137466,
+      "unit": "s",
+      "value": 0.00005101592956767673
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB6.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637091,
+      "uncertainty": 0.000003624956652470847,
+      "unit": "s",
+      "value": 0.00005425934834600618
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB10.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637092,
+      "uncertainty": 0.0000060540763536151546,
+      "unit": "s",
+      "value": 0.00003569346161826301
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB14.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637093,
+      "uncertainty": 0.000003221972483038341,
+      "unit": "s",
+      "value": 0.00005251193439921881
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB4.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637094,
+      "uncertainty": 0.000004588280719471649,
+      "unit": "s",
+      "value": 0.0000202162023958382
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB8.t1_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637095,
+      "uncertainty": 0.0000010674594492766006,
+      "unit": "s",
+      "value": 0.000026527542782208172
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB18.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637096,
+      "uncertainty": 5.257211042292638e-7,
+      "unit": "s",
+      "value": 0.00001225192792220908
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB20.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637097,
+      "uncertainty": 3.836015818709456e-7,
+      "unit": "s",
+      "value": 0.000006820051410878759
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB5.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637098,
+      "uncertainty": 4.818431136251902e-7,
+      "unit": "s",
+      "value": 0.000008836988245744428
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB17.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637099,
+      "uncertainty": 0.0000011054395933552098,
+      "unit": "s",
+      "value": 0.00001414852428780573
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB1.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637100,
+      "uncertainty": 0.0000017198723143068002,
+      "unit": "s",
+      "value": 0.000004352413993218537
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB9.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637101,
+      "uncertainty": 4.5745029489350347e-7,
+      "unit": "s",
+      "value": 0.000007574425715322925
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB7.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637102,
+      "uncertainty": 6.939057582076605e-7,
+      "unit": "s",
+      "value": 0.000010065475052629168
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB13.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637103,
+      "uncertainty": 0.0000012663862503982244,
+      "unit": "s",
+      "value": 0.000012289074803422708
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB11.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637104,
+      "uncertainty": 7.560209129411329e-7,
+      "unit": "s",
+      "value": 0.00001091037022828474
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB15.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637105,
+      "uncertainty": 0.000001055606533319044,
+      "unit": "s",
+      "value": 0.000013832136514258826
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB3.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637106,
+      "uncertainty": 7.680688512977758e-7,
+      "unit": "s",
+      "value": 0.000011686427200961056
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB20.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637107,
+      "uncertainty": 0.0000014171969135727924,
+      "unit": "s",
+      "value": 0.000016791372872872267
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB18.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637108,
+      "uncertainty": 0.000001410043709154529,
+      "unit": "s",
+      "value": 0.00002451743337658764
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB13.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637109,
+      "uncertainty": 0.000002098219208046581,
+      "unit": "s",
+      "value": 0.00002646566631447789
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB3.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637110,
+      "uncertainty": 0.0000011415267470041546,
+      "unit": "s",
+      "value": 0.00002097640877365981
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB5.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637111,
+      "uncertainty": 9.24907746237645e-7,
+      "unit": "s",
+      "value": 0.000018272158795313464
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB1.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637112,
+      "uncertainty": 2.891317779840617e-7,
+      "unit": "s",
+      "value": 0.0000044634987039373315
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB17.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637113,
+      "uncertainty": 0.000001982018992241939,
+      "unit": "s",
+      "value": 0.00002895166867236245
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB15.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637114,
+      "uncertainty": 0.000001889875210943867,
+      "unit": "s",
+      "value": 0.000033113371335462616
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB7.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637115,
+      "uncertainty": 0.0000014226167811990057,
+      "unit": "s",
+      "value": 0.000020378546781842904
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB9.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637116,
+      "uncertainty": 0.0000014354518172269122,
+      "unit": "s",
+      "value": 0.000008992686787038188
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB11.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637117,
+      "uncertainty": 0.0000013863545490596052,
+      "unit": "s",
+      "value": 0.000026020186213878
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB6.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637118,
+      "uncertainty": 4.791801763705369e-7,
+      "unit": "s",
+      "value": 0.000008190301723729561
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB4.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637119,
+      "uncertainty": 1.880224716063183e-7,
+      "unit": "s",
+      "value": 0.0000010920201994721732
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB19.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637120,
+      "uncertainty": 3.810061185732624e-7,
+      "unit": "s",
+      "value": 0.000009220410752096191
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB14.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637121,
+      "uncertainty": 4.335820228906576e-7,
+      "unit": "s",
+      "value": 0.000008860903061843668
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB12.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637122,
+      "uncertainty": 8.911947532989626e-7,
+      "unit": "s",
+      "value": 0.000006850398926770842
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB10.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637123,
+      "uncertainty": 4.2947438610122305e-7,
+      "unit": "s",
+      "value": 0.000007469644196158531
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB2.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637124,
+      "uncertainty": 0.000001036241887949968,
+      "unit": "s",
+      "value": 0.000004850852099344146
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB8.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637125,
+      "uncertainty": 5.025272114032585e-7,
+      "unit": "s",
+      "value": 0.000008584046027621279
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB16.t2_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637126,
+      "uncertainty": 2.946420018650038e-7,
+      "unit": "s",
+      "value": 0.000007891445881072625
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB16.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637127,
+      "uncertainty": 9.570669053903605e-7,
+      "unit": "s",
+      "value": 0.000022740820344524247
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB2.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637128,
+      "uncertainty": 0.000001961321151984948,
+      "unit": "s",
+      "value": 0.000016476424952165365
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB8.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637129,
+      "uncertainty": 0.0000010489717847131346,
+      "unit": "s",
+      "value": 0.000016882831956233067
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB14.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637130,
+      "uncertainty": 0.0000010682227233706709,
+      "unit": "s",
+      "value": 0.00002428332289630138
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB12.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637131,
+      "uncertainty": 0.0000014667071957047429,
+      "unit": "s",
+      "value": 0.000026278584064722237
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB10.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637132,
+      "uncertainty": 0.0000010395218119527217,
+      "unit": "s",
+      "value": 0.000016639721054472404
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB4.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637133,
+      "uncertainty": 2.498077528035167e-7,
+      "unit": "s",
+      "value": 9.567490209890444e-7
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB6.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637134,
+      "uncertainty": 0.0000010459007161768455,
+      "unit": "s",
+      "value": 0.000020408633435817896
+    },
+    {
+      "created_timestamp": "2026-06-06T16:44:10.940306",
+      "dut_field": "characterization.model.QB19.t2_echo_time",
+      "invalid": false,
+      "modified_timestamp": "2026-06-06T16:44:10.940306",
+      "observation_id": 18637135,
+      "uncertainty": 0.0000012282055229609384,
+      "unit": "s",
+      "value": 0.00002486561726789601
+    }
+  ]
+}

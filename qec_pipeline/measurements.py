@@ -34,3 +34,24 @@ def counts_to_measurement_array(
         raise ValueError(f"Counts contain {row_index} shots, expected {total_shots}")
 
     return result
+
+
+def virtualize_omitted_repeated_resets(
+    measurements: np.ndarray,
+    measurement_order: list[int] | tuple[int, ...],
+) -> np.ndarray:
+    """Convert no-reset repeated ancilla records into reset-style records.
+
+    If an ancilla is measured and reused without an active reset, its next raw
+    measurement includes the previous measured state. XOR with the previous
+    physical measurement gives the virtual result expected by the Stim circuit
+    that used `MR`.
+    """
+    result = measurements.copy()
+    previous_index_by_qubit = {}
+    for index, stim_qubit in enumerate(measurement_order):
+        previous_index = previous_index_by_qubit.get(stim_qubit)
+        if previous_index is not None:
+            result[:, index] = measurements[:, index] ^ measurements[:, previous_index]
+        previous_index_by_qubit[stim_qubit] = index
+    return result

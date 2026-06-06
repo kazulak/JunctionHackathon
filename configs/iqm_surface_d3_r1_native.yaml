@@ -1,34 +1,29 @@
-# Minimal IQM hardware baseline.
+# One-round IQM hardware sanity run.
 #
-# Requirements:
-# - IQM_TOKEN must be set in your environment, or pass token in backend.options.
-# - This uses the real Emerald calibration dump to choose a native d=3 patch.
-# - Noise parameters are not sent to hardware. They build the Stim detector error
-#   model used by PyMatching after hardware measurements come back.
+# Purpose:
+# - Test the native d=3 Emerald patch with the shortest useful QEC circuit.
+# - This should be run before longer-round sweeps because d=3, rounds=5 is
+#   already detector-saturated on hardware.
 
 experiment:
-  name: iqm_surface_d3_baseline
-  description: "Minimal surface-code memory experiment on IQM hardware."
+  name: iqm_surface_d3_r1_native
+  description: "Distance-3 one-round native Emerald surface-code sanity run."
   seed: 1
 
 code:
   family: surface_code
   distance: 3
-  rounds: 5
+  rounds: 1
   basis: both
   reset_mode: reset
 
 backend:
   name: iqm_hardware
-  shots: 100
+  shots: 1000
   options:
     server_url: https://resonance.meetiqm.com
     quantum_computer: emerald
     optimization_level: 3
-    # Authentication:
-    # Prefer setting IQM_TOKEN in your shell or .env.
-    # Do not also put token here when IQM_TOKEN is set.
-    # token: your-token-here
 
 noise:
   model: simple_depolarizing

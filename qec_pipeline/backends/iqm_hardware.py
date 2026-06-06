@@ -7,6 +7,7 @@ from typing import Any
 def run_iqm_hardware_backend(
     backend: dict[str, Any],
     circuit: tuple,
+    mapping: dict[str, Any] | None = None,
 ) -> tuple:
     """Run a Qiskit circuit on IQM Resonance.
 
@@ -27,17 +28,25 @@ def run_iqm_hardware_backend(
     #   This covers memory-X `RX`/`MX` instructions that the provided converter
     #   does not currently cover.
     #
-    # This intentionally does not implement custom mapping yet. It lets Qiskit/IQM
-    # transpilation produce the first hardware baseline.
+    # Optional mapping comes from qec_pipeline.mapping and is passed to Qiskit as
+    # initial_layout. Qiskit/IQM still handles final routing and transpilation.
     from iqm.qiskit_iqm import IQMProvider
     from qec_pipeline.conversion import stim_to_qiskit_minimal
-    from qec_pipeline.measurements import counts_to_measurement_array
+    from qec_pipeline.mapping import select_mapping_from_config
+    from qec_pipeline.measurements import counts_to_measurement_array, virtualize_omitted_repeated_resets
     from qiskit import transpile
 
     stim_circuit, _detector_model, _measurement_order, circuit_info = circuit
     options = backend.get("options", {})
 
-    qiskit_circuit, stim_to_dense, meas_order = stim_to_qiskit_minimal(stim_circuit)
+    omit_initial_resets = bool(options.get("omit_initial_resets", False))
+    omit_repeated_resets = bool(options.get("omit_repeated_resets", False))
+    qiskit_circuit, stim_to_dense, meas_order = stim_to_qiskit_minimal(
+        stim_circuit,
+        omit_initial_resets=omit_initial_resets,
+        omit_repeated_resets=omit_repeated_resets,
+    )
+    mapping_info = select_mapping_from_config(mapping or {}, stim_circuit, stim_to_dense)
 
     provider_args = {
         "quantum_computer": options.get(
@@ -58,20 +67,28 @@ def run_iqm_hardware_backend(
     iqm_backend = provider.get_backend()
 
     transpile_optimization_level = int(options.get("optimization_level", 3))
-    transpiled_circuit = transpile(
-        qiskit_circuit,
-        iqm_backend,
-        optimization_level=transpile_optimization_level,
-    )
+    transpile_kwargs = {
+        "backend": iqm_backend,
+        "optimization_level": transpile_optimization_level,
+    }
+    if mapping_info is not None:
+        transpile_kwargs["initial_layout"] = mapping_info["initial_layout"]
+    transpiled_circuit = transpile(qiskit_circuit, **transpile_kwargs)
 
     job = iqm_backend.run(transpiled_circuit, shots=int(backend["shots"]))
     result = job.result()
     counts = result.get_counts()
-    measurements = counts_to_measurement_array(
+    physical_measurements = counts_to_measurement_array(
         counts,
         num_measurements=stim_circuit.num_measurements,
         total_shots=int(backend["shots"]),
     )
+    measurements = physical_measurements
+    if omit_repeated_resets:
+        measurements = virtualize_omitted_repeated_resets(
+            physical_measurements,
+            meas_order,
+        )
 
     raw_info = {
         "backend": backend["name"],
@@ -82,8 +99,21 @@ def run_iqm_hardware_backend(
         "transpiled_depth": transpiled_circuit.depth(),
         "qiskit_ops": dict(qiskit_circuit.count_ops()),
         "transpiled_ops": dict(transpiled_circuit.count_ops()),
+        "omit_initial_resets": omit_initial_resets,
+        "omit_repeated_resets": omit_repeated_resets,
+        "measurement_record": (
+            "virtual_reset_from_no_reset_hardware"
+            if omit_repeated_resets
+            else "physical_qiskit_clbit_order"
+        ),
+        "physical_measurement_one_rate": (
+            physical_measurements.mean(axis=0).tolist()
+            if omit_repeated_resets
+            else None
+        ),
         "stim_to_dense": stim_to_dense,
         "meas_order": meas_order,
+        "mapping": mapping_info,
         "basis": circuit_info["basis"],
         "qiskit_circuit_text": str(qiskit_circuit),
         "transpiled_circuit_text": str(transpiled_circuit),
