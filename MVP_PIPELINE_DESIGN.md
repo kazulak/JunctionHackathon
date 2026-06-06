@@ -61,6 +61,7 @@ memory_x
 | PyMatching | `qec_pipeline/decoders/pymatching_decoder.py` | Builds MWPM decoder from Stim detector error model. |
 | Reports | `qec_pipeline/analysis/reports.py` | Writes circuit, metadata, measurement heads, syndrome heads, metrics, summary. |
 | Plots | `scripts/plot_stim_circuit.py`, `scripts/plot_qiskit_translation.py` | Visual inspection helpers. |
+| Sweeps | `scripts/sweep_rounds.py`, `qec_pipeline/sweeps.py` | Runs LER vs rounds sweeps and writes CSV/JSON/PNG. |
 
 ## Current Configs
 
@@ -151,6 +152,7 @@ Done:
 - Noisy simulator + PyMatching produces decoded LER.
 - IQM hardware path runs and saves artifacts.
 - `memory_z` and `memory_x` can run in one config.
+- Rounds sweeps can produce `ler_vs_rounds.png`.
 
 Still needed for a stronger submission:
 

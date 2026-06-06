@@ -6,6 +6,7 @@ from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory
 from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_backend
 from qec_pipeline.backends.simulator import run_simulator_backend
+from qec_pipeline.codes.color_code import build_color_code_circuit
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_decoder import decode_with_pymatching
@@ -42,7 +43,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
     basis_results: list[tuple] = []
 
     for basis in _basis_list(config["code"]["basis"]):
-        circuit = build_surface_code_circuit(config["code"], config["noise"], basis)
+        circuit = _build_circuit(config["code"], config["noise"], basis)
         raw = _run_backend(config["backend"], circuit)
         syndromes = extract_detection_events(circuit, raw)
         decoded = _run_decoder(config["decoder"], circuit, syndromes)
@@ -81,6 +82,14 @@ def _run_backend(backend: dict[str, Any], circuit: tuple) -> tuple:
     if backend["name"] == "iqm_hardware":
         return run_iqm_hardware_backend(backend, circuit)
     raise ValueError(f"Unknown backend: {backend['name']}")
+
+
+def _build_circuit(code: dict[str, Any], noise: dict[str, Any], basis: str) -> tuple:
+    if code["family"] == "surface_code":
+        return build_surface_code_circuit(code, noise, basis)
+    if code["family"] == "color_code":
+        return build_color_code_circuit(code, noise, basis)
+    raise ValueError(f"Unknown code family: {code['family']}")
 
 
 def _run_decoder(decoder: dict[str, Any], circuit: tuple, syndromes: tuple) -> tuple:

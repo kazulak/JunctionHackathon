@@ -285,6 +285,7 @@ circuit_metadata.json
 raw_metadata.json
 syndrome_metadata.json
 metrics.json
+diagnostics.json
 raw_measurements_head.csv
 detection_events_head.csv
 observable_flips_head.csv
@@ -359,6 +360,58 @@ The tests check:
 - `MR` and `MRX` reset semantics match Stim,
 - `MX` preserves X-basis post-measurement state when a qubit is reused,
 - unsupported inverted measurement targets fail loudly.
+
+## Rounds Sweep Plot
+
+Run:
+
+```bash
+python scripts/sweep_rounds.py configs/iqm_surface_d3_baseline.yaml --rounds 3 15 6
+```
+
+The three numbers mean:
+
+```text
+START STOP POINTS
+```
+
+Example:
+
+```text
+3 15 6 -> [3, 5, 8, 10, 13, 15]
+```
+
+Outputs:
+
+```text
+results/<experiment>_rounds_sweep/<timestamp>/sweep_results.csv
+results/<experiment>_rounds_sweep/<timestamp>/sweep_results.json
+results/<experiment>_rounds_sweep/<timestamp>/summary.md
+results/<experiment>_rounds_sweep/<timestamp>/ler_vs_rounds.png
+```
+
+Use `--dry-run` before sending hardware jobs:
+
+```bash
+python scripts/sweep_rounds.py configs/iqm_surface_d3_baseline.yaml --rounds 3 15 6 --dry-run
+```
+
+## LER Near 0.5
+
+LER near `0.5` means logical outcomes are basically random. For each future basis run, inspect:
+
+```text
+diagnostics.json
+raw_metadata.json
+syndrome_metadata.json
+```
+
+Useful warning signs:
+
+- detector firing rates close to `0.5`,
+- mean detector firing rate above roughly `0.25`,
+- transpiled depth much larger than Qiskit depth,
+- many transpiled `cz` or `cx` gates.
 
 ## Where QPU Calibration Fits
 

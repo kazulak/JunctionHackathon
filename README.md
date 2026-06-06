@@ -63,6 +63,14 @@ Run the minimal IQM hardware baseline:
 python main.py configs/iqm_surface_d3_baseline.yaml
 ```
 
+Run a rounds sweep and plot LER:
+
+```bash
+python scripts/sweep_rounds.py configs/iqm_surface_d5_baseline.yaml --rounds 3 25 5
+```
+
+This writes `sweep_results.csv`, `sweep_results.json`, `summary.md`, and `ler_vs_rounds.png`.
+
 For IQM, set exactly one auth source:
 
 ```powershell
@@ -87,6 +95,7 @@ Current tests cover:
 - syndrome extraction,
 - observable-rate and PyMatching decoders,
 - artifact writing,
+- rounds sweep plotting,
 - a small end-to-end pipeline run.
 
 ## Main Modules
@@ -100,6 +109,7 @@ qec_pipeline/syndrome_extraction.py   raw measurements to detector events
 qec_pipeline/decoders/                decoders
 qec_pipeline/backends/                simulator and IQM runners
 qec_pipeline/analysis/                metrics and artifact writing
+qec_pipeline/sweeps.py                rounds sweeps and LER plots
 ```
 
 ## Current Limitations
@@ -110,3 +120,15 @@ qec_pipeline/analysis/                metrics and artifact writing
 - Hardware mapping is currently automatic through Qiskit/IQM.
 - `reset_mode: no_reset` is not implemented.
 - `two_qubit_error` is documented in configs but not separately mapped into the current Stim noise parameters yet.
+
+## Reading LER Near 0.5
+
+LER near `0.5` means the logical output is basically random. In the current pipeline this is now flagged in each basis folder as `diagnostics.json`.
+
+Check these first:
+
+- `diagnostics.json`: warnings, detector firing rates, transpilation depth ratio.
+- `raw_metadata.json`: original depth, transpiled depth, two-qubit gate count.
+- `syndrome_metadata.json`: detector firing rates.
+
+If most detectors fire near `0.5`, the issue is usually not the decoder alone. It is usually circuit depth/routing, hardware noise, bad mapping, or a measurement-order mismatch. For the latest saved d=5 hardware run, alternative bit-order decoding did not improve LER, while transpilation expanded the circuit heavily.

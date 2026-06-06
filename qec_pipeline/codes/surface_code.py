@@ -20,6 +20,11 @@ def build_surface_code_circuit(
     Output tuple:
         (stim_circuit, detector_model, measurement_order, circuit_info)
     """
+    if code.get("family", "surface_code") != "surface_code":
+        raise ValueError(f"surface-code builder received unsupported family: {code['family']}")
+    if code.get("reset_mode", "reset") != "reset":
+        raise NotImplementedError("surface-code no_reset circuits are not implemented yet")
+
     task = {
         "memory_z": "surface_code:rotated_memory_z",
         "memory_x": "surface_code:rotated_memory_x",

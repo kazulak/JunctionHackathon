@@ -10,6 +10,7 @@ import stim
 
 from qec_pipeline.analysis.metrics import binomial_standard_error
 from qec_pipeline.analysis.reports import write_run_artifacts
+from qec_pipeline.analysis.diagnostics import build_run_diagnostics
 from qec_pipeline.backends.simulator import run_simulator_backend
 from qec_pipeline.codes.color_code import build_color_code_circuit
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
@@ -21,6 +22,7 @@ from qec_pipeline.decoders.pymatching_decoder import decode_with_pymatching
 from qec_pipeline.measurements import counts_to_measurement_array
 from qec_pipeline.pipeline import describe_pipeline, run_pipeline
 from qec_pipeline.syndrome_extraction import extract_syndromes
+from qec_pipeline.sweeps import round_values, run_rounds_sweep
 
 
 NO_NOISE = {"model": "no_noise", "parameters": {}}
@@ -108,6 +110,13 @@ class CircuitAndBackendTests(unittest.TestCase):
         circuit_text = str(stim_circuit)
         self.assertIn("DEPOLARIZE1", circuit_text)
         self.assertIn("X_ERROR", circuit_text)
+
+    def test_no_reset_fails_loudly(self) -> None:
+        code = dict(SURFACE_D2_R1)
+        code["reset_mode"] = "no_reset"
+
+        with self.assertRaisesRegex(NotImplementedError, "no_reset"):
+            build_surface_code_circuit(code, NO_NOISE, "memory_z")
 
     def test_simulator_backend_returns_raw_measurement_matrix(self) -> None:
         stim_circuit = stim.Circuit("R 0\nM 0")
@@ -265,6 +274,7 @@ class ReportingAndPipelineTests(unittest.TestCase):
             self.assertIn("memory_z", notes[0])
             self.assertTrue((run_dir / "summary.md").exists())
             self.assertTrue((run_dir / "memory_z" / "metrics.json").exists())
+            self.assertTrue((run_dir / "memory_z" / "diagnostics.json").exists())
 
     def test_describe_pipeline_mentions_selected_basis(self) -> None:
         config = {
@@ -274,6 +284,84 @@ class ReportingAndPipelineTests(unittest.TestCase):
         plan = describe_pipeline(config)
 
         self.assertIn("memory_z, memory_x", "\n".join(plan))
+
+    def test_color_code_pipeline_path_fails_loudly(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = {
+                "experiment": {"name": "unit_pipeline", "description": "", "seed": 1},
+                "code": {
+                    "family": "color_code",
+                    "distance": 2,
+                    "rounds": 1,
+                    "basis": "memory_z",
+                    "reset_mode": "reset",
+                },
+                "backend": {"name": "simulator", "shots": 8, "options": {"seed": 1}},
+                "noise": NO_NOISE,
+                "decoder": {"name": "pymatching", "options": {}},
+                "mapping": {"strategy": "none", "hardware_patch": None},
+                "artifacts": {"root": temp_dir},
+            }
+
+            with self.assertRaisesRegex(NotImplementedError, "color-code"):
+                run_pipeline(config)
+
+
+class DiagnosticAndSweepTests(unittest.TestCase):
+    def test_diagnostics_warn_on_saturated_run(self) -> None:
+        diagnostics = build_run_diagnostics(
+            circuit_info={"num_measurements": 10, "num_qubits": 5},
+            raw_info={
+                "qiskit_depth": 25,
+                "transpiled_depth": 592,
+                "transpiled_ops": {"cz": 1410},
+            },
+            syndrome_info={
+                "num_detectors": 4,
+                "detector_firing_rate": np.array([0.45, 0.5, 0.55, 0.49]),
+                "mean_syndrome_weight": 2.0,
+                "observable_flip_rate": np.array([0.5]),
+            },
+            metrics={"basis": "memory_z", "ler": 0.51, "uncertainty": 0.02},
+        )
+
+        self.assertGreaterEqual(len(diagnostics["warnings"]), 3)
+        self.assertEqual(diagnostics["two_qubit_ops_after_transpile"], 1410)
+
+    def test_round_values_are_inclusive_and_unique(self) -> None:
+        self.assertEqual(round_values(3, 15, 6), [3, 5, 8, 10, 13, 15])
+
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            round_values(1, 2, 5)
+
+    def test_rounds_sweep_writes_csv_json_plot(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = {
+                "experiment": {"name": "unit_sweep", "description": "", "seed": 1},
+                "code": {
+                    "family": "surface_code",
+                    "distance": 2,
+                    "rounds": 1,
+                    "basis": "memory_z",
+                    "reset_mode": "reset",
+                },
+                "backend": {"name": "simulator", "shots": 8, "options": {"seed": 1}},
+                "noise": NO_NOISE,
+                "decoder": {"name": "pymatching", "options": {}},
+                "mapping": {"strategy": "none", "hardware_patch": None},
+                "artifacts": {"root": temp_dir},
+            }
+
+            sweep_dir = run_rounds_sweep(
+                config,
+                rounds=[1, 2],
+                output_root=Path(temp_dir),
+            )
+
+            self.assertTrue((sweep_dir / "sweep_results.csv").exists())
+            self.assertTrue((sweep_dir / "sweep_results.json").exists())
+            self.assertTrue((sweep_dir / "ler_vs_rounds.png").exists())
+            self.assertTrue((sweep_dir / "summary.md").exists())
 
 
 if __name__ == "__main__":

@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from qec_pipeline.analysis.diagnostics import build_run_diagnostics
+
 
 def write_run_summary(
     run_dir: Path,
@@ -67,10 +69,17 @@ def write_run_artifacts(
     raw_info_for_json = dict(raw_info)
     qiskit_circuit_text = raw_info_for_json.pop("qiskit_circuit_text", None)
     transpiled_circuit_text = raw_info_for_json.pop("transpiled_circuit_text", None)
+    if hasattr(measurements, "mean") and getattr(measurements, "size", 0):
+        raw_info_for_json["measurement_one_rate"] = measurements.mean(axis=0)
+        raw_info_for_json["mean_measurement_one_rate"] = float(measurements.mean())
 
     _write_json(run_dir / "raw_metadata.json", raw_info_for_json)
     _write_json(run_dir / "syndrome_metadata.json", syndrome_info)
     _write_json(run_dir / "metrics.json", metrics)
+    _write_json(
+        run_dir / "diagnostics.json",
+        build_run_diagnostics(circuit_info, raw_info_for_json, syndrome_info, metrics),
+    )
     if counts is not None:
         _write_json(run_dir / "counts.json", counts)
     if qiskit_circuit_text is not None:
