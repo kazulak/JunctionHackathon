@@ -1,0 +1,29 @@
+experiments:
+  - name: surface_d3_pymatching
+    extends: configs/baseline_surface_d3.yaml
+    overrides:
+      code.family: surface_code
+      decoder.name: pymatching
+
+  - name: surface_d3_gnn
+    extends: configs/baseline_surface_d3.yaml
+    overrides:
+      code.family: surface_code
+      decoder.name: gnn
+
+  - name: color_d3_pymatching
+    extends: configs/baseline_surface_d3.yaml
+    overrides:
+      code.family: color_code
+      decoder.name: pymatching
+
+  - name: surface_d3_no_reset
+    extends: configs/baseline_surface_d3.yaml
+    overrides:
+      code.reset_mode: no_reset
+
+  - name: surface_d3_iqm_emerald
+    extends: configs/baseline_surface_d3.yaml
+    overrides:
+      backend.name: iqm_hardware
+      mapping.strategy: emerald_custom_patch

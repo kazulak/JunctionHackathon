@@ -1,0 +1,33 @@
+experiment:
+  name: demo_no_noise
+  description: "Toy end-to-end pipeline check with deterministic zero measurements."
+  seed: 1
+
+code:
+  family: surface_code
+  distance: 3
+  rounds: 1
+  basis: memory_z
+  reset_mode: reset
+
+backend:
+  name: simulator
+  shots: 16
+
+noise:
+  model: no_noise
+  parameters: {}
+
+decoder:
+  name: trivial
+  options: {}
+
+mapping:
+  strategy: none
+  hardware_patch: null
+
+artifacts:
+  root: results
+  save_raw_measurements: true
+  save_syndromes: true
+  save_report: true
