@@ -9,7 +9,7 @@ experiment:
 code:
   family: surface_code
   distance: 3
-  rounds: 3
+  rounds: 15
   basis: both
   reset_mode: reset
 

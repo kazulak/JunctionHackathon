@@ -12,10 +12,13 @@ from qec_pipeline.analysis.metrics import binomial_standard_error
 from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
 from qec_pipeline.analysis.reports import write_run_artifacts
 from qec_pipeline.analysis.diagnostics import build_run_diagnostics
+from qec_pipeline.backends import get_backend_runner
 from qec_pipeline.backends.simulator import run_simulator_backend
+from qec_pipeline.codes import get_code_builder
 from qec_pipeline.codes.color_code import build_color_code_circuit
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
 from qec_pipeline.config import config_summary, load_experiment_config
+from qec_pipeline.decoders import get_decoder
 from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
 from qec_pipeline.decoders.ising_decoder import decode_with_ising
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
@@ -37,9 +40,9 @@ from qec_pipeline.sweeps import round_values, run_rounds_sweep
 
 
 NO_NOISE = {"model": "no_noise", "parameters": {}}
-SURFACE_D2_R1 = {
+SURFACE_D3_R1 = {
     "family": "surface_code",
-    "distance": 2,
+    "distance": 3,
     "rounds": 1,
     "basis": "memory_z",
     "reset_mode": "reset",
@@ -62,6 +65,21 @@ class ConfigTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "Missing config section"):
                 load_experiment_config(config_path)
+
+
+class RegistryTests(unittest.TestCase):
+    def test_pipeline_registries_return_known_modules(self) -> None:
+        self.assertIs(get_code_builder("surface_code"), build_surface_code_circuit)
+        self.assertIs(get_decoder("pymatching"), decode_with_pymatching)
+        self.assertIs(get_backend_runner("simulator"), run_simulator_backend)
+
+    def test_pipeline_registries_fail_with_available_names(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Available"):
+            get_code_builder("missing_code")
+        with self.assertRaisesRegex(ValueError, "Available"):
+            get_decoder("missing_decoder")
+        with self.assertRaisesRegex(ValueError, "Available"):
+            get_backend_runner("missing_backend")
 
 
 class MeasurementTests(unittest.TestCase):
@@ -113,7 +131,7 @@ class MeasurementTests(unittest.TestCase):
 class CircuitAndBackendTests(unittest.TestCase):
     def test_surface_code_builder_returns_consistent_metadata(self) -> None:
         stim_circuit, detector_model, measurement_order, info = build_surface_code_circuit(
-            SURFACE_D2_R1,
+            SURFACE_D3_R1,
             NO_NOISE,
             "memory_z",
         )
@@ -136,7 +154,7 @@ class CircuitAndBackendTests(unittest.TestCase):
         }
 
         stim_circuit, _detector_model, _measurement_order, _info = build_surface_code_circuit(
-            SURFACE_D2_R1,
+            SURFACE_D3_R1,
             noise,
             "memory_z",
         )
@@ -145,12 +163,19 @@ class CircuitAndBackendTests(unittest.TestCase):
         self.assertIn("DEPOLARIZE1", circuit_text)
         self.assertIn("X_ERROR", circuit_text)
 
-    def test_no_reset_fails_loudly(self) -> None:
-        code = dict(SURFACE_D2_R1)
+    def test_no_reset_falls_back_to_active_reset_with_warning(self) -> None:
+        code = dict(SURFACE_D3_R1)
         code["reset_mode"] = "no_reset"
 
-        with self.assertRaisesRegex(NotImplementedError, "no_reset"):
-            build_surface_code_circuit(code, NO_NOISE, "memory_z")
+        with self.assertWarnsRegex(RuntimeWarning, "Falling back"):
+            _stim_circuit, _detector_model, _measurement_order, info = build_surface_code_circuit(
+                code,
+                NO_NOISE,
+                "memory_z",
+            )
+
+        self.assertEqual(info["implemented_reset_mode"], "active_reset")
+        self.assertTrue(info["forced_active_reset"])
 
     def test_simulator_backend_returns_raw_measurement_matrix(self) -> None:
         stim_circuit = stim.Circuit("R 0\nM 0")
@@ -315,7 +340,7 @@ class ReportingAndPipelineTests(unittest.TestCase):
                 "experiment": {"name": "unit_pipeline", "description": "", "seed": 1},
                 "code": {
                     "family": "surface_code",
-                    "distance": 2,
+                    "distance": 3,
                     "rounds": 1,
                     "basis": "memory_z",
                     "reset_mode": "reset",
@@ -433,7 +458,7 @@ class DiagnosticAndSweepTests(unittest.TestCase):
                 "experiment": {"name": "unit_sweep", "description": "", "seed": 1},
                 "code": {
                     "family": "surface_code",
-                    "distance": 2,
+                    "distance": 3,
                     "rounds": 1,
                     "basis": "memory_z",
                     "reset_mode": "reset",

@@ -52,7 +52,7 @@ class StimToQiskitConversionTests(unittest.TestCase):
     def test_generated_no_noise_qiskit_samples_have_no_syndromes(self) -> None:
         small_code = {
             "family": "surface_code",
-            "distance": 2,
+            "distance": 3,
             "rounds": 1,
             "basis": "both",
             "reset_mode": "reset",
@@ -80,7 +80,7 @@ class StimToQiskitConversionTests(unittest.TestCase):
     def test_generated_no_reset_qiskit_samples_virtualize_to_no_syndromes(self) -> None:
         small_code = {
             "family": "surface_code",
-            "distance": 2,
+            "distance": 3,
             "rounds": 2,
             "basis": "both",
             "reset_mode": "reset",

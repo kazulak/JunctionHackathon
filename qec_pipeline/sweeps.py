@@ -155,7 +155,7 @@ def plot_ler_vs_rounds(rows: list[dict[str, Any]], output_path: Path) -> None:
         yerr = [row["uncertainty"] for row in basis_rows]
         ax.errorbar(xs, ys, yerr=yerr, marker="o", capsize=4, label=basis)
 
-    ax.axhline(0.5, color="0.4", linestyle="--", linewidth=1, label="0.5 saturation")
+    # ax.axhline(0.5, color="0.4", linestyle="--", linewidth=1, label="0.5 saturation")
     ax.set_xlabel("Rounds")
     ax.set_ylabel("Logical error rate")
     ax.set_title("LER vs rounds")

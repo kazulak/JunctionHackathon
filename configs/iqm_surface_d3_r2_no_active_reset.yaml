@@ -1,40 +1,26 @@
-# Minimal IQM hardware baseline without explicit reset gates.
-#
-# Requirements:
-# - IQM_TOKEN must be set in your environment, or pass token in backend.options.
-# - This uses the real Emerald calibration dump to choose a native d=3 patch.
-# - Noise parameters are not sent to hardware. They build the Stim detector error
-#   model used by PyMatching after hardware measurements come back.
-# - omit_initial_resets removes leading reset gates.
-# - omit_repeated_resets removes syndrome-round reset gates and converts physical
-#   measurement records into virtual reset-style records before decoding.
+# configs/iqm_surface_d3_r2_no_active_reset.yaml
 
 experiment:
-  name: iqm_surface_d3_no_reset_virtualized
-  description: "Distance-3 Emerald run with no active resets and virtualized measurement records."
+  name: iqm_surface_d3_r2_no_active_reset
+  description: "Distance-3 two-round Emerald test with no active reset and virtualized ancilla records."
   seed: 1
 
 code:
   family: surface_code
   distance: 3
-  rounds: 1
-  basis: both
+  rounds: 2
+  basis: memory_z
   reset_mode: reset
 
 backend:
   name: iqm_hardware
-  shots: 100
+  shots: 1000
   options:
     server_url: https://resonance.meetiqm.com
     quantum_computer: emerald
     optimization_level: 3
     omit_initial_resets: true
     omit_repeated_resets: true
-
-    # Authentication:
-    # Prefer setting IQM_TOKEN in your shell or .env.
-    # Do not also put token here when IQM_TOKEN is set.
-    # token: your-token-here
 
 noise:
   model: simple_depolarizing
@@ -56,7 +42,6 @@ decoder:
       - 0.05
       - 0.1
       - 0.2
-      - 0.3
 
 mapping:
   strategy: calibration_best_patch
@@ -77,8 +62,6 @@ mapping:
       - QB46
       - QB47
   hardware_patch:
-    # Pinned from the successful one-round no-initial-reset run:
-    # results/iqm_surface_d3_r1_no_initial_reset/20260606T201303Z
     stim_to_hardware:
       "1": QB31
       "2": QB39

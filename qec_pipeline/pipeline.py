@@ -4,12 +4,9 @@ from typing import Any
 
 from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory
-from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_backend
-from qec_pipeline.backends.simulator import run_simulator_backend
-from qec_pipeline.codes.color_code import build_color_code_circuit
-from qec_pipeline.codes.surface_code import build_surface_code_circuit
-from qec_pipeline.decoders.observable_decoder import decode_observable_rate
-from qec_pipeline.decoders.pymatching_decoder import decode_with_pymatching
+from qec_pipeline.backends import get_backend_runner
+from qec_pipeline.codes import get_code_builder
+from qec_pipeline.decoders import get_decoder
 from qec_pipeline.syndromes import extract_detection_events
 
 
@@ -19,7 +16,7 @@ def describe_pipeline(config: dict[str, Any]) -> list[str]:
     stages = [
         "config YAML -> load normal Python dict",
         f"basis list -> {bases}",
-        "code + noise + basis -> build_surface_code_circuit -> "
+        f"code family `{config['code'].get('family', 'surface_code')}` + noise + basis -> selected code builder -> "
         "(stim_circuit, detector_model, measurement_order, circuit_info)",
     ]
     mapping_strategy = config["mapping"].get("strategy")
@@ -89,24 +86,12 @@ def _basis_list(config_basis: str) -> list[str]:
 
 
 def _run_backend(backend: dict[str, Any], mapping: dict[str, Any], circuit: tuple) -> tuple:
-    if backend["name"] == "simulator":
-        return run_simulator_backend(backend, circuit, mapping)
-    if backend["name"] == "iqm_hardware":
-        return run_iqm_hardware_backend(backend, circuit, mapping)
-    raise ValueError(f"Unknown backend: {backend['name']}")
+    return get_backend_runner(backend["name"])(backend, circuit, mapping)
 
 
 def _build_circuit(code: dict[str, Any], noise: dict[str, Any], basis: str) -> tuple:
-    if code["family"] == "surface_code":
-        return build_surface_code_circuit(code, noise, basis)
-    if code["family"] == "color_code":
-        return build_color_code_circuit(code, noise, basis)
-    raise ValueError(f"Unknown code family: {code['family']}")
+    return get_code_builder(code.get("family", "surface_code"))(code, noise, basis)
 
 
 def _run_decoder(decoder: dict[str, Any], circuit: tuple, syndromes: tuple) -> tuple:
-    if decoder["name"] == "observable_rate":
-        return decode_observable_rate(decoder, circuit, syndromes)
-    if decoder["name"] == "pymatching":
-        return decode_with_pymatching(decoder, circuit, syndromes)
-    raise ValueError(f"Unknown decoder: {decoder['name']}")
+    return get_decoder(decoder["name"])(decoder, circuit, syndromes)

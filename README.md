@@ -23,11 +23,11 @@ qec_pipeline/              active pipeline implementation
 tests/                     fast unit tests
 scripts/                   visual inspection helpers
 docs/                      pipeline notes
-provided/                  original challenge/reference code
 results/                   generated run outputs
+archive/                   old/reference material not used by the pipeline
 ```
 
-The active implementation is under `qec_pipeline/`. The old root-level starter files were moved to `provided/` so there is one clear code path.
+The active implementation is under `qec_pipeline/`. Reference notebooks, original challenge snippets, old notes, and unused experiments live under `archive/` so there is one clear runnable code path.
 
 ## Run
 
@@ -132,6 +132,8 @@ qec_pipeline/mapping/                 QPU patch selection
 qec_pipeline/sweeps.py                rounds sweeps and LER plots
 ```
 
+To add an alternative module, see [MODULE_INTEGRATION.md](docs/MODULE_INTEGRATION.md). New implementations are selected by YAML through small registries in `codes`, `decoders`, and `backends`.
+
 ## Current Limitations
 
 - `surface_code` is the only implemented code family.
@@ -180,7 +182,7 @@ This one-round run is already too high. The saved data shows deterministic syndr
 
 The next A/B test is `configs/iqm_surface_d3_r1_no_initial_reset.yaml`. It removes explicit initial Qiskit reset gates and relies on the QPU shot initialization. If deterministic first-round syndrome bits improve, explicit reset/preparation was a major source of damage.
 
-For multi-round runs, use:
+For the no-active-reset virtualized-record run, use:
 
 ```bash
 python main.py configs/iqm_surface_d3_no_initial_reset.yaml
@@ -188,6 +190,7 @@ python main.py configs/iqm_surface_d3_no_initial_reset.yaml
 
 That config now omits both initial and repeated reset gates. Repeated ancilla measurements are converted into virtual reset-style records before Stim syndrome extraction.
 It also pins the exact Stim-to-hardware assignment from the successful one-round run so graph-isomorphism tie-breaking cannot silently choose a different stabilizer layout.
+Change `code.rounds` in that YAML when running a round-count A/B test.
 
 Summarize the worst deterministic measurement failures after a run:
 

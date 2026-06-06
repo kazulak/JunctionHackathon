@@ -24,11 +24,14 @@ python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
 | `iqm_surface_d3_baseline.yaml` | IQM hardware run with real Emerald patch selection. |
 | `iqm_surface_d3_r1_native.yaml` | Short one-round d3 hardware sanity run on the corrected native Emerald patch. |
 | `iqm_surface_d3_r1_no_initial_reset.yaml` | Same one-round native patch, but without explicit initial Qiskit reset gates. |
+| `iqm_surface_d3_no_initial_reset.yaml` | D3 Emerald run without active resets, using virtualized repeated-measurement records. |
+| `iqm_surface_d3_r2_no_active_reset.yaml` | Short no-active-reset D3 Emerald variant for reset A/B testing. |
 | `iqm_surface_d5_baseline.yaml` | D5 IQM hardware run with real Emerald routed-layout selection. |
 | `qpu_patch_calibration_example.yaml` | Full-chip calibration/topology input template for patch selection. |
 | `2026-06-06T06_08_52.470451Z.json` | Real 54-qubit IQM observation dump, used as Emerald calibration input. |
 | `2026-06-06T16_44_10.718568Z.json` | Real 20-qubit IQM observation dump, used as Garnet calibration input. |
-| `experiment_matrix.yaml` | Planning file only; not executed by `main.py`. |
+
+Old planning-only configs are in `archive/configs/`.
 
 ## YAML Sections
 
@@ -159,7 +162,7 @@ Placeholders:
 - `gnn`
 - `ising`
 
-These are not wired into `pipeline.py` yet.
+These are registered names, but they currently raise `NotImplementedError`.
 
 ### `mapping`
 
