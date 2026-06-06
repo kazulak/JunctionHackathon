@@ -1,199 +1,392 @@
 # Pipeline Steps
 
-Run:
+This document explains what happens in the current runnable pipeline.
+
+## Commands
+
+No-noise simulator:
 
 ```bash
-python main.py --config configs/demo_stim_no_noise.yaml
+python main.py configs/demo_stim_no_noise.yaml
 ```
 
-Run the first noisy simulator check:
-
-```bash
-python main.py configs/demo_stim_simple_noise.yaml
-```
-
-Run the first decoded simulator baseline:
+Noisy simulator with PyMatching:
 
 ```bash
 python main.py configs/demo_stim_simple_noise_pymatching.yaml
 ```
 
-Dry-run the minimal IQM baseline:
+Dry-run IQM hardware config:
 
 ```bash
 python main.py --dry-run --print-config configs/iqm_surface_d3_baseline.yaml
 ```
 
-Equivalent forms:
+Run IQM hardware config:
 
 ```bash
-python main.py configs/demo_stim_no_noise.yaml
-python main.py --dry-run --print-config configs/demo_stim_no_noise.yaml
-python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
+python main.py configs/iqm_surface_d3_baseline.yaml
 ```
 
-## What Happens
+## Stage By Stage
 
-1. Config loads from `configs/demo_stim_no_noise.yaml`.
-2. `qec_pipeline/codes/surface_code.py` builds real Stim rotated surface-code memory circuits.
-3. `qec_pipeline/backends/simulator.py` samples raw measurements with `stim.Circuit.compile_sampler`.
-4. `qec_pipeline/syndromes.py` calls the provided `extract_syndromes.py`.
-5. `qec_pipeline/decoders/observable_decoder.py` computes LER from observable flips.
-6. `qec_pipeline/analysis/reports.py` writes inspectable artifacts.
+### 1. Load YAML
 
-## Simple Config Choices
-
-Use YAML files in `configs/` to choose the experiment. For now these choices
-work:
-
-```yaml
-code:
-  basis: memory_z   # only Z
-  basis: memory_x   # only X
-  basis: both       # Z and X in one run
-
-noise:
-  model: no_noise
-```
-
-or:
-
-```yaml
-noise:
-  model: simple_depolarizing
-  parameters:
-    one_qubit_error: 0.003
-    two_qubit_error: 0.003
-    measurement_error: 0.003
-    reset_error: 0.003
-    idle_error: 0.003
-```
-
-The simulator is always Stim for these configs:
-
-```yaml
-backend:
-  name: simulator
-```
-
-Available first-pass decoders:
-
-```yaml
-decoder:
-  name: observable_rate
-```
-
-This counts observed logical flips directly. PyMatching and GNN come next.
-
-```yaml
-decoder:
-  name: pymatching
-```
-
-This builds an MWPM decoder from the Stim detector error model.
-
-## Data Flow
-
-The pipeline sends one tuple into the next function:
+File:
 
 ```text
-config
-  -> (stim_circuit, detector_model, measurement_order, circuit_info)
-  -> (measurements, counts, raw_info)
-  -> (detection_events, observable_flips, syndrome_info)
-  -> (predicted_observables, logical_failures, ler, uncertainty, decoder_info)
-  -> report files
+qec_pipeline/config.py
 ```
 
-For `basis: both`, the same flow runs once for `memory_z` and once for
-`memory_x`. Artifacts are split into `memory_z/` and `memory_x/`.
+Input:
 
-## Expected No-Noise Result
+```text
+configs/*.yaml
+```
 
-- Raw measurements: may contain 0s and 1s from valid measurement randomness.
-- Detection events: all zeros.
-- Observable flips: all zeros.
-- Logical failures: `0`.
-- LER: `0.0`.
-- Uncertainty: `0.0`.
+Output:
 
-For the current `distance=3`, `rounds=1`, `shots=32`, `basis=both` config,
-expect these files under both `memory_z/` and `memory_x/`:
+```text
+normal Python dict
+```
 
-- `raw_measurements`: shape `(32, 17)`.
-- `detection_events`: shape `(32, 8)`.
-- `observable_flips`: shape `(32, 1)`.
-- `num_qubits`: `26` Stim qubit indices, with 17 active measured code qubits.
+No dataclass or hidden state is used.
 
-## Output Files
+### 2. Choose basis
 
-Each run writes to `results/<experiment>/<timestamp>/`.
+File:
 
-- `summary.md`: short human-readable combined result.
-- `memory_z/`: memory-Z artifacts.
-- `memory_x/`: memory-X artifacts.
+```text
+qec_pipeline/pipeline.py
+```
 
-Each basis folder contains:
+Rules:
 
-- `circuit.stim`: generated Stim circuit.
-- `circuit_metadata.json`: qubits, measurements, detectors, observables.
-- `raw_measurements_head.csv`: first raw measurement rows.
-- `raw_metadata.json`: simulator name and raw array shape.
-- `detection_events_head.csv`: first syndrome rows.
-- `observable_flips_head.csv`: first logical observable rows.
-- `syndrome_metadata.json`: detector counts and syndrome statistics.
-- `metrics.json`: LER, uncertainty, failures, shots.
+```text
+basis: memory_z -> run memory_z
+basis: memory_x -> run memory_x
+basis: both     -> run memory_z, then memory_x
+```
+
+Each basis gets its own result folder.
+
+### 3. Build Stim circuit
+
+File:
+
+```text
+qec_pipeline/codes/surface_code.py
+```
+
+Function:
+
+```text
+build_surface_code_circuit(code, noise, basis)
+```
+
+Output:
+
+```text
+(stim_circuit, detector_model, measurement_order, circuit_info)
+```
+
+What it does:
+
+- Uses `stim.Circuit.generated`.
+- Builds `surface_code:rotated_memory_z` or `surface_code:rotated_memory_x`.
+- Applies configured Stim noise for simulator and detector-model construction.
+- Builds `detector_model = stim_circuit.detector_error_model(decompose_errors=True)`.
+
+Important:
+
+- The Stim circuit is the source of truth for detector definitions and logical observables.
+- `reset_mode` is not branching behavior yet.
+- `two_qubit_error` is not separately used yet.
+
+### 4A. Run simulator backend
+
+File:
+
+```text
+qec_pipeline/backends/simulator.py
+```
+
+Function:
+
+```text
+run_simulator_backend(backend, circuit)
+```
+
+Output:
+
+```text
+(measurements, counts, raw_info)
+```
+
+What it does:
+
+- Calls `stim_circuit.compile_sampler`.
+- Samples `backend.shots`.
+- Returns a boolean raw measurement matrix.
+- `counts` is `None` for simulator runs.
+
+### 4B. Run IQM hardware backend
+
+File:
+
+```text
+qec_pipeline/backends/iqm_hardware.py
+```
+
+Function:
+
+```text
+run_iqm_hardware_backend(backend, circuit)
+```
+
+Output:
+
+```text
+(measurements, counts, raw_info)
+```
+
+What it does:
+
+```text
+Stim circuit
+-> qec_pipeline/conversion.py
+-> Qiskit circuit
+-> IQMProvider
+-> Qiskit transpile
+-> IQM backend run
+-> Qiskit counts
+-> internal_helpers.counts_to_measurement_array
+```
+
+Important:
+
+- Stim noise instructions are skipped during Qiskit conversion.
+- Real QPU noise comes from hardware, not from YAML.
+- YAML noise is still used by the Stim detector error model for PyMatching.
+- Current mapping is automatic Qiskit/IQM mapping.
+
+### 5. Extract detector events
+
+File:
+
+```text
+qec_pipeline/syndromes.py
+extract_syndromes.py
+```
+
+Function:
+
+```text
+extract_detection_events(circuit, raw)
+```
+
+Output:
+
+```text
+(detection_events, observable_flips, syndrome_info)
+```
+
+What it does:
+
+- Uses the provided `extract_syndromes.py`.
+- Calls Stim `compile_m2d_converter()`.
+- Converts raw measurement rows into detector events.
+- Also extracts observable flips.
+
+Shapes:
+
+```text
+measurements:      (shots, num_measurements)
+detection_events:  (shots, num_detectors)
+observable_flips:  (shots, num_observables)
+```
+
+Important:
+
+- Raw measurements are not the decoder input.
+- `detection_events` are the decoder input.
+- `observable_flips` are used to score whether the decoder was right.
+
+### 6A. Observable-rate sanity decoder
+
+File:
+
+```text
+qec_pipeline/decoders/observable_decoder.py
+```
+
+This is only a sanity check.
+
+It counts observed logical flips directly. It does not use the syndrome to correct anything.
+
+### 6B. PyMatching decoder
+
+File:
+
+```text
+qec_pipeline/decoders/pymatching_decoder.py
+```
+
+Function:
+
+```text
+decode_with_pymatching(decoder, circuit, syndromes)
+```
+
+Output:
+
+```text
+(predicted_observables, logical_failures, ler, uncertainty, decoder_info)
+```
+
+What it does:
+
+```text
+detector_model -> pymatching.Matching.from_detector_error_model
+detection_events -> matching.decode_batch
+predicted_observables XOR observable_flips -> logical_failures
+mean(logical_failures) -> LER
+sqrt(LER * (1 - LER) / shots) -> uncertainty
+```
+
+This is the current real decoder.
+
+### 7. Write artifacts
+
+File:
+
+```text
+qec_pipeline/analysis/reports.py
+```
+
+Output location:
+
+```text
+results/<experiment>/<timestamp>/
+```
+
+Per basis:
+
+```text
+memory_z/
+memory_x/
+```
+
+Files:
+
+```text
+circuit.stim
+circuit_metadata.json
+raw_metadata.json
+syndrome_metadata.json
+metrics.json
+raw_measurements_head.csv
+detection_events_head.csv
+observable_flips_head.csv
+counts.json                 # hardware only
+qiskit_circuit.txt          # hardware only
+transpiled_circuit.txt      # hardware only
+```
+
+Top-level:
+
+```text
+summary.md
+```
+
+## Expected Results
+
+For `demo_stim_no_noise.yaml`:
+
+- Detection events should be all zero.
+- Observable flips should be all zero.
+- Logical failures should be zero.
+- LER should be `0.0`.
+
+For `demo_stim_simple_noise_pymatching.yaml`:
+
+- Detection events should be nonzero.
+- LER should be nonzero but small for the current low noise.
+- Exact value changes with shots and seed.
+
+For IQM hardware:
+
+- Detection events should usually be nonzero.
+- Detector firing rates should not all be zero.
+- Detector firing rates should not all be near `0.5`; that suggests ordering/model mismatch or too much noise.
+- LER must be interpreted with shot-count uncertainty.
 
 ## Visual Checks
 
-After a run, plot the saved Stim circuit:
+Plot the saved Stim circuit:
 
 ```bash
 python scripts/plot_stim_circuit.py results/<experiment>/<timestamp>
 ```
 
-This writes `stim_timeline-svg.svg` inside each basis folder.
-
-Convert the same saved Stim circuit to Qiskit and write a text drawing:
+Write Qiskit translation views:
 
 ```bash
 python scripts/plot_qiskit_translation.py results/<experiment>/<timestamp>
-```
-
-This writes:
-
-- `qiskit_translation.txt`
-- `qiskit_translation_metadata.txt`
-
-Try a PNG Qiskit drawing:
-
-```bash
 python scripts/plot_qiskit_translation.py results/<experiment>/<timestamp> --png
 ```
 
-The Qiskit converter used by this script is our small converter in
-`qec_pipeline/conversion.py`. It exists because the provided converter does not
-cover Stim memory-X instructions such as `RX` and `MX`.
+Use these to compare:
 
-## Where GNN Fits
+- `circuit.stim`
+- `qiskit_circuit.txt`
+- `transpiled_circuit.txt`
 
-GNN input should start from:
+The Qiskit converter is `qec_pipeline/conversion.py`. It supports memory-X instructions such as `RX`, `MX`, and `MRX`.
 
-- `detection_events`: shape `(shots, num_detectors)`.
-- Optional graph features from `circuit.detector_model`.
-- Labels from `observable_flips` or final logical failures.
+## Where QPU Calibration Fits
 
-GNN output should match the decoder interface:
+Current temporary path:
 
-- `predicted_observables`: shape `(shots, num_observables)`.
-- `logical_failures`.
-- `ler`.
-- `uncertainty`.
+```text
+IQM QPU calibration numbers
+-> YAML noise.parameters
+-> Stim detector error model
+-> PyMatching weights
+```
 
-The first GNN task should be supervised learning on simulated noisy runs:
+Better path to implement:
 
-1. Generate noisy Stim samples.
-2. Save `detection_events` as features.
-3. Save `observable_flips` as labels.
-4. Train the GNN to predict observable flips.
-5. Compare its LER against PyMatching on the same samples.
+```text
+IQM calibration table
+-> qec_pipeline/noise/iqm_calibration.py
+-> per-qubit/per-coupler error assumptions
+-> better detector error model or decoder weights
+-> PyMatching
+```
+
+Do not put calibration logic inside the hardware backend. The backend should run circuits and return measurements. The error model should be a separate module.
+
+## Where Colleague Work Fits
+
+| Work | Input | Output |
+| --- | --- | --- |
+| GNN decoder | `detection_events`, detector graph/features | decoder tuple |
+| Color code | config code/noise/basis | circuit tuple |
+| Ising decoder | detector events and compatible model | decoder tuple |
+| Better mapping | Qiskit circuit, QPU topology | transpiled circuit + mapping metadata |
+| Better reports | saved artifacts | plots/tables/Markdown |
+
+Keep the pipeline contract unchanged unless absolutely necessary.
+
+## Debug Checklist
+
+When a result looks strange, check in this order:
+
+1. `circuit_metadata.json`: measurement/detector/observable counts.
+2. `raw_metadata.json`: backend, job ID, circuit depths, operation counts.
+3. `raw_measurements_head.csv`: raw rows have expected width.
+4. `detection_events_head.csv`: syndromes are not all broken.
+5. `syndrome_metadata.json`: detector firing rates and mean syndrome weight.
+6. `metrics.json`: failures, shots, LER, uncertainty.
+7. `transpiled_circuit.txt`: depth and unexpected routing.
