@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import stim
 
 
 def counts_to_measurement_array(
@@ -55,3 +56,24 @@ def virtualize_omitted_repeated_resets(
             result[:, index] = measurements[:, index] ^ measurements[:, previous_index]
         previous_index_by_qubit[stim_qubit] = index
     return result
+
+
+def measurement_order_from_stim_circuit(stim_circuit: stim.Circuit) -> list[int]:
+    """Return the measured Stim qubit for each measurement-record index."""
+    order = []
+    for instruction in stim_circuit.flattened():
+        if instruction.name not in {"M", "MX", "MY", "MR", "MRX", "MRY"}:
+            continue
+        order.extend(
+            target.value
+            for target in instruction.targets_copy()
+            if target.is_qubit_target
+        )
+
+    if len(order) != stim_circuit.num_measurements:
+        raise ValueError(
+            "Measurement-order extraction failed: "
+            f"{len(order)} targets != {stim_circuit.num_measurements} measurements"
+        )
+
+    return order

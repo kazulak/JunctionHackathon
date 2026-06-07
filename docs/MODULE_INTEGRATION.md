@@ -40,6 +40,13 @@ code:
   family: my_surface_code
 ```
 
+Current registered code builders:
+
+- `surface_code`: Stim rotated surface code with optional scalar Stim noise.
+- `surface_code_iqm`: clean rotated surface code, with IQM calibration noise added after mapping.
+- `surface_code_unrotated`: Stim unrotated surface code.
+- `color_code`: placeholder.
+
 ## Decoder
 
 File example:
@@ -73,6 +80,14 @@ Use in YAML:
 decoder:
   name: my_decoder
 ```
+
+Current registered decoders:
+
+- `observable_rate`: sanity check.
+- `pymatching`: MWPM from the circuit detector model.
+- `pymatching_calibrated`: MWPM route for calibrated detector models.
+- `gnn`: placeholder.
+- `ising`: placeholder.
 
 ## Backend
 

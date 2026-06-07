@@ -1,0 +1,58 @@
+experiment:
+  name: sim_iqm_emerald_surface_d3_unrotated_calibrated
+  description: "Unrotated d3 surface-code simulation using Emerald calibration noise and routed layout selection."
+  seed: 1
+
+code:
+  family: surface_code_unrotated
+  distance: 3
+  rounds: 1
+  basis: both
+  reset_mode: reset
+
+backend:
+  name: simulator
+  shots: 2000
+  options:
+    seed: 1
+
+noise:
+  model: iqm_calibration
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  options:
+    apply_idle: true
+    route_error_multiplier: 1.0
+    missing_coupler_error: 0.25
+
+decoder:
+  name: pymatching_calibrated
+  options: {}
+
+mapping:
+  strategy: calibration_routed_layout
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+    route_distance: 0.2
+  options:
+    seed: 1
+    max_iterations: 1000
+    exclude_qubits:
+      - QB9
+      - QB25
+      - QB41
+      - QB46
+      - QB47
+
+artifacts:
+  root: results
+  save_raw_measurements: true
+  save_syndromes: true
+  save_report: true
+

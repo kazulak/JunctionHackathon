@@ -20,6 +20,9 @@ python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
 | `demo_stim_no_noise.yaml` | Fast no-noise simulator smoke test. |
 | `demo_stim_simple_noise.yaml` | Noisy simulator sanity check with observable-rate decoder. |
 | `demo_stim_simple_noise_pymatching.yaml` | Noisy simulator baseline with PyMatching. |
+| `sim_iqm_emerald_surface_d3_calibrated.yaml` | Rotated d3 simulator using Emerald per-qubit/per-coupler calibration noise. |
+| `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator using Emerald calibration noise. |
+| `sim_iqm_emerald_surface_d5_calibrated.yaml` | Rotated d5 simulator using Emerald calibration noise and routed layout. |
 | `baseline_surface_d3.yaml` | Simulator baseline template. |
 | `iqm_surface_d3_baseline.yaml` | IQM hardware run with real Emerald patch selection. |
 | `iqm_surface_d3_r1_native.yaml` | Short one-round d3 hardware sanity run on the corrected native Emerald patch. |
@@ -59,7 +62,7 @@ code:
   reset_mode: reset
 ```
 
-- `family`: only `surface_code` is implemented.
+- `family`: `surface_code`, `surface_code_iqm`, or `surface_code_unrotated`.
 - `distance`: Stim generated surface-code distance.
 - `rounds`: number of syndrome rounds.
 - `basis`: `memory_z`, `memory_x`, or `both`.
@@ -136,6 +139,26 @@ idle_error          -> before_round_data_depolarization
 two_qubit_error     -> present in YAML, not separately used yet
 ```
 
+Calibration-aware simulator:
+
+```yaml
+noise:
+  model: iqm_calibration
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  options:
+    apply_idle: true
+    route_error_multiplier: 1.0
+```
+
+This uses the selected `mapping` to inject hardware-specific Stim noise:
+
+```text
+PRX error      -> DEPOLARIZE1 after 1Q gates
+CZ error       -> DEPOLARIZE2 after 2Q gates
+readout + QND  -> X/Z error before measurement
+T2 idle error  -> DEPOLARIZE1 spread over TICKs
+```
+
 For QPU calibration:
 
 - Full per-qubit/per-coupler data belongs in `mapping.calibration_file`.
@@ -155,6 +178,7 @@ Available:
 
 - `observable_rate`: sanity check only; counts observed logical flips directly.
 - `pymatching`: real MWPM decoder from the Stim detector error model.
+- `pymatching_calibrated`: MWPM decoder intended for `noise.model: iqm_calibration`.
 - `pymatching.options.noise_sweep_probabilities`: optional diagnostic. It redecodes the same detector events with several uniform Stim noise probabilities and saves the sweep in `metrics.json`.
 
 Placeholders:

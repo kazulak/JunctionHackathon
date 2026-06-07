@@ -46,7 +46,9 @@ def run_iqm_hardware_backend(
         omit_initial_resets=omit_initial_resets,
         omit_repeated_resets=omit_repeated_resets,
     )
-    mapping_info = select_mapping_from_config(mapping or {}, stim_circuit, stim_to_dense)
+    mapping_info = circuit_info.get("mapping")
+    if mapping_info is None:
+        mapping_info = select_mapping_from_config(mapping or {}, stim_circuit, stim_to_dense)
 
     provider_args = {
         "quantum_computer": options.get(
@@ -114,6 +116,9 @@ def run_iqm_hardware_backend(
         "stim_to_dense": stim_to_dense,
         "meas_order": meas_order,
         "mapping": mapping_info,
+        "noise_model": circuit_info.get("noise_model"),
+        "implemented_noise_model": circuit_info.get("implemented_noise_model"),
+        "calibration_noise": circuit_info.get("calibration_noise"),
         "basis": circuit_info["basis"],
         "qiskit_circuit_text": str(qiskit_circuit),
         "transpiled_circuit_text": str(transpiled_circuit),

@@ -57,6 +57,18 @@ Run the noisy simulator with PyMatching:
 python main.py configs/demo_stim_simple_noise_pymatching.yaml
 ```
 
+Run the IQM-calibrated Emerald simulator:
+
+```bash
+python main.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml
+```
+
+Run a calibrated simulator rounds sweep:
+
+```bash
+python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --rounds 1 5 3
+```
+
 Run the mapped IQM d=3 hardware baseline:
 
 ```bash
@@ -122,6 +134,8 @@ Current tests cover:
 ```text
 qec_pipeline/pipeline.py              orchestration
 qec_pipeline/codes/surface_code.py    Stim circuit builder
+qec_pipeline/codes/surface_code_iqm.py calibration-first rotated surface-code builder
+qec_pipeline/codes/surface_code_unrotated.py unrotated surface-code builder
 qec_pipeline/conversion.py            Stim-to-Qiskit converter
 qec_pipeline/measurements.py          Qiskit counts to measurement array
 qec_pipeline/syndrome_extraction.py   raw measurements to detector events
@@ -129,6 +143,7 @@ qec_pipeline/decoders/                decoders
 qec_pipeline/backends/                simulator and IQM runners
 qec_pipeline/analysis/                metrics and artifact writing
 qec_pipeline/mapping/                 QPU patch selection
+qec_pipeline/noise/iqm_calibration.py per-qubit/per-coupler IQM noise injection
 qec_pipeline/sweeps.py                rounds sweeps and LER plots
 ```
 
@@ -136,14 +151,32 @@ To add an alternative module, see [MODULE_INTEGRATION.md](docs/MODULE_INTEGRATIO
 
 ## Current Limitations
 
-- `surface_code` is the only implemented code family.
+- Implemented code families: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`.
 - `observable_rate` is only a sanity decoder.
+- Implemented decoders: `observable_rate`, `pymatching`, `pymatching_calibrated`.
 - GNN, Ising, and color-code modules are placeholders.
 - `mapping.strategy: calibration_best_patch` can select a native d=3 patch from the real IQM observation dumps.
 - `mapping.strategy: calibration_routed_layout` can choose a d=5 initial layout and let Qiskit route non-native edges.
 - IQM mapping scores now include PRX, readout, QND, idle/T2, and CZ calibration terms.
 - `reset_mode: no_reset` is not implemented.
-- `two_qubit_error` is documented in configs but not separately mapped into the current Stim noise parameters yet.
+- `noise.model: iqm_calibration` injects mapped PRX/readout/QND/idle/CZ errors into the Stim simulator and detector model.
+
+## Calibrated Simulator Targets
+
+Generated on June 7, 2026 with the Emerald calibration dump:
+
+```text
+d3 rotated, native mapped, rounds [1, 3, 5], 2000 shots:
+memory_z LER: 0.168 -> 0.392 -> 0.490
+memory_x LER: 0.1705 -> 0.397 -> 0.474
+Plot: results/sim_iqm_emerald_surface_d3_calibrated_rounds_sweep/20260607T001653Z/ler_vs_rounds.png
+
+d5 rotated, routed layout, rounds [1, 3, 5], 1000 shots:
+memory_z LER: 0.307 -> 0.447 -> 0.501
+Plot: results/sim_iqm_emerald_surface_d5_calibrated_rounds_sweep/20260607T001619Z/ler_vs_rounds.png
+```
+
+Interpretation: the current calibration model already predicts saturation by five rounds. If hardware is much worse at one round than these simulator targets, the missing piece is probably execution overhead/reset/readout behavior not captured by this simple Stim-level noise model.
 
 ## Reading LER Near 0.5
 

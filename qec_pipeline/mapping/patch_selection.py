@@ -187,6 +187,28 @@ def select_mapping_from_config(
     raise NotImplementedError(f"mapping strategy not implemented: {strategy}")
 
 
+def active_stim_to_dense(stim_circuit: stim.Circuit) -> dict[int, int]:
+    """Return the dense Qiskit order used by the converter and mapper."""
+    active = sorted(
+        {
+            target.value
+            for instruction in stim_circuit.flattened()
+            for target in instruction.targets_copy()
+            if target.is_qubit_target
+        }
+    )
+    return {stim_qubit: index for index, stim_qubit in enumerate(active)}
+
+
+def parse_hardware_calibration(
+    calibration: dict[str, Any],
+    exclude_qubits: list[str] | None = None,
+) -> dict[str, Any]:
+    """Parse supported calibration formats into the internal hardware table."""
+    hardware = _parse_hardware(calibration)
+    return _filter_hardware_qubits(hardware, exclude_qubits or [])
+
+
 def select_fixed_stim_to_hardware_patch(
     stim_circuit: stim.Circuit,
     stim_to_dense: dict[int, int],

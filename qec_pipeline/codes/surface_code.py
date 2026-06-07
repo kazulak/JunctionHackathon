@@ -5,6 +5,8 @@ import warnings
 
 import stim
 
+from qec_pipeline.measurements import measurement_order_from_stim_circuit
+
 
 def build_surface_code_circuit(
     code: dict[str, Any],
@@ -72,9 +74,7 @@ def build_surface_code_circuit(
 
     detector_model = stim_circuit.detector_error_model(decompose_errors=True)
 
-    # This is measurement-record index order, not physical qubit order.
-    # Keep it for compatibility with your existing pipeline.
-    measurement_order = tuple(range(stim_circuit.num_measurements))
+    measurement_order = tuple(measurement_order_from_stim_circuit(stim_circuit))
 
     circuit_info = {
         "basis": basis,
@@ -160,13 +160,13 @@ def _stim_noise_parameters(noise: dict[str, Any]) -> dict[str, float]:
 
     model = noise.get("model", "no_noise")
 
-    if model in {"none", "no_noise"}:
+    if model in {"none", "no_noise", "iqm_calibration"}:
         return {}
 
     if model != "simple_depolarizing":
         raise NotImplementedError(
             f"Unsupported noise model {model!r}. "
-            "Supported: 'no_noise', 'none', 'simple_depolarizing'."
+            "Supported: 'no_noise', 'none', 'simple_depolarizing', 'iqm_calibration'."
         )
 
     parameters = noise.get("parameters", {})

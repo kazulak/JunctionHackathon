@@ -16,17 +16,21 @@ from qec_pipeline.backends import get_backend_runner
 from qec_pipeline.backends.simulator import run_simulator_backend
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.codes.color_code import build_color_code_circuit
+from qec_pipeline.codes.surface_code_iqm import build_iqm_surface_code_circuit
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
+from qec_pipeline.codes.surface_code_unrotated import build_unrotated_surface_code_circuit
 from qec_pipeline.config import config_summary, load_experiment_config
 from qec_pipeline.decoders import get_decoder
 from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
 from qec_pipeline.decoders.ising_decoder import decode_with_ising
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
+from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
 from qec_pipeline.decoders.pymatching_decoder import (
     detector_model_with_uniform_noise,
     decode_with_pymatching,
     pymatching_noise_sweep,
 )
+from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.measurements import counts_to_measurement_array, virtualize_omitted_repeated_resets
 from qec_pipeline.mapping.patch_selection import (
     select_calibration_best_patch,
@@ -70,7 +74,10 @@ class ConfigTests(unittest.TestCase):
 class RegistryTests(unittest.TestCase):
     def test_pipeline_registries_return_known_modules(self) -> None:
         self.assertIs(get_code_builder("surface_code"), build_surface_code_circuit)
+        self.assertIs(get_code_builder("surface_code_iqm"), build_iqm_surface_code_circuit)
+        self.assertIs(get_code_builder("surface_code_unrotated"), build_unrotated_surface_code_circuit)
         self.assertIs(get_decoder("pymatching"), decode_with_pymatching)
+        self.assertIs(get_decoder("pymatching_calibrated"), decode_with_calibrated_pymatching)
         self.assertIs(get_backend_runner("simulator"), run_simulator_backend)
 
     def test_pipeline_registries_fail_with_available_names(self) -> None:
@@ -188,6 +195,28 @@ class CircuitAndBackendTests(unittest.TestCase):
         self.assertEqual(measurements.shape, (5, 1))
         self.assertEqual(raw_info["shape"], (5, 1))
 
+    def test_iqm_surface_code_builder_starts_clean_for_calibrated_noise(self) -> None:
+        stim_circuit, _detector_model, _measurement_order, info = build_iqm_surface_code_circuit(
+            {"family": "surface_code_iqm", "distance": 3, "rounds": 1, "reset_mode": "reset"},
+            {"model": "iqm_calibration"},
+            "memory_z",
+        )
+
+        self.assertNotIn("DEPOLARIZE", str(stim_circuit))
+        self.assertEqual(info["surface_code_variant"], "rotated_iqm_calibration_first")
+        self.assertEqual(info["noise_model"], "iqm_calibration")
+
+    def test_unrotated_surface_code_builder_is_selectable(self) -> None:
+        stim_circuit, detector_model, measurement_order, info = build_unrotated_surface_code_circuit(
+            {"family": "surface_code_unrotated", "distance": 3, "rounds": 1, "reset_mode": "reset"},
+            NO_NOISE,
+            "memory_z",
+        )
+
+        self.assertIn("unrotated_memory_z", info["stim_task"])
+        self.assertEqual(len(measurement_order), stim_circuit.num_measurements)
+        self.assertEqual(detector_model.num_detectors, stim_circuit.num_detectors)
+
 
 class SyndromeTests(unittest.TestCase):
     def test_extract_syndromes_returns_detector_events_and_observables(self) -> None:
@@ -261,6 +290,43 @@ class DecoderTests(unittest.TestCase):
         np.testing.assert_array_equal(failures, np.array([False, False], dtype=bool))
         self.assertEqual(ler, 0.0)
         self.assertEqual(info["logical_failures"], 0)
+
+    def test_calibrated_pymatching_reports_calibration_model(self) -> None:
+        stim_circuit = stim.Circuit(
+            """
+            X_ERROR(0.1) 0
+            M 0
+            DETECTOR rec[-1]
+            OBSERVABLE_INCLUDE(0) rec[-1]
+            """
+        )
+        detector_model = stim_circuit.detector_error_model(decompose_errors=True)
+        circuit = (
+            stim_circuit,
+            detector_model,
+            (0,),
+            {
+                "basis": "unit",
+                "num_observables": 1,
+                "noise_model": "iqm_calibration",
+                "implemented_noise_model": "iqm_calibration_per_qubit",
+            },
+        )
+        syndromes = (
+            np.array([[False], [True]], dtype=bool),
+            np.array([[False], [True]], dtype=bool),
+            {},
+        )
+
+        _predicted, failures, ler, _uncertainty, info = decode_with_calibrated_pymatching(
+            {"name": "pymatching_calibrated"},
+            circuit,
+            syndromes,
+        )
+
+        np.testing.assert_array_equal(failures, np.array([False, False], dtype=bool))
+        self.assertEqual(ler, 0.0)
+        self.assertEqual(info["implemented_noise_model"], "iqm_calibration_per_qubit")
 
     def test_pymatching_noise_sweep_reports_ler_per_probability(self) -> None:
         stim_circuit = stim.Circuit(
@@ -410,6 +476,66 @@ class ReportingAndPipelineTests(unittest.TestCase):
 
             with self.assertRaisesRegex(NotImplementedError, "color-code"):
                 run_pipeline(config)
+
+    def test_calibrated_simulator_pipeline_uses_qubit_level_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            calibration_path = Path(temp_dir) / "calibration.yaml"
+            calibration_path.write_text(
+                yaml_dump(_grid_calibration(rows=6, cols=6, low_origin=(1, 1), low_size=5)),
+                encoding="utf-8",
+            )
+            config = {
+                "experiment": {"name": "unit_calibrated_sim", "description": "", "seed": 1},
+                "code": {
+                    "family": "surface_code_iqm",
+                    "distance": 3,
+                    "rounds": 1,
+                    "basis": "memory_z",
+                    "reset_mode": "reset",
+                },
+                "backend": {"name": "simulator", "shots": 16, "options": {"seed": 1}},
+                "noise": {
+                    "model": "iqm_calibration",
+                    "calibration_file": str(calibration_path),
+                    "options": {"apply_idle": True},
+                },
+                "decoder": {"name": "pymatching_calibrated", "options": {}},
+                "mapping": {
+                    "strategy": "calibration_best_patch",
+                    "calibration_file": str(calibration_path),
+                    "hardware_patch": None,
+                    "weights": {"one_qubit": 1.0, "two_qubit": 1.0, "measurement": 1.0},
+                },
+                "artifacts": {"root": temp_dir},
+            }
+
+            run_dir, basis_results, _notes = run_pipeline(config)
+
+            _basis, circuit, raw, _syndromes, decoded, _metrics = basis_results[0]
+            stim_circuit, detector_model, _measurement_order, circuit_info = circuit
+            _measurements, _counts, raw_info = raw
+            _predicted, _failures, _ler, _uncertainty, decoder_info = decoded
+
+            self.assertIn("DEPOLARIZE", str(stim_circuit))
+            self.assertGreater(circuit_info["detector_model_num_errors"], 0)
+            self.assertEqual(circuit_info["implemented_noise_model"], "iqm_calibration_per_qubit")
+            self.assertEqual(raw_info["implemented_noise_model"], "iqm_calibration_per_qubit")
+            self.assertEqual(decoder_info["implemented_noise_model"], "iqm_calibration_per_qubit")
+            self.assertTrue((run_dir / "memory_z" / "circuit_metadata.json").exists())
+
+    def test_prepare_circuit_requires_mapping_for_calibrated_noise(self) -> None:
+        circuit = build_iqm_surface_code_circuit(
+            {"family": "surface_code_iqm", "distance": 3, "rounds": 1, "reset_mode": "reset"},
+            {"model": "iqm_calibration"},
+            "memory_z",
+        )
+        config = {
+            "noise": {"model": "iqm_calibration", "calibration_file": "missing.yaml"},
+            "mapping": {"strategy": "none"},
+        }
+
+        with self.assertRaisesRegex(ValueError, "requires a selected mapping"):
+            prepare_circuit_for_execution(config, circuit)
 
 
 class DiagnosticAndSweepTests(unittest.TestCase):

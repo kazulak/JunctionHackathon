@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from qec_pipeline.codes.color_code import build_color_code_circuit
+from qec_pipeline.codes.surface_code_iqm import build_iqm_surface_code_circuit
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
+from qec_pipeline.codes.surface_code_unrotated import build_unrotated_surface_code_circuit
 
 
 CodeBuilder = Callable[[dict[str, Any], dict[str, Any], str], tuple]
@@ -11,6 +13,8 @@ CodeBuilder = Callable[[dict[str, Any], dict[str, Any], str], tuple]
 
 CODE_BUILDERS: dict[str, CodeBuilder] = {
     "surface_code": build_surface_code_circuit,
+    "surface_code_iqm": build_iqm_surface_code_circuit,
+    "surface_code_unrotated": build_unrotated_surface_code_circuit,
     "color_code": build_color_code_circuit,
 }
 

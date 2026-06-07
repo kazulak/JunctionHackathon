@@ -5,6 +5,7 @@ from typing import Any
 from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory
 from qec_pipeline.backends import get_backend_runner
+from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.decoders import get_decoder
 from qec_pipeline.syndromes import extract_detection_events
@@ -24,6 +25,10 @@ def describe_pipeline(config: dict[str, Any]) -> list[str]:
         stages.append("mapping calibration file + circuit -> select native patch -> initial_layout")
     if mapping_strategy == "calibration_routed_layout":
         stages.append("mapping calibration file + circuit -> select routed layout -> initial_layout")
+    if config.get("noise", {}).get("model") == "iqm_calibration":
+        stages.append(
+            "selected mapping + IQM calibration file -> inject per-qubit/per-coupler Stim noise"
+        )
     stages.extend(
         [
             "backend + circuit tuple -> run selected backend -> (measurements, counts, raw_info)",
@@ -51,6 +56,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
 
     for basis in _basis_list(config["code"]["basis"]):
         circuit = _build_circuit(config["code"], config["noise"], basis)
+        circuit = prepare_circuit_for_execution(config, circuit)
         raw = _run_backend(config["backend"], config["mapping"], circuit)
         syndromes = extract_detection_events(circuit, raw)
         decoded = _run_decoder(config["decoder"], circuit, syndromes)
