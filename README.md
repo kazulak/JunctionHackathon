@@ -29,6 +29,8 @@ archive/                   old/reference material not used by the pipeline
 
 The active implementation is under `qec_pipeline/`. Reference notebooks, original challenge snippets, old notes, and unused experiments live under `archive/` so there is one clear runnable code path.
 
+Judge-facing summary: [docs/JUDGE_SUMMARY.md](docs/JUDGE_SUMMARY.md).
+
 ## Run
 
 Create and use a Python 3.11 venv:
@@ -51,46 +53,23 @@ Run the no-noise simulator smoke test:
 python main.py configs/demo_stim_no_noise.yaml
 ```
 
-Run the IQM-calibrated Emerald simulator:
+Run the current paired Emerald d=3 simulator sweep:
 
 ```bash
-python main.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml
+python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
 ```
 
-Run a calibrated simulator rounds sweep:
+Run the matching IQM hardware sweep. The config uses IQM batch submission, so all sweep circuits are submitted before waiting for results:
 
 ```bash
-python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --rounds 1 5 3
+python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
 ```
 
-Run a quick local calibrated-model search:
+Run the postselected simulator/hardware pair:
 
 ```bash
-python scripts/search_calibrated_sim.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --basis memory_z --shots 1000 --top-patches 6
-```
-
-Run the shortest d=3 hardware check without explicit initial reset gates:
-
-```bash
-python main.py configs/iqm_surface_d3_r1_no_initial_reset.yaml
-```
-
-Run the d=3 no-active-reset hardware variant:
-
-```bash
-python main.py configs/iqm_surface_d3_r2_no_active_reset.yaml
-```
-
-Run the routed-layout IQM d=5 hardware baseline:
-
-```bash
-python main.py configs/iqm_surface_d5_baseline.yaml
-```
-
-Run a rounds sweep and plot LER:
-
-```bash
-python scripts/sweep_rounds.py configs/iqm_surface_d5_baseline.yaml --rounds 3 25 5
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_iqm.yaml --rounds 1 7 4
 ```
 
 This writes `sweep_results.csv`, `sweep_results.json`, `summary.md`, and `ler_vs_rounds.png`.
@@ -147,7 +126,8 @@ To add an alternative module, see [MODULE_INTEGRATION.md](docs/MODULE_INTEGRATIO
 
 - Implemented code families: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`.
 - `observable_rate` is only a sanity decoder.
-- Implemented decoders: `observable_rate`, `pymatching`, `pymatching_calibrated`.
+- Implemented decoders: `observable_rate`, `pymatching`, `pymatching_calibrated`, `pymatching_auto`.
+- `pymatching_auto` can try calibrated/uniform MWPM weights, no-correction, and optional syndrome-weight postselection.
 - GNN, Ising, and color-code modules are placeholders.
 - `mapping.strategy: calibration_best_patch` can select a native d=3 patch from the real IQM observation dumps.
 - `mapping.strategy: calibration_routed_layout` can choose a d=5 initial layout and let Qiskit route non-native edges.
@@ -155,95 +135,62 @@ To add an alternative module, see [MODULE_INTEGRATION.md](docs/MODULE_INTEGRATIO
 - `reset_mode: no_reset` is not implemented.
 - `noise.model: iqm_calibration` injects mapped PRX/readout/QND/idle/CZ errors into the Stim simulator and detector model.
 
-## Calibrated Simulator Targets
+## Current Results
 
-Generated on June 7, 2026 with the Emerald calibration dump:
+Generated on June 7, 2026 with the Emerald calibration dump and the pinned d=3 native patch.
+
+Normal calibrated simulator, `configs/sweep_d3_best_sim.yaml`, 2000 shots:
 
 ```text
-d3 rotated, native mapped, rounds [1, 3, 5], 2000 shots:
-memory_z LER: 0.0215 -> 0.183 -> 0.3585
-memory_x LER: 0.0265 -> 0.177 -> 0.389
-Plot: results/sim_iqm_emerald_surface_d3_calibrated_rounds_sweep/20260607T003958Z/ler_vs_rounds.png
-
-d5 rotated, routed layout, rounds [1, 3, 5], 1000 shots:
-memory_z LER: 0.047 -> 0.239 -> 0.409
-Plot: results/sim_iqm_emerald_surface_d5_calibrated_rounds_sweep/20260607T003958Z/ler_vs_rounds.png
+rounds 1: memory_z 0.021 +/- 0.0032, memory_x 0.0265 +/- 0.0036
+rounds 3: memory_z 0.1675 +/- 0.0083, memory_x 0.2025 +/- 0.0090
+rounds 5: memory_z 0.367 +/- 0.0108, memory_x 0.358 +/- 0.0107
+rounds 7: memory_z 0.468 +/- 0.0112, memory_x 0.4715 +/- 0.0112
+artifact: results/sweep_d3_best_sim_rounds_sweep/20260607T011525Z
 ```
 
-These active targets use `qnd_scale: 0.0` and `idle_scale: 0.5`. Earlier worst-case QND-as-readout-bitflip modeling produced d3 round-1 LER near `0.17`.
+Matching IQM hardware sweep, `configs/sweep_d3_best_iqm.yaml`, 2000 shots:
 
-Interpretation: the calibrated simulator now predicts low one-round LER but still trends toward saturation by five rounds. If hardware is much worse at one round than these targets, the missing piece is probably execution overhead/reset/readout behavior not captured by this simple Stim-level noise model.
+```text
+rounds 1: memory_z 0.049 +/- 0.0048, memory_x 0.0545 +/- 0.0051
+rounds 3: memory_z 0.487 +/- 0.0112, memory_x 0.4925 +/- 0.0112
+rounds 5: memory_z 0.484 +/- 0.0112, memory_x 0.4965 +/- 0.0112
+rounds 7: memory_z 0.472 +/- 0.0112, memory_x 0.4825 +/- 0.0112
+artifact: results/sweep_d3_best_iqm_rounds_sweep/20260607T011549Z
+```
+
+Postselected calibrated simulator, `configs/sweep_d3_postselected_sim.yaml`, keeps about half of shots with lowest syndrome weight:
+
+```text
+rounds 1: memory_z 0.0, memory_x 0.0
+rounds 3: memory_z 0.0929 +/- 0.0089, memory_x 0.1028 +/- 0.0095
+rounds 5: memory_z 0.3135 +/- 0.0136, memory_x 0.3211 +/- 0.0135
+rounds 7: memory_z 0.4538 +/- 0.0142, memory_x 0.4650 +/- 0.0157
+artifact: results/sweep_d3_postselected_sim_rounds_sweep/20260607T012558Z
+```
+
+Active model knobs:
+
+```yaml
+noise:
+  options:
+    qnd_scale: 0.0
+    idle_scale: 0.5
+```
+
+Interpretation: one-round hardware is now close enough to the simulator to be useful, but hardware saturates immediately from round 3. The likely missing pieces are repeated-round reset/readout dynamics, circuit timing, leakage, crosstalk, and pulse-level compilation effects that are not captured by the current Stim-level calibration model.
 
 ## Reading LER Near 0.5
 
-LER near `0.5` means the logical output is basically random. In the current pipeline this is now flagged in each basis folder as `diagnostics.json`.
+LER near `0.5` means the logical output is basically random. In this pipeline each basis folder writes:
 
-Current hardware baseline, recorded on June 6, 2026:
+- `diagnostics.json`: warning summary.
+- `measurement_diagnostics.json`: per-measurement ideal vs observed one-rates, with hardware qubit labels when mapped.
+- `raw_metadata.json`: job ID, circuit depths, operation counts, transpiler metadata.
+- `syndrome_metadata.json`: detector firing rates and mean syndrome weight.
+- `metrics.json`: LER, uncertainty, logical failures, and `decoder_info`.
 
-```text
-Config: d=5, rounds=5, memory_z, 1000 shots, IQM Emerald
-Run: results/iqm_surface_d3_baseline/20260606T163211Z
-LER: 0.504 +/- 0.0158
-Detector saturation: 115 / 120 detectors near 0.5
-Transpiled depth: 276 vs Qiskit depth 41
-Two-qubit gates after transpilation: 842
-```
-
-Check these first:
-
-- `diagnostics.json`: warnings, detector firing rates, transpilation depth ratio.
-- `measurement_diagnostics.json`: per-measurement ideal vs observed one-rates, including hardware qubit labels when mapped.
-- `raw_metadata.json`: original depth, transpiled depth, two-qubit gate count.
-- `syndrome_metadata.json`: detector firing rates.
-
-If most detectors fire near `0.5`, the issue is usually not the decoder alone. It is usually circuit depth/routing, hardware noise, bad mapping, or a measurement-order mismatch. For the latest saved d=5 hardware run, alternative bit-order decoding did not improve LER, while transpilation expanded the circuit heavily.
-
-Latest mapped d=3 hardware result:
-
-```text
-Run: results/iqm_surface_d3_r1_native/20260606T193823Z
-Code: d=3, rounds=1, memory_z + memory_x, 1000 shots, IQM Emerald
-memory_z LER: 0.398 +/- 0.0155
-memory_x LER: 0.435 +/- 0.0157
-```
-
-This one-round run is already too high. The saved data shows deterministic syndrome bits on some ancillas firing at `0.36-0.48`, so the next retest should use the updated converter that skips unused final ancilla resets and then inspect `measurement_diagnostics.json`.
-
-The next A/B test is `configs/iqm_surface_d3_r1_no_initial_reset.yaml`. It removes explicit initial Qiskit reset gates and relies on the QPU shot initialization. If deterministic first-round syndrome bits improve, explicit reset/preparation was a major source of damage.
-
-For the no-active-reset virtualized-record run, use:
-
-```bash
-python main.py configs/iqm_surface_d3_no_initial_reset.yaml
-```
-
-That config now omits both initial and repeated reset gates. Repeated ancilla measurements are converted into virtual reset-style records before Stim syndrome extraction.
-It also pins the exact Stim-to-hardware assignment from the successful one-round run so graph-isomorphism tie-breaking cannot silently choose a different stabilizer layout.
-Change `code.rounds` in that YAML when running a round-count A/B test.
-
-Summarize the worst deterministic measurement failures after a run:
-
-```bash
-python scripts/summarize_measurement_diagnostics.py results/<experiment>/<timestamp> --top 8
-```
-
-Stress-test PyMatching weights on a saved hardware run:
-
-```bash
-python scripts/decoder_noise_sweep.py results/<experiment>/<timestamp>
-```
-
-Latest routed d=5 hardware result:
-
-```text
-Run: results/iqm_surface_d5_baseline/20260606T182846Z
-Code: d=5, rounds=5, memory_z, 1000 shots, IQM Emerald
-LER: 0.48 +/- 0.0158
-Mean detector firing rate: 0.476
-Saturated detectors: 112 / 120
-Transpiled depth: 275
-CZ gates after transpilation: 981
-```
+If most detectors fire near `0.5`, treat it as a circuit/noise/execution problem before blaming the decoder. The current symptom is precise: round 1 works, but rounds 3+ saturate on hardware while the simulator degrades more gradually.
 
 ## Calibration Mapping
 

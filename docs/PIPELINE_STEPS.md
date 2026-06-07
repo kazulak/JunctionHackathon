@@ -16,22 +16,24 @@ IQM-calibrated simulator with PyMatching:
 python main.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml
 ```
 
-Dry-run IQM hardware config:
+Current paired simulator/hardware sweeps:
 
 ```bash
-python main.py --dry-run --print-config configs/iqm_surface_d3_r1_no_initial_reset.yaml
+python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
 ```
 
-Run IQM hardware config:
+Current postselected simulator/hardware sweeps:
 
 ```bash
-python main.py configs/iqm_surface_d3_r1_no_initial_reset.yaml
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_iqm.yaml --rounds 1 7 4
 ```
 
-Run the d=3 no-active-reset variant:
+Dry-run a hardware config before submitting:
 
 ```bash
-python main.py configs/iqm_surface_d3_r2_no_active_reset.yaml
+python main.py --dry-run --print-config configs/sweep_d3_best_iqm.yaml
 ```
 
 ## Stage By Stage
@@ -242,6 +244,7 @@ File:
 
 ```text
 qec_pipeline/decoders/pymatching_decoder.py
+qec_pipeline/decoders/pymatching_auto_decoder.py
 ```
 
 Function:
@@ -267,6 +270,15 @@ sqrt(LER * (1 - LER) / shots) -> uncertainty
 ```
 
 This is the current real decoder.
+
+`pymatching_auto` is the current experimental route. It can try:
+
+- the calibrated/configured detector model,
+- a list of uniform detector-model probabilities,
+- no correction,
+- optional low-syndrome postselection.
+
+With postselection enabled, `metrics.json` records the original shot count, kept shot count, postselection fraction, selected candidate, and all candidate LERs under `decoder_info`.
 
 ### 7. Write artifacts
 
@@ -307,6 +319,8 @@ qiskit_circuit.txt          # hardware only
 transpiled_circuit.txt      # hardware only
 ```
 
+For decoder experiments, `metrics.json` also contains `decoder_info`, including selected decoder candidate and postselection audit data when available.
+
 Top-level:
 
 ```text
@@ -328,12 +342,42 @@ For `sim_iqm_emerald_surface_d3_calibrated.yaml`:
 - LER should be low at one round and increase with rounds.
 - Exact value changes with shots and seed.
 
+Latest paired d3 simulator sweep:
+
+```text
+artifact: results/sweep_d3_best_sim_rounds_sweep/20260607T011525Z
+rounds 1: memory_z 0.021, memory_x 0.0265
+rounds 3: memory_z 0.1675, memory_x 0.2025
+rounds 5: memory_z 0.367, memory_x 0.358
+rounds 7: memory_z 0.468, memory_x 0.4715
+```
+
+Latest postselected d3 simulator sweep:
+
+```text
+artifact: results/sweep_d3_postselected_sim_rounds_sweep/20260607T012558Z
+rounds 1: memory_z 0.0, memory_x 0.0
+rounds 3: memory_z 0.0929, memory_x 0.1028
+rounds 5: memory_z 0.3135, memory_x 0.3211
+rounds 7: memory_z 0.4538, memory_x 0.4650
+```
+
 For IQM hardware:
 
 - Detection events should usually be nonzero.
 - Detector firing rates should not all be zero.
 - Detector firing rates should not all be near `0.5`; that suggests ordering/model mismatch or too much noise.
 - LER must be interpreted with shot-count uncertainty.
+
+Latest paired d3 IQM sweep:
+
+```text
+artifact: results/sweep_d3_best_iqm_rounds_sweep/20260607T011549Z
+rounds 1: memory_z 0.049, memory_x 0.0545
+rounds 3: memory_z 0.487, memory_x 0.4925
+rounds 5: memory_z 0.484, memory_x 0.4965
+rounds 7: memory_z 0.472, memory_x 0.4825
+```
 
 ## Visual Checks
 
@@ -406,7 +450,7 @@ results/<experiment>_rounds_sweep/<timestamp>/ler_vs_rounds.png
 Use `--dry-run` before sending hardware jobs:
 
 ```bash
-python scripts/sweep_rounds.py configs/iqm_surface_d3_r1_no_initial_reset.yaml --rounds 1 3 3 --dry-run
+python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4 --dry-run
 ```
 
 ## LER Near 0.5
@@ -429,17 +473,14 @@ Useful warning signs:
 Current recorded baseline:
 
 ```text
-Run: results/iqm_surface_d3_baseline/20260606T163211Z
-Code: d=5, rounds=5, memory_z
-Shots: 1000
-LER: 0.504 +/- 0.0158
-Mean detector firing rate: 0.488
-Saturated detectors: 115 / 120
-Transpiled depth: 276 vs Qiskit depth 41
-Two-qubit gates after transpilation: 842
+Run: results/sweep_d3_best_iqm_rounds_sweep/20260607T011549Z
+Code: d=3, pinned native Emerald patch, memory_z + memory_x
+Shots: 2000
+rounds 1: about 0.05 LER
+rounds 3+: about 0.48-0.50 LER
 ```
 
-This proves the hardware path works, but the syndrome data is nearly random. Treat this as the baseline to beat, not as successful error correction.
+This proves the hardware path works and that the one-round circuit is usable. The current problem is repeated-round saturation, so the next improvements should target reset/readout dynamics, timing, and pulse-level execution before assuming the surface-code graph is broken.
 
 ## Calibration Mapping
 

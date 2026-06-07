@@ -3,62 +3,70 @@
 Purpose:
 
 ```text
-real IQM calibration dump
--> mapping selects hardware qubits
--> noise.model: iqm_calibration injects qubit/coupler Stim noise
--> simulator samples the noisy circuit
--> pymatching_calibrated decodes the calibrated detector model
+IQM calibration dump
+-> mapping selects the hardware patch
+-> iqm_calibration injects per-qubit/per-coupler Stim noise
+-> simulator samples noisy measurements
+-> PyMatching decodes detector events
+-> LER vs rounds plot
 ```
 
-Run d3:
+Current paired flow:
 
 ```bash
-python main.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml
-python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --rounds 1 5 3
+python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
 ```
 
-Run d5:
+Current postselected flow:
 
 ```bash
-python main.py configs/sim_iqm_emerald_surface_d5_calibrated.yaml
-python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d5_calibrated.yaml --rounds 1 5 3
-```
-
-Current generated targets:
-
-```text
-d3 rotated, native mapped:
-rounds 1: memory_z 0.0215, memory_x 0.0265
-rounds 3: memory_z 0.183, memory_x 0.177
-rounds 5: memory_z 0.3585, memory_x 0.389
-
-d5 rotated, routed layout:
-rounds 1: memory_z 0.047
-rounds 3: memory_z 0.239
-rounds 5: memory_z 0.409
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_iqm.yaml --rounds 1 7 4
 ```
 
 Active model knobs:
 
 ```yaml
 noise:
+  model: iqm_calibration
   options:
+    apply_idle: true
+    route_error_multiplier: 1.0
     qnd_scale: 0.0
     idle_scale: 0.5
 ```
 
-Local search:
-
-```bash
-python scripts/search_calibrated_sim.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --basis memory_z --shots 1000 --top-patches 6
-```
-
-Latest search result:
+Latest normal d3 simulator target, 2000 shots:
 
 ```text
-best variant: qnd_x0_idle_x0_5
-memory_z LER: 0.024 +/- 0.00484
-artifact: results/sim_iqm_emerald_surface_d3_calibrated_calibrated_search/20260607T003904Z
+artifact: results/sweep_d3_best_sim_rounds_sweep/20260607T011525Z
+rounds 1: memory_z 0.021,  memory_x 0.0265
+rounds 3: memory_z 0.1675, memory_x 0.2025
+rounds 5: memory_z 0.367,  memory_x 0.358
+rounds 7: memory_z 0.468,  memory_x 0.4715
 ```
 
-Main caveat: this is a Stim-level approximation. It does not simulate full Qiskit transpilation overhead, pulse timing, leakage, reset dynamics, crosstalk, or hardware queue drift.
+Latest matching hardware d3 result, 2000 shots:
+
+```text
+artifact: results/sweep_d3_best_iqm_rounds_sweep/20260607T011549Z
+rounds 1: memory_z 0.049, memory_x 0.0545
+rounds 3: memory_z 0.487, memory_x 0.4925
+rounds 5: memory_z 0.484, memory_x 0.4965
+rounds 7: memory_z 0.472, memory_x 0.4825
+```
+
+Latest postselected d3 simulator result, keeping about half of shots:
+
+```text
+artifact: results/sweep_d3_postselected_sim_rounds_sweep/20260607T012558Z
+rounds 1: memory_z 0.0,    memory_x 0.0
+rounds 3: memory_z 0.0929, memory_x 0.1028
+rounds 5: memory_z 0.3135, memory_x 0.3211
+rounds 7: memory_z 0.4538, memory_x 0.4650
+```
+
+Read this as an experimental lever, not a solved decoder. It shows that low-syndrome shots still carry cleaner signal in the simulator. The next hardware check is whether `configs/sweep_d3_postselected_iqm.yaml` shows the same improvement.
+
+Main caveat: this is a Stim-level approximation. It does not model full pulse timing, leakage, crosstalk, queue drift, or detailed repeated-reset dynamics.

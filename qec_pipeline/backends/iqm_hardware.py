@@ -83,9 +83,15 @@ def _prepare_iqm_request(
         "backend": iqm_backend,
         "optimization_level": transpile_optimization_level,
     }
+    transpile_kwargs.update(_optional_transpile_kwargs(options))
     if mapping_info is not None:
         transpile_kwargs["initial_layout"] = mapping_info["initial_layout"]
     transpiled_circuit = transpile(qiskit_circuit, **transpile_kwargs)
+    transpiled_circuit, dd_info = _maybe_apply_dynamical_decoupling(
+        transpiled_circuit,
+        iqm_backend,
+        options,
+    )
 
     return {
         "circuit": circuit,
@@ -93,6 +99,7 @@ def _prepare_iqm_request(
         "circuit_info": circuit_info,
         "qiskit_circuit": qiskit_circuit,
         "transpiled_circuit": transpiled_circuit,
+        "dynamical_decoupling": dd_info,
         "stim_to_dense": stim_to_dense,
         "meas_order": meas_order,
         "mapping_info": mapping_info,
@@ -136,6 +143,7 @@ def _raw_tuple_from_counts(
         "transpiled_depth": item["transpiled_circuit"].depth(),
         "qiskit_ops": dict(item["qiskit_circuit"].count_ops()),
         "transpiled_ops": dict(item["transpiled_circuit"].count_ops()),
+        "dynamical_decoupling": item.get("dynamical_decoupling"),
         "omit_initial_resets": item["omit_initial_resets"],
         "omit_repeated_resets": item["omit_repeated_resets"],
         "measurement_record": (
@@ -172,3 +180,58 @@ def _provider_args(options: dict[str, Any]) -> dict[str, Any]:
     if "token" in options:
         provider_args["token"] = options["token"]
     return provider_args
+
+
+def _optional_transpile_kwargs(options: dict[str, Any]) -> dict[str, Any]:
+    keys = [
+        "seed_transpiler",
+        "layout_method",
+        "routing_method",
+        "translation_method",
+        "scheduling_method",
+        "approximation_degree",
+    ]
+    return {
+        key: options[key]
+        for key in keys
+        if key in options
+    }
+
+
+def _maybe_apply_dynamical_decoupling(
+    circuit: Any,
+    backend: Any,
+    options: dict[str, Any],
+) -> tuple[Any, dict[str, Any]]:
+    if not bool(options.get("dynamical_decoupling", False)):
+        return circuit, {"enabled": False}
+
+    try:
+        from qiskit.circuit.library import XGate
+        from qiskit.transpiler import PassManager
+        from qiskit.transpiler.passes import ALAPScheduleAnalysis, PadDynamicalDecoupling
+
+        durations = backend.target.durations()
+        sequence_name = str(options.get("dd_sequence", "xx")).lower()
+        if sequence_name == "x_x":
+            sequence_name = "xx"
+        if sequence_name != "xx":
+            raise ValueError(f"unsupported dd_sequence={sequence_name!r}; supported: xx")
+
+        pass_manager = PassManager(
+            [
+                ALAPScheduleAnalysis(durations),
+                PadDynamicalDecoupling(durations, [XGate(), XGate()]),
+            ]
+        )
+        return pass_manager.run(circuit), {
+            "enabled": True,
+            "applied": True,
+            "sequence": sequence_name,
+        }
+    except Exception as exc:
+        return circuit, {
+            "enabled": True,
+            "applied": False,
+            "error": str(exc),
+        }

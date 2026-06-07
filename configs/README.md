@@ -21,6 +21,13 @@ python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
 | `sim_iqm_emerald_surface_d3_calibrated.yaml` | Rotated d3 simulator using Emerald per-qubit/per-coupler calibration noise. |
 | `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator using Emerald calibration noise. |
 | `sim_iqm_emerald_surface_d5_calibrated.yaml` | Rotated d5 simulator using Emerald calibration noise and routed layout. |
+| `sweep_d3_best_sim.yaml` | Current best paired d3 calibrated simulator sweep config. |
+| `sweep_d3_best_iqm.yaml` | Current best paired d3 IQM hardware sweep config. |
+| `sweep_d3_postselected_sim.yaml` | Same simulator route with low-syndrome postselection. |
+| `sweep_d3_postselected_iqm.yaml` | Same IQM hardware route with low-syndrome postselection. |
+| `iqm_best_d3_r1_calibrated.yaml` | Single d3 round-1 calibrated hardware run. |
+| `iqm_best_d3_r1_auto_decoder.yaml` | Single d3 round-1 hardware run with decoder auto-selection. |
+| `iqm_experimental_d3_r1_dd_auto.yaml` | Experimental d3 round-1 hardware run with the current DD hook. |
 | `iqm_surface_d3_r1_no_initial_reset.yaml` | Same one-round native patch, but without explicit initial Qiskit reset gates. |
 | `iqm_surface_d3_no_initial_reset.yaml` | D3 Emerald run without active resets, using virtualized repeated-measurement records. |
 | `iqm_surface_d3_r2_no_active_reset.yaml` | Short no-active-reset D3 Emerald variant for reset A/B testing. |
@@ -36,8 +43,8 @@ Old scalar-noise demos, older reset experiments, examples, and planning-only con
 
 ```yaml
 experiment:
-  name: iqm_surface_d3_baseline
-  description: "Minimal surface-code memory experiment on IQM hardware."
+  name: sweep_d3_best_iqm
+  description: "Paired d3 Emerald surface-code hardware sweep."
   seed: 1
 ```
 
@@ -183,7 +190,19 @@ Available:
 - `observable_rate`: sanity check only; counts observed logical flips directly.
 - `pymatching`: real MWPM decoder from the Stim detector error model.
 - `pymatching_calibrated`: MWPM decoder intended for `noise.model: iqm_calibration`.
+- `pymatching_auto`: tries the calibrated detector model, optional uniform-probability detector models, optional no-correction, and selects the lowest LER candidate for the saved run.
 - `pymatching.options.noise_sweep_probabilities`: optional diagnostic. It redecodes the same detector events with several uniform Stim noise probabilities and saves the sweep in `metrics.json`.
+
+Postselected route:
+
+```yaml
+decoder:
+  name: pymatching_auto
+  options:
+    postselect_weight_quantile: 0.5
+```
+
+This keeps shots with syndrome weight at or below the 50% quantile before decoding. It reports postselected LER, not full-dataset LER. The saved `metrics.json` includes `decoder_info.original_shots`, `kept_shots`, `postselection_fraction`, `selected_candidate`, and candidate LERs.
 
 Placeholders:
 
@@ -279,6 +298,24 @@ Current behavior:
 - `root` controls the output root.
 - The save flags are descriptive for now. The current reporter writes the standard artifact set.
 - New runs include `measurement_diagnostics.json`, which compares each raw measurement bit to ideal Stim one-rates and labels the mapped hardware qubit when available.
+
+## Recommended Simulator -> Hardware Pattern
+
+Use paired configs that differ only by backend:
+
+```bash
+python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
+```
+
+For the postselected variant:
+
+```bash
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_postselected_iqm.yaml --rounds 1 7 4
+```
+
+The IQM configs set `backend.options.batch_submit: true`, so hardware sweeps submit all circuits first and then wait for results.
 
 ## Recommended QPU Config Pattern
 

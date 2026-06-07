@@ -91,6 +91,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
             "uncertainty": uncertainty,
             "logical_failures": decoder_info["logical_failures"],
             "shots": decoder_info["shots"],
+            "decoder_info": decoder_info,
         }
         if "noise_sweep" in decoder_info:
             metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]

@@ -86,6 +86,7 @@ Current registered decoders:
 - `observable_rate`: sanity check.
 - `pymatching`: MWPM from the circuit detector model.
 - `pymatching_calibrated`: MWPM route for calibrated detector models.
+- `pymatching_auto`: current experimental decoder route; tries calibrated/uniform/no-correction candidates and optional low-syndrome postselection.
 - `gnn`: placeholder.
 - `ising`: placeholder.
 
@@ -125,8 +126,8 @@ backend:
 
 ## Current Priority
 
-1. Hardware execution variants: reset handling, round count, mapping, QPU choice, IQM batch submission.
-2. Mapping and calibration: pin good layouts, avoid bad readout/CZ/T2 regions.
-3. Noise/error model: tune calibrated Stim noise scales and compare with hardware.
-4. Decoder alternatives: GNN, Union-Find, BP, or better calibration-aware MWPM.
-5. Code alternatives: color code or custom/PulLA surface-code schedule.
+1. Reduce multi-round hardware saturation: reset/readout dynamics, circuit timing, and pulse-level compilation.
+2. Improve decoder experiments: postselection, Union-Find/BP/GNN, calibration-aware MWPM weights.
+3. Improve the noise model: fit repeated-round hardware behavior, not only one-round calibration.
+4. Improve hardware execution: PulLA/DD, shallower schedules, and better native patches.
+5. Add code alternatives only after the d3 surface-code route is understood.

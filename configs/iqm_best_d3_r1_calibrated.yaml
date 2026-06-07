@@ -1,0 +1,91 @@
+# Best current hardware attempt.
+#
+# Why this config:
+# - Real hardware best so far was d3, rounds=1, no explicit initial reset.
+# - Calibrated simulator says d3/r1 is the low-LER regime.
+# - Multi-round d3 and routed d5 trend toward saturation quickly.
+# - Uses the successful pinned Emerald patch from the good no-initial-reset run.
+# - Uses calibrated detector model for PyMatching, but Qiskit hardware execution
+#   still receives the clean circuit because Stim noise instructions are skipped.
+
+experiment:
+  name: iqm_best_d3_r1_calibrated
+  description: "Best current Emerald hardware attempt: d3 r1, no initial reset, pinned patch, calibrated decoder."
+  seed: 1
+
+code:
+  family: surface_code_iqm
+  distance: 3
+  rounds: 1
+  basis: both
+  reset_mode: reset
+
+backend:
+  name: iqm_hardware
+  shots: 2000
+  options:
+    server_url: https://resonance.meetiqm.com
+    quantum_computer: emerald
+    optimization_level: 3
+    batch_submit: true
+    omit_initial_resets: true
+    omit_repeated_resets: false
+
+noise:
+  model: iqm_calibration
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  options:
+    apply_idle: true
+    route_error_multiplier: 1.0
+    qnd_scale: 0.0
+    idle_scale: 0.5
+
+decoder:
+  name: pymatching_calibrated
+  options: {}
+
+mapping:
+  strategy: calibration_best_patch
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+  options:
+    exclude_qubits:
+      - QB9
+      - QB25
+      - QB41
+      - QB46
+      - QB47
+  hardware_patch:
+    # Pinned from:
+    # results/iqm_surface_d3_r1_no_initial_reset/20260606T201303Z
+    stim_to_hardware:
+      "1": QB31
+      "2": QB39
+      "3": QB38
+      "5": QB45
+      "8": QB22
+      "9": QB30
+      "10": QB29
+      "11": QB37
+      "12": QB36
+      "13": QB44
+      "14": QB14
+      "15": QB13
+      "16": QB21
+      "17": QB20
+      "18": QB28
+      "19": QB27
+      "25": QB19
+
+artifacts:
+  root: results
+  save_raw_measurements: true
+  save_syndromes: true
+  save_report: true
