@@ -45,6 +45,7 @@ Current registered code builders:
 - `surface_code`: Stim rotated surface code with optional scalar Stim noise.
 - `surface_code_iqm`: clean rotated surface code, with IQM calibration noise added after mapping.
 - `surface_code_unrotated`: Stim unrotated surface code.
+- `repetition_code`: Stim repetition-code memory circuit; final low-depth improvement path.
 - `color_code`: placeholder.
 
 ## Decoder

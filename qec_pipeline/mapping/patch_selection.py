@@ -264,6 +264,7 @@ def select_fixed_stim_to_hardware_patch(
         roles,
         hardware,
         weights,
+        allow_routing=bool(options.get("allow_routing", False)),
     )
     if selected is None:
         raise ValueError("fixed hardware patch is missing required native couplers")
@@ -491,6 +492,7 @@ def _score_assignment(
     roles: dict[int, str],
     hardware: dict[str, Any],
     weights: dict[str, float],
+    allow_routing: bool = False,
 ) -> dict[str, Any] | None:
     score = 0.0
     for stim_qubit, label in stim_to_hardware.items():
@@ -498,18 +500,40 @@ def _score_assignment(
 
     missing_couplers = []
     max_coupler_error = 0.0
+    routed_code_edges = 0
+    expected_swap_count = 0
+    max_route_distance = 1
+    hardware_graph = _hardware_graph(hardware) if allow_routing else None
     for (stim_a, stim_b), count in interaction_counts.items():
         labels = _sorted_pair(stim_to_hardware[stim_a], stim_to_hardware[stim_b])
         if hardware["has_couplers"] and labels not in hardware["couplers"]:
             missing_couplers.append(labels)
+            if allow_routing and hardware_graph is not None:
+                try:
+                    path = nx.shortest_path(hardware_graph, labels[0], labels[1])
+                    distance = len(path) - 1
+                    routed_code_edges += 1
+                    max_route_distance = max(max_route_distance, distance)
+                    expected_swap_count += max(0, distance - 1)
+                    score += float(weights.get("route_distance", 0.2)) * count * max(0, distance - 1)
+                    for index in range(len(path) - 1):
+                        edge = _sorted_pair(path[index], path[index + 1])
+                        coupler_error = hardware["couplers"].get(edge, 0.0)
+                        max_coupler_error = max(max_coupler_error, coupler_error)
+                        score += float(weights.get("two_qubit", 1.0)) * count * coupler_error
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    return None
             continue
         coupler_error = hardware["couplers"].get(labels, 0.0)
         max_coupler_error = max(max_coupler_error, coupler_error)
         score += float(weights.get("two_qubit", 1.0)) * count * coupler_error
     score += float(weights.get("max_coupler", 0.0)) * max_coupler_error
 
-    if missing_couplers:
+    if missing_couplers and not allow_routing:
         return None
+
+    unique_code_edges = len(interaction_counts)
+    total_code_interactions = int(sum(interaction_counts.values()))
 
     dense_to_hardware = {
         dense: stim_to_hardware[stim_qubit]
@@ -526,6 +550,13 @@ def _score_assignment(
         "initial_layout": initial_layout,
         "stim_to_hardware": {str(key): value for key, value in sorted(stim_to_hardware.items())},
         "dense_to_hardware": {str(key): value for key, value in sorted(dense_to_hardware.items())},
+        "unique_code_edges": unique_code_edges,
+        "native_code_edges": unique_code_edges - len(missing_couplers),
+        "routed_code_edges": routed_code_edges,
+        "missing_couplers": [list(pair) for pair in missing_couplers],
+        "max_route_distance": max_route_distance,
+        "total_code_two_qubit_interactions": total_code_interactions,
+        "expected_swap_count": expected_swap_count,
         "data_hardware": sorted(
             (label for stim_qubit, label in stim_to_hardware.items() if roles[stim_qubit] == "data"),
             key=_label_sort_key,

@@ -93,6 +93,12 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
             "shots": decoder_info["shots"],
             "decoder_info": decoder_info,
         }
+        rounds = int(config["code"].get("rounds", 1))
+        if rounds > 1:
+            per_round_ler, per_round_uncertainty = _per_round_ler(ler, uncertainty, rounds)
+            metrics["rounds"] = rounds
+            metrics["logical_error_per_round"] = per_round_ler
+            metrics["logical_error_per_round_uncertainty"] = per_round_uncertainty
         if "noise_sweep" in decoder_info:
             metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]
 
@@ -133,3 +139,14 @@ def _use_iqm_batch_submit(backend: dict[str, Any], num_circuits: int) -> bool:
     if num_circuits <= 1:
         return False
     return bool(backend.get("options", {}).get("batch_submit", True))
+
+
+def _per_round_ler(total_ler: float, total_uncertainty: float, rounds: int) -> tuple[float, float]:
+    """Convert total memory-failure probability to per-round probability."""
+    if rounds <= 1:
+        return total_ler, total_uncertainty
+    clamped = min(max(float(total_ler), 0.0), 0.499999999)
+    survival = 1.0 - 2.0 * clamped
+    per_round = (1.0 - survival ** (1.0 / rounds)) / 2.0
+    derivative = (1.0 / rounds) * survival ** ((1.0 / rounds) - 1.0)
+    return float(per_round), float(abs(derivative) * total_uncertainty)

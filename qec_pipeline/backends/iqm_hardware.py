@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 
@@ -29,6 +30,8 @@ def run_iqm_hardware_batch_backend(
     requests: list[dict[str, Any]],
 ) -> list[tuple]:
     """Submit several IQM circuits in one batch job and return raw tuples."""
+    _load_dotenv()
+
     from iqm.qiskit_iqm import IQMProvider
     from qiskit import transpile
 
@@ -143,6 +146,13 @@ def _raw_tuple_from_counts(
         "transpiled_depth": item["transpiled_circuit"].depth(),
         "qiskit_ops": dict(item["qiskit_circuit"].count_ops()),
         "transpiled_ops": dict(item["transpiled_circuit"].count_ops()),
+        "transpilation_metrics": _transpilation_metrics(
+            dict(item["qiskit_circuit"].count_ops()),
+            dict(item["transpiled_circuit"].count_ops()),
+            item["qiskit_circuit"].depth(),
+            item["transpiled_circuit"].depth(),
+            item["mapping_info"],
+        ),
         "dynamical_decoupling": item.get("dynamical_decoupling"),
         "omit_initial_resets": item["omit_initial_resets"],
         "omit_repeated_resets": item["omit_repeated_resets"],
@@ -170,6 +180,49 @@ def _raw_tuple_from_counts(
     return measurements, counts, raw_info
 
 
+def _transpilation_metrics(
+    qiskit_ops: dict[str, int],
+    transpiled_ops: dict[str, int],
+    qiskit_depth: int,
+    transpiled_depth: int,
+    mapping_info: dict[str, Any] | None,
+) -> dict[str, Any]:
+    qiskit_two_qubit = _two_qubit_gate_count(qiskit_ops)
+    transpiled_two_qubit = _two_qubit_gate_count(transpiled_ops)
+    return {
+        "qiskit_depth": int(qiskit_depth),
+        "transpiled_depth": int(transpiled_depth),
+        "depth_ratio": float(transpiled_depth / qiskit_depth) if qiskit_depth else 0.0,
+        "qiskit_two_qubit_gate_count": qiskit_two_qubit,
+        "transpiled_two_qubit_gate_count": transpiled_two_qubit,
+        "added_two_qubit_gate_count": transpiled_two_qubit - qiskit_two_qubit,
+        "swap_count": int(transpiled_ops.get("swap", 0)),
+        "qiskit_swap_count": int(qiskit_ops.get("swap", 0)),
+        "transpiled_swap_count": int(transpiled_ops.get("swap", 0)),
+        "expected_swap_count_from_mapping": (
+            mapping_info.get("expected_swap_count") if mapping_info else None
+        ),
+        "native_code_edges": mapping_info.get("native_code_edges") if mapping_info else None,
+        "routed_code_edges": mapping_info.get("routed_code_edges") if mapping_info else None,
+        "unique_code_edges": mapping_info.get("unique_code_edges") if mapping_info else None,
+    }
+
+
+def _two_qubit_gate_count(ops: dict[str, int]) -> int:
+    two_qubit_names = {
+        "cx",
+        "cz",
+        "swap",
+        "ecr",
+        "iswap",
+        "rxx",
+        "ryy",
+        "rzz",
+        "move",
+    }
+    return int(sum(count for name, count in ops.items() if name.lower() in two_qubit_names))
+
+
 def _provider_args(options: dict[str, Any]) -> dict[str, Any]:
     provider_args = {
         "quantum_computer": options.get(
@@ -180,6 +233,24 @@ def _provider_args(options: dict[str, Any]) -> dict[str, Any]:
     if "token" in options:
         provider_args["token"] = options["token"]
     return provider_args
+
+
+def _load_dotenv() -> None:
+    repo_env = Path(__file__).resolve().parents[2] / ".env"
+    if not repo_env.exists():
+        return
+
+    for line in repo_env.read_text(encoding="utf-8").splitlines():
+        text = line.strip()
+        if not text or text.startswith("#") or "=" not in text:
+            continue
+        if text.startswith("export "):
+            text = text[len("export ") :].strip()
+        key, value = text.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key:
+            os.environ.setdefault(key, value)
 
 
 def _optional_transpile_kwargs(options: dict[str, Any]) -> dict[str, Any]:

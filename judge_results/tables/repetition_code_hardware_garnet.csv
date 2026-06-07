@@ -1,0 +1,8 @@
+rounds,basis,ler,uncertainty,logical_failures,shots,run_dir,notes
+1,memory_z,0.00255,0.0003566158647620714,51,20000,results\final_rep_code_iqm_rounds_sweep\20260607T062249Z\runs\final_rep_code_iqm_rounds_1\20260607T062249Z,memory_z: LER 0.00255 +/- 0.0003566158647620714
+9,memory_z,0.02245,0.0010475208231820502,449,20000,results\final_rep_code_iqm_rounds_sweep\20260607T062249Z\runs\final_rep_code_iqm_rounds_9\20260607T062250Z,memory_z: LER 0.02245 +/- 0.0010475208231820502
+17,memory_z,0.028,0.0011665333257134148,560,20000,results\final_rep_code_iqm_rounds_sweep\20260607T062249Z\runs\final_rep_code_iqm_rounds_17\20260607T062250Z,memory_z: LER 0.028 +/- 0.0011665333257134148
+26,memory_z,0.03325,0.001267762546772857,665,20000,results\final_rep_code_iqm_rounds_sweep\20260607T062249Z\runs\final_rep_code_iqm_rounds_26\20260607T062251Z,memory_z: LER 0.03325 +/- 0.001267762546772857
+34,memory_z,0.0245,0.001093154838071899,490,20000,results\final_rep_code_iqm_rounds_sweep\20260607T062249Z\runs\final_rep_code_iqm_rounds_34\20260607T062251Z,memory_z: LER 0.0245 +/- 0.001093154838071899
+42,memory_z,0.0146,0.00084814031857942,292,20000,results\final_rep_code_iqm_rounds_sweep\20260607T062249Z\runs\final_rep_code_iqm_rounds_42\20260607T062252Z,memory_z: LER 0.0146 +/- 0.00084814031857942
+50,memory_z,0.0163,0.0008953856710937471,326,20000,results\final_rep_code_iqm_rounds_sweep\20260607T062249Z\runs\final_rep_code_iqm_rounds_50\20260607T062253Z,memory_z: LER 0.0163 +/- 0.0008953856710937471

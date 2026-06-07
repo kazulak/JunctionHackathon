@@ -1,0 +1,86 @@
+# Final-hour improvement path: shallow repetition code on an empirical Garnet layout.
+# Pair with: configs/final_rep_code_sim.yaml
+#
+# Default hardware run:
+#   python main.py configs/final_rep_code_iqm.yaml
+#
+# Optional hardware sweep matching the judge pack:
+#   python scripts/sweep_rounds.py configs/final_rep_code_iqm.yaml --rounds 1 50 7
+
+experiment:
+  name: final_rep_code_iqm
+  description: "IQM hardware d3 repetition code on empirical Garnet layout."
+  seed: 1
+
+code:
+  family: repetition_code
+  distance: 3
+  rounds: 3
+  basis: memory_z
+  reset_mode: reset
+
+backend:
+  name: iqm_hardware
+  shots: 20000
+  options:
+    server_url: https://resonance.meetiqm.com
+    quantum_computer: garnet
+    optimization_level: 3
+    seed_transpiler: 11
+    routing_method: sabre
+    batch_submit: true
+    omit_initial_resets: true
+    omit_repeated_resets: false
+
+noise:
+  model: iqm_calibration
+  calibration_file: configs/2026-06-06T16_44_10.718568Z.json
+  options:
+    apply_idle: true
+    route_error_multiplier: 1.0
+    qnd_scale: 0.0
+    idle_scale: 0.5
+
+decoder:
+  name: pymatching_auto
+  options:
+    include_no_correction: false
+    uniform_probabilities:
+      - 0.001
+      - 0.003
+      - 0.005
+      - 0.01
+      - 0.02
+      - 0.05
+
+mapping:
+  strategy: fixed_stim_to_hardware
+  calibration_file: configs/2026-06-06T16_44_10.718568Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 0.2
+    qnd: 0.5
+    max_coupler: 5.0
+    route_distance: 0.2
+  options:
+    exclude_qubits: []
+    allow_routing: true
+  hardware_patch:
+    # Empirically strong Garnet initial layout. Not all code edges are native;
+    # allow_routing records the routed edges and expected routing overhead.
+    # Stim repetition-code qubits alternate data/ancilla/data/ancilla/...
+    stim_to_hardware:
+      "0": QB14
+      "1": QB13
+      "2": QB12
+      "3": QB6
+      "4": QB2
+
+artifacts:
+  root: results
+  save_raw_measurements: true
+  save_syndromes: true
+  save_report: true

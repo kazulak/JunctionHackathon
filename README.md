@@ -30,6 +30,10 @@ archive/                   old/reference material not used by the pipeline
 The active implementation is under `qec_pipeline/`. Reference notebooks, original challenge snippets, old notes, and unused experiments live under `archive/` so there is one clear runnable code path.
 
 Judge-facing summary: [docs/JUDGE_SUMMARY.md](docs/JUDGE_SUMMARY.md).
+Curated final evidence: [judge_results/README.md](judge_results/README.md).
+Final one-pager: [judge_results/FINAL_ONE_PAGER.md](judge_results/FINAL_ONE_PAGER.md).
+Two-minute demo script: [judge_results/DEMO_SCRIPT.md](judge_results/DEMO_SCRIPT.md).
+Repetition-code explanation: [docs/REPETITION_CODE_EXPLANATION.md](docs/REPETITION_CODE_EXPLANATION.md).
 
 ## Run
 
@@ -51,6 +55,13 @@ Run the no-noise simulator smoke test:
 
 ```bash
 python main.py configs/demo_stim_no_noise.yaml
+```
+
+Run the final repetition-code improvement path:
+
+```bash
+python main.py configs/final_rep_code_sim.yaml
+python main.py configs/final_rep_code_iqm.yaml
 ```
 
 Run the current paired Emerald d=3 simulator sweep:
@@ -124,7 +135,7 @@ To add an alternative module, see [MODULE_INTEGRATION.md](docs/MODULE_INTEGRATIO
 
 ## Current Limitations
 
-- Implemented code families: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`.
+- Implemented code families: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`, `repetition_code`.
 - `observable_rate` is only a sanity decoder.
 - Implemented decoders: `observable_rate`, `pymatching`, `pymatching_calibrated`, `pymatching_auto`.
 - `pymatching_auto` can try calibrated/uniform MWPM weights, no-correction, and optional syndrome-weight postselection.
@@ -167,6 +178,16 @@ rounds 3: memory_z 0.0929 +/- 0.0089, memory_x 0.1028 +/- 0.0095
 rounds 5: memory_z 0.3135 +/- 0.0136, memory_x 0.3211 +/- 0.0135
 rounds 7: memory_z 0.4538 +/- 0.0142, memory_x 0.4650 +/- 0.0157
 artifact: results/sweep_d3_postselected_sim_rounds_sweep/20260607T012558Z
+```
+
+Final repetition-code Garnet hardware, `configs/final_rep_code_iqm.yaml`, 20000 shots:
+
+```text
+artifact: results/final_rep_code_iqm_rounds_sweep/20260607T062249Z
+rounds 50 total LER: 0.0163 +/- 0.00090
+rounds 50 per-round LER: 0.000331 +/- 0.000018
+literal transpiled swap gates in curated hardware sweeps: 0
+judge pack: judge_results/
 ```
 
 Active model knobs:

@@ -18,6 +18,8 @@ python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
 | Config | Purpose |
 | --- | --- |
 | `demo_stim_no_noise.yaml` | Fast no-noise simulator smoke test. |
+| `final_rep_code_sim.yaml` | Final improvement: calibrated simulator for d3 repetition code on fixed Emerald chain. |
+| `final_rep_code_iqm.yaml` | Final improvement: matching IQM hardware config for d3 repetition code. |
 | `sim_iqm_emerald_surface_d3_calibrated.yaml` | Rotated d3 simulator using Emerald per-qubit/per-coupler calibration noise. |
 | `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator using Emerald calibration noise. |
 | `sim_iqm_emerald_surface_d5_calibrated.yaml` | Rotated d5 simulator using Emerald calibration noise and routed layout. |
@@ -63,8 +65,8 @@ code:
   reset_mode: reset
 ```
 
-- `family`: `surface_code`, `surface_code_iqm`, or `surface_code_unrotated`.
-- `distance`: Stim generated surface-code distance.
+- `family`: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`, or `repetition_code`.
+- `distance`: Stim generated code distance.
 - `rounds`: number of syndrome rounds.
 - `basis`: `memory_z`, `memory_x`, or `both`.
 - `reset_mode`: currently only `reset` behavior is implemented. `no_reset` is a future branch.
@@ -300,6 +302,20 @@ Current behavior:
 - New runs include `measurement_diagnostics.json`, which compares each raw measurement bit to ideal Stim one-rates and labels the mapped hardware qubit when available.
 
 ## Recommended Simulator -> Hardware Pattern
+
+Final low-LER repetition-code path:
+
+```bash
+python main.py configs/final_rep_code_sim.yaml
+python main.py configs/final_rep_code_iqm.yaml
+```
+
+Optional final sweep:
+
+```bash
+python scripts/sweep_rounds.py configs/final_rep_code_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/final_rep_code_iqm.yaml --rounds 1 7 4
+```
 
 Use paired configs that differ only by backend:
 

@@ -41,10 +41,17 @@ def write_run_summary(
                 f"- LER: {ler}",
                 f"- Uncertainty: {uncertainty}",
                 f"- Logical failures: {decoder_info['logical_failures']}",
-                f"- Artifacts: `{basis}/`",
-                "",
             ]
         )
+        if "logical_error_per_round" in _metrics:
+            lines.extend(
+                [
+                    f"- Logical error per round: {_metrics['logical_error_per_round']}",
+                    "- Logical error per round uncertainty: "
+                    f"{_metrics['logical_error_per_round_uncertainty']}",
+                ]
+            )
+        lines.extend([f"- Artifacts: `{basis}/`", ""])
 
     if notes:
         lines.extend(["## Notes", ""])

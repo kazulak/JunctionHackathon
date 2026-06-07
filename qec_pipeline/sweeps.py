@@ -76,6 +76,10 @@ def run_rounds_sweep(
                     "basis": basis,
                     "ler": float(metrics["ler"]),
                     "uncertainty": float(metrics["uncertainty"]),
+                    "logical_error_per_round": metrics.get("logical_error_per_round"),
+                    "logical_error_per_round_uncertainty": metrics.get(
+                        "logical_error_per_round_uncertainty"
+                    ),
                     "logical_failures": int(metrics["logical_failures"]),
                     "shots": int(metrics["shots"]),
                     "run_dir": str(run_dir),
@@ -156,7 +160,17 @@ def _run_iqm_rounds_sweep_batch(
             "uncertainty": uncertainty,
             "logical_failures": decoder_info["logical_failures"],
             "shots": decoder_info["shots"],
+            "decoder_info": decoder_info,
         }
+        if group["rounds"] > 1:
+            per_round_ler, per_round_uncertainty = _per_round_ler(
+                ler,
+                uncertainty,
+                group["rounds"],
+            )
+            metrics["rounds"] = group["rounds"]
+            metrics["logical_error_per_round"] = per_round_ler
+            metrics["logical_error_per_round_uncertainty"] = per_round_uncertainty
         if "noise_sweep" in decoder_info:
             metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]
 
@@ -173,6 +187,10 @@ def _run_iqm_rounds_sweep_batch(
                 "basis": basis,
                 "ler": float(metrics["ler"]),
                 "uncertainty": float(metrics["uncertainty"]),
+                "logical_error_per_round": metrics.get("logical_error_per_round"),
+                "logical_error_per_round_uncertainty": metrics.get(
+                    "logical_error_per_round_uncertainty"
+                ),
                 "logical_failures": int(metrics["logical_failures"]),
                 "shots": int(metrics["shots"]),
                 "run_dir": str(group["run_dir"]),
@@ -204,6 +222,8 @@ def _write_sweep_outputs(
         "basis",
         "ler",
         "uncertainty",
+        "logical_error_per_round",
+        "logical_error_per_round_uncertainty",
         "logical_failures",
         "shots",
         "run_dir",
@@ -241,13 +261,15 @@ def _write_sweep_outputs(
         "",
         "## Results",
         "",
-        "| Rounds | Basis | LER | Uncertainty | Failures | Shots |",
-        "| --- | --- | ---: | ---: | ---: | ---: |",
+        "| Rounds | Basis | LER | Uncertainty | Per-round LER | Per-round uncertainty | Failures | Shots |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in rows:
         summary_lines.append(
             f"| {row['rounds']} | {row['basis']} | {row['ler']} | "
-            f"{row['uncertainty']} | {row['logical_failures']} | {row['shots']} |"
+            f"{row['uncertainty']} | {row.get('logical_error_per_round', '')} | "
+            f"{row.get('logical_error_per_round_uncertainty', '')} | "
+            f"{row['logical_failures']} | {row['shots']} |"
         )
     (sweep_dir / "summary.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
 
@@ -294,3 +316,13 @@ def _basis_list(config_basis: str) -> list[str]:
     if config_basis in {"memory_z", "memory_x"}:
         return [config_basis]
     raise ValueError("code.basis must be memory_z, memory_x, or both")
+
+
+def _per_round_ler(total_ler: float, total_uncertainty: float, rounds: int) -> tuple[float, float]:
+    if rounds <= 1:
+        return total_ler, total_uncertainty
+    clamped = min(max(float(total_ler), 0.0), 0.499999999)
+    survival = 1.0 - 2.0 * clamped
+    per_round = (1.0 - survival ** (1.0 / rounds)) / 2.0
+    derivative = (1.0 / rounds) * survival ** ((1.0 / rounds) - 1.0)
+    return float(per_round), float(abs(derivative) * total_uncertainty)
