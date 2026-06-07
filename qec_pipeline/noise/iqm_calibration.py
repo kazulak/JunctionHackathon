@@ -84,6 +84,14 @@ class _IqmNoiseBuilder:
         self.idle_tick_fraction = float(options.get("idle_tick_fraction", rounds / ticks))
         self.route_error_multiplier = float(options.get("route_error_multiplier", 1.0))
         self.missing_coupler_error = float(options.get("missing_coupler_error", 0.25))
+        self.error_scales = {
+            "one_qubit": float(options.get("one_qubit_scale", 1.0)),
+            "two_qubit": float(options.get("two_qubit_scale", 1.0)),
+            "measurement": float(options.get("measurement_scale", 1.0)),
+            "reset": float(options.get("reset_scale", 1.0)),
+            "idle": float(options.get("idle_scale", 1.0)),
+            "qnd": float(options.get("qnd_scale", 1.0)),
+        }
 
     def noisy_copy(self, stim_circuit: stim.Circuit) -> stim.Circuit:
         noisy = stim.Circuit()
@@ -129,6 +137,7 @@ class _IqmNoiseBuilder:
             "idle_tick_fraction": self.idle_tick_fraction,
             "route_error_multiplier": self.route_error_multiplier,
             "missing_coupler_error": self.missing_coupler_error,
+            "error_scales": self.error_scales,
             "one_qubit_error": _stats(self._qubit_error_values("one_qubit")),
             "measurement_error": _stats(self._qubit_error_values("measurement")),
             "qnd_error": _stats(self._qubit_error_values("qnd")),
@@ -194,26 +203,28 @@ class _IqmNoiseBuilder:
         if label is None:
             return 0.0
         errors = self.hardware["qubits"][label]["errors"]
-        return _clamp_probability(float(errors.get(name, 0.0)))
+        scale = self.error_scales.get(name, 1.0)
+        return _clamp_probability(scale * float(errors.get(name, 0.0)))
 
     def _two_qubit_error(self, left_stim: int, right_stim: int) -> float:
         left = self.stim_to_hardware[left_stim]
         right = self.stim_to_hardware[right_stim]
         pair = _sorted_pair(left, right)
+        scale = self.error_scales["two_qubit"]
         if pair in self.hardware["couplers"]:
-            return _clamp_probability(float(self.hardware["couplers"][pair]))
+            return _clamp_probability(scale * float(self.hardware["couplers"][pair]))
 
         path = self._route(left, right)
         if not path:
             self.operation_counts["routed_two_qubit_interactions"] += 1
-            return self.missing_coupler_error
+            return _clamp_probability(scale * self.missing_coupler_error)
 
         self.operation_counts["routed_two_qubit_interactions"] += 1
         path_errors = []
         for index in range(len(path) - 1):
             edge = _sorted_pair(path[index], path[index + 1])
             path_errors.append(float(self.hardware["couplers"].get(edge, self.missing_coupler_error)))
-        return _clamp_probability(self.route_error_multiplier * _combined_probability(path_errors))
+        return _clamp_probability(scale * self.route_error_multiplier * _combined_probability(path_errors))
 
     def _route(self, left: str, right: str) -> list[str] | None:
         pair = _sorted_pair(left, right)

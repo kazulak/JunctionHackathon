@@ -10,28 +10,28 @@ No-noise simulator:
 python main.py configs/demo_stim_no_noise.yaml
 ```
 
-Noisy simulator with PyMatching:
+IQM-calibrated simulator with PyMatching:
 
 ```bash
-python main.py configs/demo_stim_simple_noise_pymatching.yaml
+python main.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml
 ```
 
 Dry-run IQM hardware config:
 
 ```bash
-python main.py --dry-run --print-config configs/iqm_surface_d3_baseline.yaml
+python main.py --dry-run --print-config configs/iqm_surface_d3_r1_no_initial_reset.yaml
 ```
 
 Run IQM hardware config:
 
 ```bash
-python main.py configs/iqm_surface_d3_baseline.yaml
+python main.py configs/iqm_surface_d3_r1_no_initial_reset.yaml
 ```
 
-Run the shortest native d=3 sanity config:
+Run the d=3 no-active-reset variant:
 
 ```bash
-python main.py configs/iqm_surface_d3_r1_native.yaml
+python main.py configs/iqm_surface_d3_r2_no_active_reset.yaml
 ```
 
 ## Stage By Stage
@@ -174,6 +174,7 @@ Important:
 - Stim noise instructions are skipped during Qiskit conversion.
 - Real QPU noise comes from hardware, not from YAML.
 - YAML noise is still used by the Stim detector error model for PyMatching.
+- With `backend.options.batch_submit: true`, all circuits from `basis: both` or a hardware rounds sweep are submitted as one IQM batch before the pipeline waits for results.
 - `MR`/`MRX` resets are kept only when that measured qubit is used again later; terminal unused resets are skipped before hardware execution.
 - `backend.options.omit_initial_resets: true` additionally skips leading explicit Qiskit reset gates for hardware A/B tests; later repeated-round resets remain.
 - `backend.options.omit_repeated_resets: true` skips repeated syndrome reset gates and XOR-converts repeated ancilla records into virtual reset-style measurements before decoding.
@@ -321,10 +322,10 @@ For `demo_stim_no_noise.yaml`:
 - Logical failures should be zero.
 - LER should be `0.0`.
 
-For `demo_stim_simple_noise_pymatching.yaml`:
+For `sim_iqm_emerald_surface_d3_calibrated.yaml`:
 
 - Detection events should be nonzero.
-- LER should be nonzero but small for the current low noise.
+- LER should be low at one round and increase with rounds.
 - Exact value changes with shots and seed.
 
 For IQM hardware:
@@ -378,7 +379,7 @@ The tests check:
 Run:
 
 ```bash
-python scripts/sweep_rounds.py configs/iqm_surface_d3_baseline.yaml --rounds 3 15 6
+python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --rounds 1 5 3
 ```
 
 The three numbers mean:
@@ -405,7 +406,7 @@ results/<experiment>_rounds_sweep/<timestamp>/ler_vs_rounds.png
 Use `--dry-run` before sending hardware jobs:
 
 ```bash
-python scripts/sweep_rounds.py configs/iqm_surface_d3_baseline.yaml --rounds 3 15 6 --dry-run
+python scripts/sweep_rounds.py configs/iqm_surface_d3_r1_no_initial_reset.yaml --rounds 1 3 3 --dry-run
 ```
 
 ## LER Near 0.5

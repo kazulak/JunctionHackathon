@@ -4,7 +4,7 @@ This folder is intentionally outside the active pipeline.
 
 Contents:
 
-- `configs/`: planning configs that are not executable by `main.py`.
+- `configs/`: old, planning, example, or superseded configs that are not part of the active workflow.
 - `docs/`: older design notes kept for history.
 - `old_emerald_files/`: older Emerald helper scripts and derived JSON files.
 - `reference/iqm_utils/`: IQM tutorial/reference notebooks.

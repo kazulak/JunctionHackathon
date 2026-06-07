@@ -18,23 +18,17 @@ python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
 | Config | Purpose |
 | --- | --- |
 | `demo_stim_no_noise.yaml` | Fast no-noise simulator smoke test. |
-| `demo_stim_simple_noise.yaml` | Noisy simulator sanity check with observable-rate decoder. |
-| `demo_stim_simple_noise_pymatching.yaml` | Noisy simulator baseline with PyMatching. |
 | `sim_iqm_emerald_surface_d3_calibrated.yaml` | Rotated d3 simulator using Emerald per-qubit/per-coupler calibration noise. |
 | `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator using Emerald calibration noise. |
 | `sim_iqm_emerald_surface_d5_calibrated.yaml` | Rotated d5 simulator using Emerald calibration noise and routed layout. |
-| `baseline_surface_d3.yaml` | Simulator baseline template. |
-| `iqm_surface_d3_baseline.yaml` | IQM hardware run with real Emerald patch selection. |
-| `iqm_surface_d3_r1_native.yaml` | Short one-round d3 hardware sanity run on the corrected native Emerald patch. |
 | `iqm_surface_d3_r1_no_initial_reset.yaml` | Same one-round native patch, but without explicit initial Qiskit reset gates. |
 | `iqm_surface_d3_no_initial_reset.yaml` | D3 Emerald run without active resets, using virtualized repeated-measurement records. |
 | `iqm_surface_d3_r2_no_active_reset.yaml` | Short no-active-reset D3 Emerald variant for reset A/B testing. |
 | `iqm_surface_d5_baseline.yaml` | D5 IQM hardware run with real Emerald routed-layout selection. |
-| `qpu_patch_calibration_example.yaml` | Full-chip calibration/topology input template for patch selection. |
 | `2026-06-06T06_08_52.470451Z.json` | Real 54-qubit IQM observation dump, used as Emerald calibration input. |
 | `2026-06-06T16_44_10.718568Z.json` | Real 20-qubit IQM observation dump, used as Garnet calibration input. |
 
-Old planning-only configs are in `archive/configs/`.
+Old scalar-noise demos, older reset experiments, examples, and planning-only configs are in `archive/configs/`.
 
 ## YAML Sections
 
@@ -90,6 +84,7 @@ backend:
     server_url: https://resonance.meetiqm.com
     quantum_computer: garnet
     optimization_level: 3
+    batch_submit: true
     omit_initial_resets: false
     omit_repeated_resets: false
 ```
@@ -100,6 +95,7 @@ backend:
 - `options.server_url`: IQM Resonance URL.
 - `options.quantum_computer`: QPU name, for example `garnet`.
 - `options.optimization_level`: Qiskit transpiler optimization level.
+- `options.batch_submit`: if `true`, all basis circuits or sweep circuits are submitted to IQM as one batch before waiting for results.
 - `options.omit_initial_resets`: IQM A/B option. If `true`, leading Stim `R`/`RX` preparations are translated without explicit Qiskit reset gates; later syndrome-round resets are still kept.
 - `options.omit_repeated_resets`: IQM A/B option. If `true`, repeated syndrome reset gates are omitted and raw records are XOR-converted into virtual reset-style measurements before Stim syndrome extraction.
 
@@ -148,6 +144,8 @@ noise:
   options:
     apply_idle: true
     route_error_multiplier: 1.0
+    qnd_scale: 0.0
+    idle_scale: 0.5
 ```
 
 This uses the selected `mapping` to inject hardware-specific Stim noise:
@@ -158,6 +156,12 @@ CZ error       -> DEPOLARIZE2 after 2Q gates
 readout + QND  -> X/Z error before measurement
 T2 idle error  -> DEPOLARIZE1 spread over TICKs
 ```
+
+Useful scale knobs:
+
+- `qnd_scale`: currently `0.0` in active simulator configs because QND failure is not treated as a direct same-shot measurement bit flip.
+- `idle_scale`: currently `0.5` in active simulator configs after local search.
+- `one_qubit_scale`, `two_qubit_scale`, `measurement_scale`, `reset_scale`: optional sensitivity knobs.
 
 For QPU calibration:
 
@@ -303,7 +307,7 @@ For d=5 on the current Emerald dump, native patch selection fails because the re
 
 The selector accepts either:
 
-- the small documented template `qpu_patch_calibration_example.yaml`,
+- template calibration files like `archive/configs/old_yaml/qpu_patch_calibration_example.yaml`,
 - the real IQM observation-set JSON files in this directory.
 
 For template files, it uses:

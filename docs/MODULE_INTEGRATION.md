@@ -125,8 +125,8 @@ backend:
 
 ## Current Priority
 
-1. Hardware execution variants: reset handling, round count, mapping, QPU choice.
-2. Mapping and calibration: pin good layouts, avoid bad QND/readout/CZ regions.
-3. Noise/error model: build better detector-model weights from calibration data.
-4. Decoder alternatives: GNN or calibration-aware MWPM.
-5. Code alternatives: color code or custom surface-code schedule.
+1. Hardware execution variants: reset handling, round count, mapping, QPU choice, IQM batch submission.
+2. Mapping and calibration: pin good layouts, avoid bad readout/CZ/T2 regions.
+3. Noise/error model: tune calibrated Stim noise scales and compare with hardware.
+4. Decoder alternatives: GNN, Union-Find, BP, or better calibration-aware MWPM.
+5. Code alternatives: color code or custom/PulLA surface-code schedule.

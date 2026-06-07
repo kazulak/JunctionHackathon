@@ -12,7 +12,14 @@ import matplotlib
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 
+from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
+from qec_pipeline.artifacts import prepare_run_directory
+from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_batch_backend
+from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
+from qec_pipeline.codes import get_code_builder
+from qec_pipeline.decoders import get_decoder
 from qec_pipeline.pipeline import run_pipeline
+from qec_pipeline.syndromes import extract_detection_events
 
 
 def round_values(start: int, stop: int, points: int) -> list[int]:
@@ -44,6 +51,9 @@ def run_rounds_sweep(
     output_root: Path | None = None,
 ) -> Path:
     """Run one pipeline job per round value and write CSV/JSON/plot summary."""
+    if _use_iqm_batch_sweep(base_config):
+        return _run_iqm_rounds_sweep_batch(base_config, rounds, output_root)
+
     base_name = base_config["experiment"]["name"]
     timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
     root = output_root or Path(base_config["artifacts"].get("root", "results"))
@@ -72,6 +82,111 @@ def run_rounds_sweep(
                     "notes": "; ".join(notes),
                 }
             )
+
+    _write_sweep_outputs(sweep_dir, base_config, rounds, rows)
+    return sweep_dir
+
+
+def _run_iqm_rounds_sweep_batch(
+    base_config: dict[str, Any],
+    rounds: list[int],
+    output_root: Path | None = None,
+) -> Path:
+    """Submit all IQM sweep circuits in one batch before waiting for results."""
+    base_name = base_config["experiment"]["name"]
+    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    root = output_root or Path(base_config["artifacts"].get("root", "results"))
+    sweep_dir = root / f"{base_name}_rounds_sweep" / timestamp
+    runs_root = sweep_dir / "runs"
+    sweep_dir.mkdir(parents=True, exist_ok=False)
+
+    jobs = []
+    groups = []
+    for rounds_value in rounds:
+        config = copy.deepcopy(base_config)
+        config["code"]["rounds"] = int(rounds_value)
+        config["experiment"]["name"] = f"{base_name}_rounds_{rounds_value}"
+        config["artifacts"]["root"] = str(runs_root)
+        run_dir = prepare_run_directory(config)
+        group = {
+            "rounds": int(rounds_value),
+            "config": config,
+            "run_dir": run_dir,
+            "basis_results": [],
+            "notes": [],
+        }
+        groups.append(group)
+
+        for basis in _basis_list(config["code"]["basis"]):
+            circuit = get_code_builder(config["code"].get("family", "surface_code"))(
+                config["code"],
+                config["noise"],
+                basis,
+            )
+            circuit = prepare_circuit_for_execution(config, circuit)
+            jobs.append(
+                {
+                    "group": group,
+                    "basis": basis,
+                    "circuit": circuit,
+                    "mapping": config["mapping"],
+                    "decoder": config["decoder"],
+                }
+            )
+
+    raws = run_iqm_hardware_batch_backend(
+        base_config["backend"],
+        [
+            {"circuit": job["circuit"], "mapping": job["mapping"]}
+            for job in jobs
+        ],
+    )
+
+    rows = []
+    for job, raw in zip(jobs, raws):
+        group = job["group"]
+        basis = job["basis"]
+        circuit = job["circuit"]
+        syndromes = extract_detection_events(circuit, raw)
+        decoded = get_decoder(job["decoder"]["name"])(job["decoder"], circuit, syndromes)
+        _predicted, _failures, ler, uncertainty, decoder_info = decoded
+        metrics = {
+            "basis": basis,
+            "ler": ler,
+            "uncertainty": uncertainty,
+            "logical_failures": decoder_info["logical_failures"],
+            "shots": decoder_info["shots"],
+        }
+        if "noise_sweep" in decoder_info:
+            metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]
+
+        basis_run_dir = group["run_dir"] / basis
+        basis_run_dir.mkdir(parents=True, exist_ok=False)
+        write_run_artifacts(basis_run_dir, circuit, raw, syndromes, metrics)
+
+        group["basis_results"].append((basis, circuit, raw, syndromes, decoded, metrics))
+        note = f"{basis}: LER {ler} +/- {uncertainty}"
+        group["notes"].append(note)
+        rows.append(
+            {
+                "rounds": group["rounds"],
+                "basis": basis,
+                "ler": float(metrics["ler"]),
+                "uncertainty": float(metrics["uncertainty"]),
+                "logical_failures": int(metrics["logical_failures"]),
+                "shots": int(metrics["shots"]),
+                "run_dir": str(group["run_dir"]),
+                "notes": "; ".join(group["notes"]),
+            }
+        )
+
+    for group in groups:
+        write_run_summary(
+            group["run_dir"],
+            group["config"],
+            group["basis_results"],
+            group["notes"],
+        )
 
     _write_sweep_outputs(sweep_dir, base_config, rounds, rows)
     return sweep_dir
@@ -165,3 +280,17 @@ def plot_ler_vs_rounds(rows: list[dict[str, Any]], output_path: Path) -> None:
     fig.tight_layout()
     fig.savefig(output_path, dpi=160)
     plt.close(fig)
+
+
+def _use_iqm_batch_sweep(config: dict[str, Any]) -> bool:
+    if config["backend"].get("name") != "iqm_hardware":
+        return False
+    return bool(config["backend"].get("options", {}).get("batch_submit", True))
+
+
+def _basis_list(config_basis: str) -> list[str]:
+    if config_basis == "both":
+        return ["memory_z", "memory_x"]
+    if config_basis in {"memory_z", "memory_x"}:
+        return [config_basis]
+    raise ValueError("code.basis must be memory_z, memory_x, or both")

@@ -51,12 +51,6 @@ Run the no-noise simulator smoke test:
 python main.py configs/demo_stim_no_noise.yaml
 ```
 
-Run the noisy simulator with PyMatching:
-
-```bash
-python main.py configs/demo_stim_simple_noise_pymatching.yaml
-```
-
 Run the IQM-calibrated Emerald simulator:
 
 ```bash
@@ -69,22 +63,22 @@ Run a calibrated simulator rounds sweep:
 python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --rounds 1 5 3
 ```
 
-Run the mapped IQM d=3 hardware baseline:
+Run a quick local calibrated-model search:
 
 ```bash
-python main.py configs/iqm_surface_d3_baseline.yaml
+python scripts/search_calibrated_sim.py configs/sim_iqm_emerald_surface_d3_calibrated.yaml --basis memory_z --shots 1000 --top-patches 6
 ```
 
-Run the shortest native d=3 hardware sanity check:
-
-```bash
-python main.py configs/iqm_surface_d3_r1_native.yaml
-```
-
-Run the same one-round check without explicit initial reset gates:
+Run the shortest d=3 hardware check without explicit initial reset gates:
 
 ```bash
 python main.py configs/iqm_surface_d3_r1_no_initial_reset.yaml
+```
+
+Run the d=3 no-active-reset hardware variant:
+
+```bash
+python main.py configs/iqm_surface_d3_r2_no_active_reset.yaml
 ```
 
 Run the routed-layout IQM d=5 hardware baseline:
@@ -167,16 +161,18 @@ Generated on June 7, 2026 with the Emerald calibration dump:
 
 ```text
 d3 rotated, native mapped, rounds [1, 3, 5], 2000 shots:
-memory_z LER: 0.168 -> 0.392 -> 0.490
-memory_x LER: 0.1705 -> 0.397 -> 0.474
-Plot: results/sim_iqm_emerald_surface_d3_calibrated_rounds_sweep/20260607T001653Z/ler_vs_rounds.png
+memory_z LER: 0.0215 -> 0.183 -> 0.3585
+memory_x LER: 0.0265 -> 0.177 -> 0.389
+Plot: results/sim_iqm_emerald_surface_d3_calibrated_rounds_sweep/20260607T003958Z/ler_vs_rounds.png
 
 d5 rotated, routed layout, rounds [1, 3, 5], 1000 shots:
-memory_z LER: 0.307 -> 0.447 -> 0.501
-Plot: results/sim_iqm_emerald_surface_d5_calibrated_rounds_sweep/20260607T001619Z/ler_vs_rounds.png
+memory_z LER: 0.047 -> 0.239 -> 0.409
+Plot: results/sim_iqm_emerald_surface_d5_calibrated_rounds_sweep/20260607T003958Z/ler_vs_rounds.png
 ```
 
-Interpretation: the current calibration model already predicts saturation by five rounds. If hardware is much worse at one round than these simulator targets, the missing piece is probably execution overhead/reset/readout behavior not captured by this simple Stim-level noise model.
+These active targets use `qnd_scale: 0.0` and `idle_scale: 0.5`. Earlier worst-case QND-as-readout-bitflip modeling produced d3 round-1 LER near `0.17`.
+
+Interpretation: the calibrated simulator now predicts low one-round LER but still trends toward saturation by five rounds. If hardware is much worse at one round than these targets, the missing piece is probably execution overhead/reset/readout behavior not captured by this simple Stim-level noise model.
 
 ## Reading LER Near 0.5
 

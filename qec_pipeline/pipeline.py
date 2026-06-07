@@ -5,6 +5,7 @@ from typing import Any
 from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory
 from qec_pipeline.backends import get_backend_runner
+from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_batch_backend
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.decoders import get_decoder
@@ -29,6 +30,11 @@ def describe_pipeline(config: dict[str, Any]) -> list[str]:
         stages.append(
             "selected mapping + IQM calibration file -> inject per-qubit/per-coupler Stim noise"
         )
+    if (
+        config.get("backend", {}).get("name") == "iqm_hardware"
+        and bool(config.get("backend", {}).get("options", {}).get("batch_submit", True))
+    ):
+        stages.append("IQM backend -> submit selected circuits as one batch job before waiting")
     stages.extend(
         [
             "backend + circuit tuple -> run selected backend -> (measurements, counts, raw_info)",
@@ -53,11 +59,28 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
     run_dir = prepare_run_directory(config)
     notes = []
     basis_results: list[tuple] = []
+    prepared_basis = []
 
     for basis in _basis_list(config["code"]["basis"]):
         circuit = _build_circuit(config["code"], config["noise"], basis)
         circuit = prepare_circuit_for_execution(config, circuit)
-        raw = _run_backend(config["backend"], config["mapping"], circuit)
+        prepared_basis.append((basis, circuit))
+
+    if _use_iqm_batch_submit(config["backend"], len(prepared_basis)):
+        raws = run_iqm_hardware_batch_backend(
+            config["backend"],
+            [
+                {"circuit": circuit, "mapping": config["mapping"]}
+                for _basis, circuit in prepared_basis
+            ],
+        )
+    else:
+        raws = [
+            _run_backend(config["backend"], config["mapping"], circuit)
+            for _basis, circuit in prepared_basis
+        ]
+
+    for (basis, circuit), raw in zip(prepared_basis, raws):
         syndromes = extract_detection_events(circuit, raw)
         decoded = _run_decoder(config["decoder"], circuit, syndromes)
 
@@ -101,3 +124,11 @@ def _build_circuit(code: dict[str, Any], noise: dict[str, Any], basis: str) -> t
 
 def _run_decoder(decoder: dict[str, Any], circuit: tuple, syndromes: tuple) -> tuple:
     return get_decoder(decoder["name"])(decoder, circuit, syndromes)
+
+
+def _use_iqm_batch_submit(backend: dict[str, Any], num_circuits: int) -> bool:
+    if backend.get("name") != "iqm_hardware":
+        return False
+    if num_circuits <= 1:
+        return False
+    return bool(backend.get("options", {}).get("batch_submit", True))

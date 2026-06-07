@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import stim
@@ -36,6 +37,7 @@ from qec_pipeline.mapping.patch_selection import (
     select_calibration_best_patch,
     select_calibration_routed_layout,
     select_mapping_from_config,
+    rank_calibration_best_patches,
     surface_code_patch_coordinates,
 )
 from qec_pipeline.pipeline import describe_pipeline, run_pipeline
@@ -497,7 +499,7 @@ class ReportingAndPipelineTests(unittest.TestCase):
                 "noise": {
                     "model": "iqm_calibration",
                     "calibration_file": str(calibration_path),
-                    "options": {"apply_idle": True},
+                    "options": {"apply_idle": True, "qnd_scale": 0.0, "idle_scale": 0.5},
                 },
                 "decoder": {"name": "pymatching_calibrated", "options": {}},
                 "mapping": {
@@ -519,6 +521,8 @@ class ReportingAndPipelineTests(unittest.TestCase):
             self.assertIn("DEPOLARIZE", str(stim_circuit))
             self.assertGreater(circuit_info["detector_model_num_errors"], 0)
             self.assertEqual(circuit_info["implemented_noise_model"], "iqm_calibration_per_qubit")
+            self.assertEqual(circuit_info["calibration_noise"]["error_scales"]["qnd"], 0.0)
+            self.assertEqual(circuit_info["calibration_noise"]["error_scales"]["idle"], 0.5)
             self.assertEqual(raw_info["implemented_noise_model"], "iqm_calibration_per_qubit")
             self.assertEqual(decoder_info["implemented_noise_model"], "iqm_calibration_per_qubit")
             self.assertTrue((run_dir / "memory_z" / "circuit_metadata.json").exists())
@@ -536,6 +540,57 @@ class ReportingAndPipelineTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "requires a selected mapping"):
             prepare_circuit_for_execution(config, circuit)
+
+    def test_iqm_pipeline_batches_both_bases_before_decoding(self) -> None:
+        def fake_batch(_backend: dict, requests: list[dict]) -> list[tuple]:
+            raws = []
+            for request in requests:
+                stim_circuit = request["circuit"][0]
+                measurements = np.zeros((4, stim_circuit.num_measurements), dtype=bool)
+                raws.append(
+                    (
+                        measurements,
+                        None,
+                        {
+                            "backend": "iqm_hardware",
+                            "shots": 4,
+                            "shape": tuple(measurements.shape),
+                            "batch_size": len(requests),
+                        },
+                    )
+                )
+            return raws
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = {
+                "experiment": {"name": "unit_iqm_batch", "description": "", "seed": 1},
+                "code": {
+                    "family": "surface_code",
+                    "distance": 3,
+                    "rounds": 1,
+                    "basis": "both",
+                    "reset_mode": "reset",
+                },
+                "backend": {
+                    "name": "iqm_hardware",
+                    "shots": 4,
+                    "options": {"batch_submit": True},
+                },
+                "noise": NO_NOISE,
+                "decoder": {"name": "pymatching", "options": {}},
+                "mapping": {"strategy": "none", "hardware_patch": None},
+                "artifacts": {"root": temp_dir},
+            }
+
+            with patch(
+                "qec_pipeline.pipeline.run_iqm_hardware_batch_backend",
+                side_effect=fake_batch,
+            ) as batch_mock:
+                _run_dir, basis_results, _notes = run_pipeline(config)
+
+        self.assertEqual(len(basis_results), 2)
+        self.assertEqual(batch_mock.call_count, 1)
+        self.assertEqual(len(batch_mock.call_args.args[1]), 2)
 
 
 class DiagnosticAndSweepTests(unittest.TestCase):
@@ -651,6 +706,28 @@ class PatchSelectionTests(unittest.TestCase):
         self.assertEqual(selected["origin"], {"row": 1, "col": 1})
         self.assertEqual(len(selected["initial_layout"]), len(stim_to_dense))
         self.assertGreaterEqual(selected["num_candidates"], 2)
+
+    def test_rank_calibration_best_patches_returns_sorted_candidates(self) -> None:
+        code = {
+            "family": "surface_code",
+            "distance": 3,
+            "rounds": 1,
+            "basis": "memory_z",
+            "reset_mode": "reset",
+        }
+        stim_circuit, _detector_model, _measurement_order, _info = build_surface_code_circuit(
+            code,
+            NO_NOISE,
+            "memory_z",
+        )
+        stim_to_dense = _stim_to_dense(stim_circuit)
+        calibration = _grid_calibration(rows=6, cols=6, low_origin=(1, 1), low_size=5)
+
+        candidates = rank_calibration_best_patches(stim_circuit, stim_to_dense, calibration)
+
+        scores = [candidate["score"] for candidate in candidates]
+        self.assertGreaterEqual(len(candidates), 2)
+        self.assertEqual(scores, sorted(scores))
 
     def test_select_mapping_from_config_reads_calibration_file(self) -> None:
         code = {

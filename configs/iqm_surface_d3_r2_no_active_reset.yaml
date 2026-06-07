@@ -19,6 +19,7 @@ backend:
     server_url: https://resonance.meetiqm.com
     quantum_computer: emerald
     optimization_level: 3
+    batch_submit: true
     omit_initial_resets: true
     omit_repeated_resets: true
 

@@ -22,6 +22,8 @@ noise:
   options:
     apply_idle: true
     route_error_multiplier: 1.0
+    qnd_scale: 0.0
+    idle_scale: 0.5
 
 decoder:
   name: pymatching_calibrated
@@ -51,4 +53,3 @@ artifacts:
   save_raw_measurements: true
   save_syndromes: true
   save_report: true
-

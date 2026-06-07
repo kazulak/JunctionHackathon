@@ -25,6 +25,26 @@ def select_calibration_best_patch(
     options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Select the lowest-score hardware patch for a Stim surface-code circuit."""
+    candidates = rank_calibration_best_patches(
+        stim_circuit,
+        stim_to_dense,
+        calibration,
+        weights=weights,
+        options=options,
+    )
+    if not candidates:
+        raise ValueError("No valid hardware patch found for this circuit and calibration data")
+    return candidates[0]
+
+
+def rank_calibration_best_patches(
+    stim_circuit: stim.Circuit,
+    stim_to_dense: dict[int, int],
+    calibration: dict[str, Any],
+    weights: dict[str, float] | None = None,
+    options: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Return all valid native patches sorted by mapping score."""
     weights = weights or {}
     options = options or {}
     interaction_counts = two_qubit_interaction_counts(stim_circuit)
@@ -33,10 +53,11 @@ def select_calibration_best_patch(
     hardware = _filter_hardware_qubits(hardware, options.get("exclude_qubits", []) or [])
 
     if not hardware["coord_to_label"]:
-        best = _select_graph_patch(stim_to_dense, interaction_counts, roles, hardware, weights)
-        best["strategy"] = "calibration_best_patch"
-        best["excluded_qubits"] = hardware.get("excluded_qubits", [])
-        return best
+        candidates = _rank_graph_patches(stim_to_dense, interaction_counts, roles, hardware, weights)
+        for candidate in candidates:
+            candidate["strategy"] = "calibration_best_patch"
+            candidate["excluded_qubits"] = hardware.get("excluded_qubits", [])
+        return candidates
 
     patch_coords = surface_code_patch_coordinates(stim_circuit, stim_to_dense)
     candidates = []
@@ -59,14 +80,12 @@ def select_calibration_best_patch(
             if candidate is not None:
                 candidates.append(candidate)
 
-    if not candidates:
-        raise ValueError("No valid hardware patch found for this circuit and calibration data")
-
-    best = min(candidates, key=lambda item: item["score"])
-    best["num_candidates"] = len(candidates)
-    best["strategy"] = "calibration_best_patch"
-    best["excluded_qubits"] = hardware.get("excluded_qubits", [])
-    return best
+    candidates = sorted(candidates, key=lambda item: item["score"])
+    for candidate in candidates:
+        candidate["num_candidates"] = len(candidates)
+        candidate["strategy"] = "calibration_best_patch"
+        candidate["excluded_qubits"] = hardware.get("excluded_qubits", [])
+    return candidates
 
 
 def select_calibration_routed_layout(
@@ -378,6 +397,23 @@ def _select_graph_patch(
     weights: dict[str, float],
 ) -> dict[str, Any]:
     """Find a native hardware subgraph matching the generated surface-code interactions."""
+    candidates = _rank_graph_patches(stim_to_dense, interaction_counts, roles, hardware, weights)
+    if not candidates:
+        raise ValueError(
+            "No native hardware graph patch found for this circuit and calibration data. "
+            "Use a smaller distance or disable mapping so Qiskit can route the circuit."
+        )
+    return candidates[0]
+
+
+def _rank_graph_patches(
+    stim_to_dense: dict[int, int],
+    interaction_counts: Counter[tuple[int, int]],
+    roles: dict[int, str],
+    hardware: dict[str, Any],
+    weights: dict[str, float],
+) -> list[dict[str, Any]]:
+    """Find native hardware subgraphs matching the generated interaction graph."""
     code_graph = nx.Graph()
     code_graph.add_nodes_from(stim_to_dense)
     code_graph.add_edges_from(interaction_counts)
@@ -385,8 +421,7 @@ def _select_graph_patch(
     hardware_graph = _hardware_graph(hardware)
 
     matcher = nx.algorithms.isomorphism.GraphMatcher(hardware_graph, code_graph)
-    best = None
-    num_candidates = 0
+    candidates = []
 
     for hardware_to_stim in matcher.subgraph_monomorphisms_iter():
         stim_to_hardware = {
@@ -403,20 +438,14 @@ def _select_graph_patch(
         )
         if candidate is None:
             continue
-        num_candidates += 1
-        if best is None or candidate["score"] < best["score"]:
-            best = candidate
+        candidates.append(candidate)
 
-    if best is None:
-        raise ValueError(
-            "No native hardware graph patch found for this circuit and calibration data. "
-            "Use a smaller distance or disable mapping so Qiskit can route the circuit."
-        )
-
-    best["num_candidates"] = num_candidates
-    best["selection"] = "native_graph"
-    best["source_schema"] = hardware["source_schema"]
-    return best
+    candidates = sorted(candidates, key=lambda item: item["score"])
+    for candidate in candidates:
+        candidate["num_candidates"] = len(candidates)
+        candidate["selection"] = "native_graph"
+        candidate["source_schema"] = hardware["source_schema"]
+    return candidates
 
 
 def _hardware_graph(hardware: dict[str, Any]) -> nx.Graph:

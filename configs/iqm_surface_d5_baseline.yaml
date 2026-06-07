@@ -27,6 +27,7 @@ backend:
     server_url: https://resonance.meetiqm.com
     quantum_computer: emerald
     optimization_level: 3
+    batch_submit: true
     # Authentication:
     # Prefer setting IQM_TOKEN in your shell or .env.
     # Do not also put token here when IQM_TOKEN is set.
