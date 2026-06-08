@@ -1,8 +1,0 @@
-rounds,basis,ler,uncertainty,logical_failures,shots,run_dir,notes
-1,memory_z,0.00955,0.000687706241792235,191,20000,results\final_rep_code_sim_rounds_sweep\20260607T062152Z\runs\final_rep_code_sim_rounds_1\20260607T062152Z,memory_z: LER 0.00955 +/- 0.000687706241792235
-9,memory_z,0.01285,0.0007963942961875104,257,20000,results\final_rep_code_sim_rounds_sweep\20260607T062152Z\runs\final_rep_code_sim_rounds_9\20260607T062152Z,memory_z: LER 0.01285 +/- 0.0007963942961875104
-17,memory_z,0.01435,0.0008409541455989143,287,20000,results\final_rep_code_sim_rounds_sweep\20260607T062152Z\runs\final_rep_code_sim_rounds_17\20260607T062153Z,memory_z: LER 0.01435 +/- 0.0008409541455989143
-26,memory_z,0.01675,0.000907453511205946,335,20000,results\final_rep_code_sim_rounds_sweep\20260607T062152Z\runs\final_rep_code_sim_rounds_26\20260607T062154Z,memory_z: LER 0.01675 +/- 0.000907453511205946
-34,memory_z,0.0223,0.001044095541605269,446,20000,results\final_rep_code_sim_rounds_sweep\20260607T062152Z\runs\final_rep_code_sim_rounds_34\20260607T062155Z,memory_z: LER 0.0223 +/- 0.001044095541605269
-42,memory_z,0.03325,0.001267762546772857,665,20000,results\final_rep_code_sim_rounds_sweep\20260607T062152Z\runs\final_rep_code_sim_rounds_42\20260607T062157Z,memory_z: LER 0.03325 +/- 0.001267762546772857
-50,memory_z,0.0434,0.0014407713212026398,868,20000,results\final_rep_code_sim_rounds_sweep\20260607T062152Z\runs\final_rep_code_sim_rounds_50\20260607T062159Z,memory_z: LER 0.0434 +/- 0.0014407713212026398

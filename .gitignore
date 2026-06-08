@@ -22,6 +22,9 @@ secrets.*
 # Experiment outputs
 results/*
 !results/.gitkeep
+judge_results/
+gate_crushers_submission_*.zip
+Quantum Hack*.pdf
 *.npy
 *.npz
 *.h5

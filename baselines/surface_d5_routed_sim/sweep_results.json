@@ -1,0 +1,40 @@
+{
+  "base_experiment": "sim_iqm_emerald_surface_d5_calibrated",
+  "rounds": [
+    1,
+    3,
+    5
+  ],
+  "rows": [
+    {
+      "rounds": 1,
+      "basis": "memory_z",
+      "ler": 0.047,
+      "uncertainty": 0.006692607862410586,
+      "logical_failures": 47,
+      "shots": 1000,
+      "run_dir": "results\\sim_iqm_emerald_surface_d5_calibrated_rounds_sweep\\20260607T003958Z\\runs\\sim_iqm_emerald_surface_d5_calibrated_rounds_1\\20260607T003958Z",
+      "notes": "memory_z: LER 0.047 +/- 0.006692607862410586"
+    },
+    {
+      "rounds": 3,
+      "basis": "memory_z",
+      "ler": 0.239,
+      "uncertainty": 0.01348625225924534,
+      "logical_failures": 239,
+      "shots": 1000,
+      "run_dir": "results\\sim_iqm_emerald_surface_d5_calibrated_rounds_sweep\\20260607T003958Z\\runs\\sim_iqm_emerald_surface_d5_calibrated_rounds_3\\20260607T004002Z",
+      "notes": "memory_z: LER 0.239 +/- 0.01348625225924534"
+    },
+    {
+      "rounds": 5,
+      "basis": "memory_z",
+      "ler": 0.409,
+      "uncertainty": 0.015547314880711717,
+      "logical_failures": 409,
+      "shots": 1000,
+      "run_dir": "results\\sim_iqm_emerald_surface_d5_calibrated_rounds_sweep\\20260607T003958Z\\runs\\sim_iqm_emerald_surface_d5_calibrated_rounds_5\\20260607T004007Z",
+      "notes": "memory_z: LER 0.409 +/- 0.015547314880711717"
+    }
+  ]
+}

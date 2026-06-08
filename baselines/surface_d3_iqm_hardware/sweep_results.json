@@ -1,0 +1,91 @@
+{
+  "base_experiment": "sweep_d3_best_iqm",
+  "rounds": [
+    1,
+    3,
+    5,
+    7
+  ],
+  "rows": [
+    {
+      "rounds": 1,
+      "basis": "memory_z",
+      "ler": 0.049,
+      "uncertainty": 0.0048269555622566076,
+      "logical_failures": 98,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_1\\20260607T011549Z",
+      "notes": "memory_z: LER 0.049 +/- 0.0048269555622566076"
+    },
+    {
+      "rounds": 1,
+      "basis": "memory_x",
+      "ler": 0.0545,
+      "uncertainty": 0.005075911248239078,
+      "logical_failures": 109,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_1\\20260607T011549Z",
+      "notes": "memory_z: LER 0.049 +/- 0.0048269555622566076; memory_x: LER 0.0545 +/- 0.005075911248239078"
+    },
+    {
+      "rounds": 3,
+      "basis": "memory_z",
+      "ler": 0.487,
+      "uncertainty": 0.011176560293757645,
+      "logical_failures": 974,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_3\\20260607T011552Z",
+      "notes": "memory_z: LER 0.487 +/- 0.011176560293757645"
+    },
+    {
+      "rounds": 3,
+      "basis": "memory_x",
+      "ler": 0.4925,
+      "uncertainty": 0.011179082028503056,
+      "logical_failures": 985,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_3\\20260607T011552Z",
+      "notes": "memory_z: LER 0.487 +/- 0.011176560293757645; memory_x: LER 0.4925 +/- 0.011179082028503056"
+    },
+    {
+      "rounds": 5,
+      "basis": "memory_z",
+      "ler": 0.484,
+      "uncertainty": 0.011174614087296258,
+      "logical_failures": 968,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_5\\20260607T011555Z",
+      "notes": "memory_z: LER 0.484 +/- 0.011174614087296258"
+    },
+    {
+      "rounds": 5,
+      "basis": "memory_x",
+      "ler": 0.4965,
+      "uncertainty": 0.011180065965816124,
+      "logical_failures": 993,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_5\\20260607T011555Z",
+      "notes": "memory_z: LER 0.484 +/- 0.011174614087296258; memory_x: LER 0.4965 +/- 0.011180065965816124"
+    },
+    {
+      "rounds": 7,
+      "basis": "memory_z",
+      "ler": 0.472,
+      "uncertainty": 0.011162795348836239,
+      "logical_failures": 944,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_7\\20260607T011558Z",
+      "notes": "memory_z: LER 0.472 +/- 0.011162795348836239"
+    },
+    {
+      "rounds": 7,
+      "basis": "memory_x",
+      "ler": 0.4825,
+      "uncertainty": 0.011173489830845151,
+      "logical_failures": 965,
+      "shots": 2000,
+      "run_dir": "results\\sweep_d3_best_iqm_rounds_sweep\\20260607T011549Z\\runs\\sweep_d3_best_iqm_rounds_7\\20260607T011558Z",
+      "notes": "memory_z: LER 0.472 +/- 0.011162795348836239; memory_x: LER 0.4825 +/- 0.011173489830845151"
+    }
+  ]
+}

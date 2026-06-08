@@ -1,5 +1,5 @@
 # Sweep-compatible simulator config with postselected decoding.
-# Pair with: configs/sweep_d3_postselected_iqm.yaml
+# Promote to hardware only after this simulator route shows useful results.
 #
 # This keeps the 50% of shots with the lowest syndrome weight before decoding.
 # It is not a replacement for full QEC, but it can reveal whether low-syndrome
@@ -91,4 +91,3 @@ artifacts:
   save_raw_measurements: true
   save_syndromes: true
   save_report: true
-

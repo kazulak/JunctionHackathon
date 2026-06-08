@@ -1,43 +1,30 @@
 # Configs
 
-Run one YAML config with:
+Run one config:
 
 ```bash
 python main.py configs/demo_stim_no_noise.yaml
 ```
 
-Equivalent dry-run forms:
+Dry-run without executing:
 
 ```bash
-python main.py --dry-run --print-config configs/demo_stim_no_noise.yaml
-python main.py --dry-run --print-config --config configs/demo_stim_no_noise.yaml
+python main.py --dry-run --print-config configs/sweep_d3_best_sim.yaml
 ```
 
-## Available Configs
+## Active Files
 
 | Config | Purpose |
 | --- | --- |
-| `demo_stim_no_noise.yaml` | Fast no-noise simulator smoke test. |
-| `final_rep_code_sim.yaml` | Final improvement: calibrated simulator for d3 repetition code on fixed Emerald chain. |
-| `final_rep_code_iqm.yaml` | Final improvement: matching IQM hardware config for d3 repetition code. |
-| `sim_iqm_emerald_surface_d3_calibrated.yaml` | Rotated d3 simulator using Emerald per-qubit/per-coupler calibration noise. |
-| `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator using Emerald calibration noise. |
-| `sim_iqm_emerald_surface_d5_calibrated.yaml` | Rotated d5 simulator using Emerald calibration noise and routed layout. |
-| `sweep_d3_best_sim.yaml` | Current best paired d3 calibrated simulator sweep config. |
-| `sweep_d3_best_iqm.yaml` | Current best paired d3 IQM hardware sweep config. |
-| `sweep_d3_postselected_sim.yaml` | Same simulator route with low-syndrome postselection. |
-| `sweep_d3_postselected_iqm.yaml` | Same IQM hardware route with low-syndrome postselection. |
-| `iqm_best_d3_r1_calibrated.yaml` | Single d3 round-1 calibrated hardware run. |
-| `iqm_best_d3_r1_auto_decoder.yaml` | Single d3 round-1 hardware run with decoder auto-selection. |
-| `iqm_experimental_d3_r1_dd_auto.yaml` | Experimental d3 round-1 hardware run with the current DD hook. |
-| `iqm_surface_d3_r1_no_initial_reset.yaml` | Same one-round native patch, but without explicit initial Qiskit reset gates. |
-| `iqm_surface_d3_no_initial_reset.yaml` | D3 Emerald run without active resets, using virtualized repeated-measurement records. |
-| `iqm_surface_d3_r2_no_active_reset.yaml` | Short no-active-reset D3 Emerald variant for reset A/B testing. |
-| `iqm_surface_d5_baseline.yaml` | D5 IQM hardware run with real Emerald routed-layout selection. |
-| `2026-06-06T06_08_52.470451Z.json` | Real 54-qubit IQM observation dump, used as Emerald calibration input. |
-| `2026-06-06T16_44_10.718568Z.json` | Real 20-qubit IQM observation dump, used as Garnet calibration input. |
-
-Old scalar-noise demos, older reset experiments, examples, and planning-only configs are in `archive/configs/`.
+| `demo_stim_no_noise.yaml` | No-noise simulator smoke test. |
+| `sweep_d3_best_sim.yaml` | Main d3 calibrated simulator sweep config. |
+| `sweep_d3_postselected_sim.yaml` | D3 simulator with low-syndrome postselection. |
+| `sim_iqm_emerald_surface_d3_calibrated.yaml` | Single d3 calibrated simulator run. |
+| `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator variant. |
+| `sim_iqm_emerald_surface_d5_calibrated.yaml` | D5 calibrated simulator with routed layout. |
+| `sweep_d3_best_iqm.yaml` | Hardware template matching the main d3 simulator route. Use only after simulator results justify it. |
+| `2026-06-06T06_08_52.470451Z.json` | Emerald-like IQM calibration dump. |
+| `2026-06-06T16_44_10.718568Z.json` | Garnet-like IQM calibration dump. |
 
 ## YAML Sections
 
@@ -45,14 +32,14 @@ Old scalar-noise demos, older reset experiments, examples, and planning-only con
 
 ```yaml
 experiment:
-  name: sweep_d3_best_iqm
-  description: "Paired d3 Emerald surface-code hardware sweep."
+  name: sweep_d3_best_sim
+  description: "D3 calibrated simulator sweep."
   seed: 1
 ```
 
-- `name`: output folder name under `results/`.
-- `description`: human-readable note.
-- `seed`: experiment-level note. The simulator seed currently comes from `backend.options.seed`.
+- `name`: output folder under `results/`.
+- `description`: free text.
+- `seed`: experiment-level note; backend seed controls simulator sampling.
 
 ### `code`
 
@@ -65,11 +52,11 @@ code:
   reset_mode: reset
 ```
 
-- `family`: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`, or `repetition_code`.
-- `distance`: Stim generated code distance.
-- `rounds`: number of syndrome rounds.
+- `family`: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`, or placeholder `color_code`.
+- `distance`: code distance.
+- `rounds`: syndrome rounds.
 - `basis`: `memory_z`, `memory_x`, or `both`.
-- `reset_mode`: currently only `reset` behavior is implemented. `no_reset` is a future branch.
+- `reset_mode`: currently only reset-style behavior is implemented.
 
 ### `backend`
 
@@ -78,45 +65,34 @@ Simulator:
 ```yaml
 backend:
   name: simulator
-  shots: 1000
+  shots: 2000
   options:
     seed: 1
 ```
 
-IQM hardware:
+Hardware:
 
 ```yaml
 backend:
   name: iqm_hardware
-  shots: 100
+  shots: 2000
   options:
     server_url: https://resonance.meetiqm.com
-    quantum_computer: garnet
+    quantum_computer: emerald
     optimization_level: 3
     batch_submit: true
-    omit_initial_resets: false
-    omit_repeated_resets: false
 ```
 
-- `name`: `simulator` or `iqm_hardware`.
-- `shots`: number of samples/jobs shots.
-- `options.seed`: Stim sampler seed for simulator.
-- `options.server_url`: IQM Resonance URL.
-- `options.quantum_computer`: QPU name, for example `garnet`.
-- `options.optimization_level`: Qiskit transpiler optimization level.
-- `options.batch_submit`: if `true`, all basis circuits or sweep circuits are submitted to IQM as one batch before waiting for results.
-- `options.omit_initial_resets`: IQM A/B option. If `true`, leading Stim `R`/`RX` preparations are translated without explicit Qiskit reset gates; later syndrome-round resets are still kept.
-- `options.omit_repeated_resets`: IQM A/B option. If `true`, repeated syndrome reset gates are omitted and raw records are XOR-converted into virtual reset-style measurements before Stim syndrome extraction.
+Notes:
 
-For IQM auth, prefer:
-
-```powershell
-$env:IQM_TOKEN="your-token"
-```
-
-Do not also set `backend.options.token` when `IQM_TOKEN` exists in the environment.
+- `backend.name`: `simulator` or `iqm_hardware`.
+- `shots`: number of samples.
+- `batch_submit: true`: sweeps submit all IQM jobs first, then wait.
+- IQM token is read from `.env` or `IQM_TOKEN`.
 
 ### `noise`
+
+Simple scalar noise:
 
 ```yaml
 noise:
@@ -129,22 +105,7 @@ noise:
     idle_error: 0.003
 ```
 
-Meaning:
-
-- Simulator backend: these values create a noisy Stim circuit and affect samples.
-- IQM backend: these values are not sent to the QPU. They define the Stim detector error model used by PyMatching.
-
-Current implementation:
-
-```text
-one_qubit_error     -> after_clifford_depolarization
-measurement_error   -> before_measure_flip_probability
-reset_error         -> after_reset_flip_probability
-idle_error          -> before_round_data_depolarization
-two_qubit_error     -> present in YAML, not separately used yet
-```
-
-Calibration-aware simulator:
+Calibration-aware noise:
 
 ```yaml
 noise:
@@ -157,45 +118,30 @@ noise:
     idle_scale: 0.5
 ```
 
-This uses the selected `mapping` to inject hardware-specific Stim noise:
+Meaning:
 
-```text
-PRX error      -> DEPOLARIZE1 after 1Q gates
-CZ error       -> DEPOLARIZE2 after 2Q gates
-readout + QND  -> X/Z error before measurement
-T2 idle error  -> DEPOLARIZE1 spread over TICKs
-```
-
-Useful scale knobs:
-
-- `qnd_scale`: currently `0.0` in active simulator configs because QND failure is not treated as a direct same-shot measurement bit flip.
-- `idle_scale`: currently `0.5` in active simulator configs after local search.
-- `one_qubit_scale`, `two_qubit_scale`, `measurement_scale`, `reset_scale`: optional sensitivity knobs.
-
-For QPU calibration:
-
-- Full per-qubit/per-coupler data belongs in `mapping.calibration_file`.
-- Scalar `noise.parameters` remains the simple detector-model approximation for PyMatching.
-- Later, a richer error-model module should use the same calibration data to build better decoder weights.
+- Simulator: noise is injected into the Stim circuit and affects samples.
+- IQM hardware: real hardware supplies the noise; YAML noise is still used to build the detector error model for decoding.
+- `iqm_calibration` uses selected qubits/couplers from `mapping`.
 
 ### `decoder`
 
 ```yaml
 decoder:
-  name: pymatching
+  name: pymatching_auto
   options:
-    noise_sweep_probabilities: [0.001, 0.003, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3]
+    uniform_probabilities: [0.001, 0.003, 0.01, 0.02, 0.05]
 ```
 
 Available:
 
-- `observable_rate`: sanity check only; counts observed logical flips directly.
-- `pymatching`: real MWPM decoder from the Stim detector error model.
-- `pymatching_calibrated`: MWPM decoder intended for `noise.model: iqm_calibration`.
-- `pymatching_auto`: tries the calibrated detector model, optional uniform-probability detector models, optional no-correction, and selects the lowest LER candidate for the saved run.
-- `pymatching.options.noise_sweep_probabilities`: optional diagnostic. It redecodes the same detector events with several uniform Stim noise probabilities and saves the sweep in `metrics.json`.
+- `observable_rate`: sanity check, no correction.
+- `pymatching`: MWPM from the configured detector model.
+- `pymatching_calibrated`: calibrated MWPM route.
+- `pymatching_auto`: tries configured/calibrated and optional uniform detector models.
+- `gnn`, `ising`: placeholders.
 
-Postselected route:
+Postselection:
 
 ```yaml
 decoder:
@@ -204,34 +150,18 @@ decoder:
     postselect_weight_quantile: 0.5
 ```
 
-This keeps shots with syndrome weight at or below the 50% quantile before decoding. It reports postselected LER, not full-dataset LER. The saved `metrics.json` includes `decoder_info.original_shots`, `kept_shots`, `postselection_fraction`, `selected_candidate`, and candidate LERs.
-
-Placeholders:
-
-- `gnn`
-- `ising`
-
-These are registered names, but they currently raise `NotImplementedError`.
+This reports LER only on kept low-syndrome shots.
 
 ### `mapping`
+
+No fixed layout:
 
 ```yaml
 mapping:
   strategy: none
-  hardware_patch: null
 ```
 
-Current behavior:
-
-- `strategy: none` means Qiskit/IQM chooses layout and routing.
-- `strategy: calibration_best_patch` selects an exact native hardware patch and passes `initial_layout` to Qiskit.
-- `strategy: calibration_routed_layout` selects a low-cost initial layout when no exact native patch exists, then Qiskit routes missing edges.
-- Real IQM observation dumps are supported directly. If they have no explicit coordinates, the selector uses the measured coupler graph.
-- If no native graph patch exists, use `calibration_routed_layout` or `strategy: none`.
-- IQM scoring uses PRX, readout, QND, idle/T2, and CZ calibration terms.
-- `hardware_patch.stim_to_hardware` pins an exact Stim-qubit-to-QPU-qubit assignment and bypasses graph isomorphism tie-breaking.
-
-Native d=3 patch selection:
+Calibration-selected native d3 patch:
 
 ```yaml
 mapping:
@@ -241,48 +171,24 @@ mapping:
     one_qubit: 1.0
     two_qubit: 1.0
     measurement: 1.0
-    reset: 1.0
     idle: 1.0
     qnd: 1.0
     max_coupler: 10.0
   options:
-    exclude_qubits:
-      - QB9
-      - QB25
-      - QB41
-      - QB46
-      - QB47
-  hardware_patch:
-    stim_to_hardware:
-      "1": QB31
-      "2": QB39
-      "3": QB38
+    exclude_qubits: [QB9, QB25, QB41, QB46, QB47]
 ```
 
-D5 routed layout:
+D5 currently needs routed layout selection:
 
 ```yaml
 mapping:
   strategy: calibration_routed_layout
   calibration_file: configs/2026-06-06T06_08_52.470451Z.json
   weights:
-    one_qubit: 1.0
-    two_qubit: 1.0
-    measurement: 1.0
-    reset: 1.0
-    idle: 1.0
-    qnd: 1.0
-    max_coupler: 10.0
     route_distance: 0.2
   options:
     seed: 1
     max_iterations: 5000
-    exclude_qubits:
-      - QB9
-      - QB25
-      - QB41
-      - QB46
-      - QB47
 ```
 
 ### `artifacts`
@@ -295,100 +201,14 @@ artifacts:
   save_report: true
 ```
 
-Current behavior:
-
-- `root` controls the output root.
-- The save flags are descriptive for now. The current reporter writes the standard artifact set.
-- New runs include `measurement_diagnostics.json`, which compares each raw measurement bit to ideal Stim one-rates and labels the mapped hardware qubit when available.
-
-## Recommended Simulator -> Hardware Pattern
-
-Final low-LER repetition-code path:
-
-```bash
-python main.py configs/final_rep_code_sim.yaml
-python main.py configs/final_rep_code_iqm.yaml
-```
-
-Optional final sweep:
-
-```bash
-python scripts/sweep_rounds.py configs/final_rep_code_sim.yaml --rounds 1 7 4
-python scripts/sweep_rounds.py configs/final_rep_code_iqm.yaml --rounds 1 7 4
-```
-
-Use paired configs that differ only by backend:
-
-```bash
-python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
-python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
-```
-
-For the postselected variant:
-
-```bash
-python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
-python scripts/sweep_rounds.py configs/sweep_d3_postselected_iqm.yaml --rounds 1 7 4
-```
-
-The IQM configs set `backend.options.batch_submit: true`, so hardware sweeps submit all circuits first and then wait for results.
-
-## Recommended QPU Config Pattern
-
-Make one config per QPU:
+Standard outputs are written under:
 
 ```text
-configs/iqm_garnet_surface_d3_baseline.yaml
-configs/iqm_emerald_surface_d3_baseline.yaml
+results/<experiment>/<timestamp>/
 ```
 
-Change:
-
-```yaml
-backend:
-  options:
-    quantum_computer: garnet
-
-mapping:
-  strategy: calibration_best_patch
-  calibration_file: configs/2026-06-06T16_44_10.718568Z.json
-```
-
-For d=5 on the current Emerald dump, native patch selection fails because the required surface-code interaction graph is not present. Use `calibration_routed_layout` for the d=5 baseline config.
-
-## QPU Patch Calibration
-
-The selector accepts either:
-
-- template calibration files like `archive/configs/old_yaml/qpu_patch_calibration_example.yaml`,
-- the real IQM observation-set JSON files in this directory.
-
-For template files, it uses:
-
-- qubit `row` / `col` coordinates,
-- Qiskit hardware `index`,
-- per-qubit errors,
-- native couplers and their two-qubit errors.
-
-For IQM observation dumps, it extracts:
-
-- one-qubit PRX error from PRX fidelity records, with Clifford fidelity as fallback,
-- measurement error from SSRO records,
-- QND failure from QND records,
-- idle error from T2 echo or T2 records, assuming a 1 us round for scoring,
-- CZ error from IRB CZ fidelity when present, otherwise RB CZ fidelity,
-- native couplers from two-qubit records.
-
-Reset errors are currently left at `0.0` in mapping scores; direct reset calibration should be added when available.
-
-`calibration_best_patch` chooses the lowest-score native region for the generated surface-code interaction graph.
-
-`calibration_routed_layout` chooses a low-cost layout even when some code interactions need routing. Current offline d=5 Emerald check:
+For sweeps:
 
 ```text
-49 circuit qubits mapped
-excluded bad qubits: QB9, QB25, QB41, QB46, QB47
-50 / 80 unique code interactions are native
-30 / 80 require routing
-max hardware graph route distance: 5
+results/<experiment>_rounds_sweep/<timestamp>/
 ```
