@@ -82,6 +82,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
 
     for (basis, circuit), raw in zip(prepared_basis, raws):
         syndromes = extract_detection_events(circuit, raw)
+        _detection_events, _observable_flips, syndrome_info = syndromes
         decoded = _run_decoder(config["decoder"], circuit, syndromes)
 
         _predicted, _failures, ler, uncertainty, decoder_info = decoded
@@ -91,8 +92,15 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
             "uncertainty": uncertainty,
             "logical_failures": decoder_info["logical_failures"],
             "shots": decoder_info["shots"],
+            "mean_detector_firing_rate": syndrome_info["mean_detector_firing_rate"],
+            "max_detector_firing_rate": syndrome_info["max_detector_firing_rate"],
+            "mean_syndrome_weight": syndrome_info["mean_syndrome_weight"],
             "decoder_info": decoder_info,
         }
+        if "original_shots" in decoder_info:
+            metrics["original_shots"] = decoder_info["original_shots"]
+            metrics["kept_shots"] = decoder_info.get("kept_shots", decoder_info["shots"])
+            metrics["postselection_fraction"] = decoder_info.get("postselection_fraction", 1.0)
         rounds = int(config["code"].get("rounds", 1))
         if rounds > 1:
             per_round_ler, per_round_uncertainty = _per_round_ler(ler, uncertainty, rounds)

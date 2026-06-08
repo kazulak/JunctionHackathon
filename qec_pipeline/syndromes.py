@@ -34,6 +34,7 @@ def extract_detection_events(
         "max_syndrome_weight": int(result["syndrome_weight_per_shot"].max()),
         "detector_firing_rate": result["detector_firing_rate"],
         "mean_detector_firing_rate": float(result["detector_firing_rate"].mean()),
+        "max_detector_firing_rate": float(result["detector_firing_rate"].max()),
         "observable_flip_rate": result["obs_flips"].mean(axis=0),
     }
 

@@ -82,6 +82,12 @@ def run_rounds_sweep(
                     ),
                     "logical_failures": int(metrics["logical_failures"]),
                     "shots": int(metrics["shots"]),
+                    "mean_detector_firing_rate": metrics.get("mean_detector_firing_rate"),
+                    "max_detector_firing_rate": metrics.get("max_detector_firing_rate"),
+                    "mean_syndrome_weight": metrics.get("mean_syndrome_weight"),
+                    "original_shots": metrics.get("original_shots", metrics["shots"]),
+                    "kept_shots": metrics.get("kept_shots", metrics["shots"]),
+                    "postselection_fraction": metrics.get("postselection_fraction", 1.0),
                     "run_dir": str(run_dir),
                     "notes": "; ".join(notes),
                 }
@@ -152,6 +158,7 @@ def _run_iqm_rounds_sweep_batch(
         basis = job["basis"]
         circuit = job["circuit"]
         syndromes = extract_detection_events(circuit, raw)
+        _detection_events, _observable_flips, syndrome_info = syndromes
         decoded = get_decoder(job["decoder"]["name"])(job["decoder"], circuit, syndromes)
         _predicted, _failures, ler, uncertainty, decoder_info = decoded
         metrics = {
@@ -160,8 +167,15 @@ def _run_iqm_rounds_sweep_batch(
             "uncertainty": uncertainty,
             "logical_failures": decoder_info["logical_failures"],
             "shots": decoder_info["shots"],
+            "mean_detector_firing_rate": syndrome_info["mean_detector_firing_rate"],
+            "max_detector_firing_rate": syndrome_info["max_detector_firing_rate"],
+            "mean_syndrome_weight": syndrome_info["mean_syndrome_weight"],
             "decoder_info": decoder_info,
         }
+        if "original_shots" in decoder_info:
+            metrics["original_shots"] = decoder_info["original_shots"]
+            metrics["kept_shots"] = decoder_info.get("kept_shots", decoder_info["shots"])
+            metrics["postselection_fraction"] = decoder_info.get("postselection_fraction", 1.0)
         if group["rounds"] > 1:
             per_round_ler, per_round_uncertainty = _per_round_ler(
                 ler,
@@ -193,6 +207,12 @@ def _run_iqm_rounds_sweep_batch(
                 ),
                 "logical_failures": int(metrics["logical_failures"]),
                 "shots": int(metrics["shots"]),
+                "mean_detector_firing_rate": metrics.get("mean_detector_firing_rate"),
+                "max_detector_firing_rate": metrics.get("max_detector_firing_rate"),
+                "mean_syndrome_weight": metrics.get("mean_syndrome_weight"),
+                "original_shots": metrics.get("original_shots", metrics["shots"]),
+                "kept_shots": metrics.get("kept_shots", metrics["shots"]),
+                "postselection_fraction": metrics.get("postselection_fraction", 1.0),
                 "run_dir": str(group["run_dir"]),
                 "notes": "; ".join(group["notes"]),
             }
@@ -226,6 +246,12 @@ def _write_sweep_outputs(
         "logical_error_per_round_uncertainty",
         "logical_failures",
         "shots",
+        "mean_detector_firing_rate",
+        "max_detector_firing_rate",
+        "mean_syndrome_weight",
+        "original_shots",
+        "kept_shots",
+        "postselection_fraction",
         "run_dir",
         "notes",
     ]
@@ -250,6 +276,8 @@ def _write_sweep_outputs(
 
     plot_path = sweep_dir / "ler_vs_rounds.png"
     plot_ler_vs_rounds(rows, plot_path)
+    detector_plot_path = sweep_dir / "detector_rate_vs_rounds.png"
+    plot_detector_rate_vs_rounds(rows, detector_plot_path)
 
     summary_lines = [
         f"# Rounds Sweep: {base_config['experiment']['name']}",
@@ -258,17 +286,19 @@ def _write_sweep_outputs(
         f"- Results CSV: `{csv_path.name}`",
         f"- Results JSON: `{json_path.name}`",
         f"- Plot: `{plot_path.name}`",
+        f"- Detector-rate plot: `{detector_plot_path.name}`",
         "",
         "## Results",
         "",
-        "| Rounds | Basis | LER | Uncertainty | Per-round LER | Per-round uncertainty | Failures | Shots |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Rounds | Basis | LER | Uncertainty | Per-round LER | Mean detector rate | Kept fraction | Failures | Shots |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in rows:
         summary_lines.append(
             f"| {row['rounds']} | {row['basis']} | {row['ler']} | "
             f"{row['uncertainty']} | {row.get('logical_error_per_round', '')} | "
-            f"{row.get('logical_error_per_round_uncertainty', '')} | "
+            f"{row.get('mean_detector_firing_rate', '')} | "
+            f"{row.get('postselection_fraction', '')} | "
             f"{row['logical_failures']} | {row['shots']} |"
         )
     (sweep_dir / "summary.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
@@ -296,6 +326,37 @@ def plot_ler_vs_rounds(rows: list[dict[str, Any]], output_path: Path) -> None:
     ax.set_xlabel("Rounds")
     ax.set_ylabel("Logical error rate")
     ax.set_title("LER vs rounds")
+    ax.set_ylim(bottom=0.0, top=1.0)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=160)
+    plt.close(fig)
+
+
+def plot_detector_rate_vs_rounds(rows: list[dict[str, Any]], output_path: Path) -> None:
+    """Plot mean detector firing probability against rounds, one line per basis."""
+    rows_with_rates = [
+        row for row in rows if row.get("mean_detector_firing_rate") not in {None, ""}
+    ]
+    if not rows_with_rates:
+        return
+
+    bases = sorted({row["basis"] for row in rows_with_rates})
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+
+    for basis in bases:
+        basis_rows = sorted(
+            [row for row in rows_with_rates if row["basis"] == basis],
+            key=lambda row: row["rounds"],
+        )
+        xs = [row["rounds"] for row in basis_rows]
+        ys = [float(row["mean_detector_firing_rate"]) for row in basis_rows]
+        ax.plot(xs, ys, marker="o", label=basis)
+
+    ax.set_xlabel("Rounds")
+    ax.set_ylabel("Mean detector firing rate")
+    ax.set_title("Detector rate vs rounds")
     ax.set_ylim(bottom=0.0, top=1.0)
     ax.grid(True, alpha=0.3)
     ax.legend()

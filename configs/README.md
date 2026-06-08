@@ -19,6 +19,7 @@ python main.py --dry-run --print-config configs/sweep_d3_best_sim.yaml
 | `demo_stim_no_noise.yaml` | No-noise simulator smoke test. |
 | `sweep_d3_best_sim.yaml` | Main d3 calibrated simulator sweep config. |
 | `sweep_d3_postselected_sim.yaml` | D3 simulator with low-syndrome postselection. |
+| `sweep_d3_low_syndrome_sim.yaml` | D3 simulator with aggressive 25% low-syndrome postselection. |
 | `sim_iqm_emerald_surface_d3_calibrated.yaml` | Single d3 calibrated simulator run. |
 | `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator variant. |
 | `sim_iqm_emerald_surface_d5_calibrated.yaml` | D5 calibrated simulator with routed layout. |

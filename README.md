@@ -105,6 +105,7 @@ configs/sweep_d3_best_iqm.yaml
 ```
 
 Details: [configs/README.md](configs/README.md).
+Research workflow: [docs/RESEARCH_ROADMAP.md](docs/RESEARCH_ROADMAP.md).
 
 ## Main Modules
 
