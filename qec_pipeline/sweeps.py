@@ -190,7 +190,14 @@ def _run_iqm_rounds_sweep_batch(
 
         basis_run_dir = group["run_dir"] / basis
         basis_run_dir.mkdir(parents=True, exist_ok=False)
-        write_run_artifacts(basis_run_dir, circuit, raw, syndromes, metrics)
+        write_run_artifacts(
+            basis_run_dir,
+            circuit,
+            raw,
+            syndromes,
+            metrics,
+            group["config"]["artifacts"],
+        )
 
         group["basis_results"].append((basis, circuit, raw, syndromes, decoded, metrics))
         note = f"{basis}: LER {ler} +/- {uncertainty}"

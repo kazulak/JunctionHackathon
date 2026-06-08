@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from qec_pipeline.analysis.diagnostics import build_run_diagnostics
 from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
 
@@ -66,8 +68,10 @@ def write_run_artifacts(
     raw: tuple,
     syndromes: tuple,
     metrics: dict[str, Any],
+    artifacts: dict[str, Any] | None = None,
 ) -> None:
     """Write inspectable files for one basis run."""
+    artifacts = artifacts or {}
     stim_circuit, _detector_model, _measurement_order, circuit_info = circuit
     measurements, counts, raw_info = raw
     detection_events, observable_flips, syndrome_info = syndromes
@@ -105,6 +109,14 @@ def write_run_artifacts(
     _write_table_head(run_dir / "raw_measurements_head.csv", measurements, max_rows=10)
     _write_table_head(run_dir / "detection_events_head.csv", detection_events, max_rows=10)
     _write_table_head(run_dir / "observable_flips_head.csv", observable_flips, max_rows=10)
+    if bool(artifacts.get("save_raw_measurements", False)):
+        np.savez_compressed(run_dir / "raw_measurements.npz", measurements=measurements)
+    if bool(artifacts.get("save_syndromes", False)):
+        np.savez_compressed(
+            run_dir / "syndromes.npz",
+            detection_events=detection_events,
+            observable_flips=observable_flips,
+        )
 
 
 def _write_json(path: Path, data: object) -> None:

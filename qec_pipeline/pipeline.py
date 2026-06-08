@@ -112,7 +112,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
 
         basis_run_dir = run_dir / basis
         basis_run_dir.mkdir(parents=True, exist_ok=False)
-        write_run_artifacts(basis_run_dir, circuit, raw, syndromes, metrics)
+        write_run_artifacts(basis_run_dir, circuit, raw, syndromes, metrics, config["artifacts"])
 
         basis_results.append((basis, circuit, raw, syndromes, decoded, metrics))
         notes.append(f"{basis}: LER {ler} +/- {uncertainty}")

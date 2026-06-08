@@ -64,22 +64,40 @@ Postselection simulator experiment:
 python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
 ```
 
+Best combined reported-LER simulator experiment:
+
+```bash
+python scripts/sweep_rounds.py configs/sweep_d3_best_combined_sim.yaml --rounds 1 7 4
+```
+
+Full-shot decoder improvement experiment:
+
+```bash
+python scripts/sweep_rounds.py configs/sweep_d3_decoder_improvements_sim.yaml --rounds 1 7 4
+```
+
+Out-of-fold decoder validation:
+
+```bash
+python scripts/sweep_rounds.py configs/sweep_d3_decoder_kfold_sim.yaml --rounds 1 7 4
+```
+
 D5 calibrated simulator:
 
 ```bash
 python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d5_calibrated.yaml --rounds 1 5 3
 ```
 
-Only after a simulator result is worth checking, dry-run the hardware config:
+Only after a simulator result is worth checking, dry-run the best combined hardware config:
 
 ```bash
-python main.py --dry-run --print-config configs/sweep_d3_best_iqm.yaml
+python scripts/sweep_rounds.py configs/sweep_d3_best_combined_iqm.yaml --rounds 1 7 4 --dry-run
 ```
 
 Then run the IQM sweep:
 
 ```bash
-python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_best_combined_iqm.yaml --rounds 1 7 4
 ```
 
 IQM auth is loaded from `.env` or the shell environment. Do not commit `.env`.
@@ -98,6 +116,10 @@ The tests cover config loading, Stim-to-Qiskit translation, measurement conversi
 configs/demo_stim_no_noise.yaml
 configs/sweep_d3_best_sim.yaml
 configs/sweep_d3_postselected_sim.yaml
+configs/sweep_d3_best_combined_sim.yaml
+configs/sweep_d3_best_combined_iqm.yaml
+configs/sweep_d3_decoder_improvements_sim.yaml
+configs/sweep_d3_decoder_kfold_sim.yaml
 configs/sim_iqm_emerald_surface_d3_calibrated.yaml
 configs/sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml
 configs/sim_iqm_emerald_surface_d5_calibrated.yaml
@@ -144,6 +166,37 @@ rounds 5: memory_z 0.3670, memory_x 0.3580
 rounds 7: memory_z 0.4680, memory_x 0.4715
 ```
 
+Same-batch decoder candidate tuning looked better, 2000 shots:
+
+```text
+rounds 1: memory_z 0.0210, memory_x 0.0265
+rounds 3: memory_z 0.1645, memory_x 0.1995
+rounds 5: memory_z 0.3585, memory_x 0.3470
+rounds 7: memory_z 0.4585, memory_x 0.4605
+```
+
+But held-out and k-fold validation did not confirm the improvement. Treat same-batch decoder tuning as diagnostic only, not a deployable result.
+
+Recorded k-fold decoder validation, 2000 shots:
+
+```text
+rounds 1: memory_z 0.0210, memory_x 0.0265
+rounds 3: memory_z 0.1645, memory_x 0.2005
+rounds 5: memory_z 0.3640, memory_x 0.3550
+rounds 7: memory_z 0.4890, memory_x 0.4795
+```
+
+Best combined reported-LER simulator route, 2000 original shots:
+
+```text
+rounds 1: memory_z 0.0000, memory_x 0.0000
+rounds 3: memory_z 0.0650, memory_x 0.0697
+rounds 5: memory_z 0.2562, memory_x 0.2644
+rounds 7: memory_z 0.4239, memory_x 0.4463
+```
+
+This uses postselection and keeps about 25-56% of shots depending on round count.
+
 Recorded matching IQM hardware, 2000 shots:
 
 ```text
@@ -153,4 +206,4 @@ rounds 5: memory_z 0.4840, memory_x 0.4965
 rounds 7: memory_z 0.4720, memory_x 0.4825
 ```
 
-Treat this as the starting point, not the result. Next work should improve simulation behavior and decoder/noise assumptions before spending more QPU credits.
+Treat this as the starting point, not the result. For hardware, prefer the combined config if the goal is lowest reported LER; prefer the baseline config if the goal is full-shot comparison.

@@ -43,22 +43,38 @@ correlated two-qubit or burst errors
 6. Treat ZXXZ/code-family changes as second phase.
    - Do this after diagnostics, per-round fitting, and error-budget sweeps are stable.
 
-## Current Low-Cost Improvement Under Test
+## Current Low-Cost Improvements Under Test
 
-Low-syndrome postselection.
+Low-syndrome postselection, gated decoding, correlation-aware MWPM, and MWPM ensembles.
 
-This does not claim full QEC improvement because it discards shots. It is useful because it answers:
+Postselection does not claim full QEC improvement because it discards shots. It is useful because it answers:
 
 ```text
 Does the low-syndrome subset still contain correctable logical signal?
 ```
+
+Gated decoding keeps all shots. It tries no correction on low-syndrome shots and MWPM on the rest. This tests whether MWPM is over-correcting very clean syndrome records.
+
+Correlation-aware MWPM and ensemble decoding also keep all shots. These test whether the detector error model contains useful correlated-error information or whether several MWPM priors make different useful mistakes.
+
+Current conclusion:
+
+```text
+same-batch candidate tuning: looks better, but optimistic
+single holdout / k-fold: does not beat baseline
+```
+
+Do not spend QPU credits on adaptive decoder candidate selection until it improves out-of-fold in simulation.
 
 Run:
 
 ```bash
 python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
 python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
-python scripts/compare_sweeps.py baseline=<baseline_sweep_dir> postselected=<postselected_sweep_dir>
+python scripts/sweep_rounds.py configs/sweep_d3_gated_decoder_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_decoder_improvements_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_decoder_kfold_sim.yaml --rounds 1 7 4
+python scripts/compare_sweeps.py baseline=<baseline_sweep_dir> postselected=<postselected_sweep_dir> gated=<gated_sweep_dir> decoder_improved=<decoder_improved_sweep_dir> decoder_kfold=<decoder_kfold_sweep_dir>
 ```
 
 Next improvement after this:

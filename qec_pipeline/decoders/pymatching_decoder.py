@@ -57,10 +57,19 @@ def decode_detection_events(
     detector_model: stim.DetectorErrorModel,
     detection_events: np.ndarray,
     observable_flips: np.ndarray,
+    enable_correlations: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, float, float]:
     """Decode one batch with a supplied detector error model."""
-    matching = pymatching.Matching.from_detector_error_model(detector_model)
-    predicted_observables = _as_2d_bool(matching.decode_batch(detection_events))
+    matching = pymatching.Matching.from_detector_error_model(
+        detector_model,
+        enable_correlations=enable_correlations,
+    )
+    predicted_observables = _as_2d_bool(
+        matching.decode_batch(
+            detection_events,
+            enable_correlations=enable_correlations,
+        )
+    )
     observable_flips = _as_2d_bool(observable_flips)
 
     logical_failures_per_observable = np.logical_xor(predicted_observables, observable_flips)

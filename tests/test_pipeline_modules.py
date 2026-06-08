@@ -26,6 +26,7 @@ from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
 from qec_pipeline.decoders.ising_decoder import decode_with_ising
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
+from qec_pipeline.decoders.pymatching_auto_decoder import decode_with_pymatching_auto
 from qec_pipeline.decoders.pymatching_decoder import (
     detector_model_with_uniform_noise,
     decode_with_pymatching,
@@ -354,6 +355,136 @@ class DecoderTests(unittest.TestCase):
         self.assertEqual(rows[0]["ler"], 0.0)
         self.assertEqual(detector_model.num_detectors, 1)
 
+    def test_pymatching_auto_supports_full_shot_decoder_improvements(self) -> None:
+        stim_circuit = stim.Circuit(
+            """
+            X_ERROR(0.1) 0
+            M 0
+            DETECTOR rec[-1]
+            OBSERVABLE_INCLUDE(0) rec[-1]
+            """
+        )
+        detector_model = stim_circuit.detector_error_model(decompose_errors=True)
+        circuit = (
+            stim_circuit,
+            detector_model,
+            (0,),
+            {"basis": "unit", "num_observables": 1},
+        )
+        syndromes = (
+            np.array([[False], [True], [True]], dtype=bool),
+            np.array([False, True, True], dtype=bool),
+            {},
+        )
+
+        _predicted, failures, ler, _uncertainty, info = decode_with_pymatching_auto(
+            {
+                "name": "pymatching_auto",
+                "options": {
+                    "include_correlated_matching": True,
+                    "include_matching_ensembles": True,
+                    "gated_no_correction_quantiles": [0.5],
+                    "uniform_probabilities": [0.01, 0.1],
+                },
+            },
+            circuit,
+            syndromes,
+        )
+
+        candidate_names = {candidate["name"] for candidate in info["candidates"]}
+        self.assertIn("correlated_calibrated_or_configured", candidate_names)
+        self.assertIn("ensemble_all_mwpm", candidate_names)
+        self.assertEqual(info["postselection_fraction"], 1.0)
+        np.testing.assert_array_equal(failures, np.array([False, False, False], dtype=bool))
+        self.assertEqual(ler, 0.0)
+
+    def test_pymatching_auto_can_report_on_holdout_split(self) -> None:
+        stim_circuit = stim.Circuit(
+            """
+            X_ERROR(0.1) 0
+            M 0
+            DETECTOR rec[-1]
+            OBSERVABLE_INCLUDE(0) rec[-1]
+            """
+        )
+        detector_model = stim_circuit.detector_error_model(decompose_errors=True)
+        circuit = (
+            stim_circuit,
+            detector_model,
+            (0,),
+            {"basis": "unit", "num_observables": 1},
+        )
+        syndromes = (
+            np.array([[False], [True], [False], [True]], dtype=bool),
+            np.array([False, True, False, True], dtype=bool),
+            {},
+        )
+
+        _predicted, failures, _ler, _uncertainty, info = decode_with_pymatching_auto(
+            {
+                "name": "pymatching_auto",
+                "options": {
+                    "candidate_selection_mode": "holdout",
+                    "selection_fraction": 0.5,
+                    "selection_seed": 1,
+                    "include_correlated_matching": True,
+                    "uniform_probabilities": [0.01],
+                },
+            },
+            circuit,
+            syndromes,
+        )
+
+        self.assertEqual(info["candidate_selection"], "holdout")
+        self.assertEqual(info["selection_shots"], 2)
+        self.assertEqual(info["evaluation_shots"], 2)
+        self.assertEqual(info["shots"], 2)
+        self.assertEqual(len(failures), 2)
+        self.assertIn("selected_candidate_evaluation_ler", info)
+
+    def test_pymatching_auto_can_report_with_kfold_selection(self) -> None:
+        stim_circuit = stim.Circuit(
+            """
+            X_ERROR(0.1) 0
+            M 0
+            DETECTOR rec[-1]
+            OBSERVABLE_INCLUDE(0) rec[-1]
+            """
+        )
+        detector_model = stim_circuit.detector_error_model(decompose_errors=True)
+        circuit = (
+            stim_circuit,
+            detector_model,
+            (0,),
+            {"basis": "unit", "num_observables": 1},
+        )
+        syndromes = (
+            np.array([[False], [True], [False], [True], [False], [True]], dtype=bool),
+            np.array([False, True, False, True, False, True], dtype=bool),
+            {},
+        )
+
+        _predicted, failures, _ler, _uncertainty, info = decode_with_pymatching_auto(
+            {
+                "name": "pymatching_auto",
+                "options": {
+                    "candidate_selection_mode": "kfold",
+                    "candidate_selection_folds": 3,
+                    "selection_seed": 1,
+                    "include_correlated_matching": True,
+                    "uniform_probabilities": [0.01],
+                },
+            },
+            circuit,
+            syndromes,
+        )
+
+        self.assertEqual(info["candidate_selection"], "kfold")
+        self.assertEqual(info["candidate_selection_folds"], 3)
+        self.assertEqual(info["shots"], 6)
+        self.assertEqual(len(failures), 6)
+        self.assertEqual(len(info["fold_selected_candidates"]), 3)
+
     def test_placeholder_modules_fail_clearly(self) -> None:
         with self.assertRaisesRegex(NotImplementedError, "color-code"):
             build_color_code_circuit({}, {}, "memory_z")
@@ -392,13 +523,22 @@ class ReportingAndPipelineTests(unittest.TestCase):
             )
             metrics = {"basis": "unit", "ler": 0.0, "uncertainty": 0.0}
 
-            write_run_artifacts(run_dir, circuit, raw, syndromes, metrics)
+            write_run_artifacts(
+                run_dir,
+                circuit,
+                raw,
+                syndromes,
+                metrics,
+                {"save_raw_measurements": True, "save_syndromes": True},
+            )
 
             self.assertTrue((run_dir / "circuit.stim").exists())
             self.assertTrue((run_dir / "metrics.json").exists())
             self.assertTrue((run_dir / "counts.json").exists())
             self.assertTrue((run_dir / "qiskit_circuit.txt").exists())
             self.assertTrue((run_dir / "measurement_diagnostics.json").exists())
+            self.assertTrue((run_dir / "raw_measurements.npz").exists())
+            self.assertTrue((run_dir / "syndromes.npz").exists())
             metrics_json = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
             self.assertEqual(metrics_json["ler"], 0.0)
 
