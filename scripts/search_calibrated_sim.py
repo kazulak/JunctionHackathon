@@ -5,7 +5,6 @@ import copy
 import csv
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from qec_pipeline.artifacts import utc_timestamp
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.config import load_experiment_config
 from qec_pipeline.mapping import active_stim_to_dense, rank_calibration_best_patches
@@ -171,7 +171,7 @@ def _config_with_noise_options(
 
 
 def _make_search_dir(base_config: dict[str, Any], output_root: Path | None) -> Path:
-    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    timestamp = utc_timestamp()
     root = output_root or Path(base_config["artifacts"].get("root", "results"))
     search_dir = root / f"{base_config['experiment']['name']}_calibrated_search" / timestamp
     search_dir.mkdir(parents=True, exist_ok=False)

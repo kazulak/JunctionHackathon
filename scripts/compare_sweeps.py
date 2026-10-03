@@ -4,7 +4,7 @@ import argparse
 import csv
 import json
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -311,7 +311,7 @@ def _format_optional(value: Any) -> str:
 
 
 def _timestamp() -> str:
-    return datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%S_%fZ")
 
 
 if __name__ == "__main__":

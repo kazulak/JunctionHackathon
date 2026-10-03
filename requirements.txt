@@ -7,9 +7,9 @@ PyYAML==6.0.3
 PyMatching==2.4.0
 
 # Qiskit/IQM path. Aer is not used by the current pipeline.
-qiskit>=1.2.4,<3.0
+qiskit==2.1.2
 iqm-client[qiskit]==34.0.3
-iqm-qubit-selector
+iqm-qubit-selector==1.0.3
 
 # Analysis and plotting.
 networkx==3.6.1
@@ -19,6 +19,5 @@ matplotlib==3.10.9
 pylatexenc==2.10
 tqdm==4.68.1
 
-# Future GNN experiments.
-jax==0.7.1
-jaxlib==0.7.1
+# Dev tools: requirements-dev.txt
+# Future GNN experiments: requirements-gnn.txt
