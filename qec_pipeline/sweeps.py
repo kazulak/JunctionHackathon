@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import csv
 import json
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +12,7 @@ matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 
 from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
-from qec_pipeline.artifacts import prepare_run_directory
+from qec_pipeline.artifacts import prepare_run_directory, utc_timestamp
 from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_batch_backend
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
@@ -55,7 +54,7 @@ def run_rounds_sweep(
         return _run_iqm_rounds_sweep_batch(base_config, rounds, output_root)
 
     base_name = base_config["experiment"]["name"]
-    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    timestamp = utc_timestamp()
     root = output_root or Path(base_config["artifacts"].get("root", "results"))
     sweep_dir = root / f"{base_name}_rounds_sweep" / timestamp
     runs_root = sweep_dir / "runs"
@@ -104,7 +103,7 @@ def _run_iqm_rounds_sweep_batch(
 ) -> Path:
     """Submit all IQM sweep circuits in one batch before waiting for results."""
     base_name = base_config["experiment"]["name"]
-    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    timestamp = utc_timestamp()
     root = output_root or Path(base_config["artifacts"].get("root", "results"))
     sweep_dir = root / f"{base_name}_rounds_sweep" / timestamp
     runs_root = sweep_dir / "runs"

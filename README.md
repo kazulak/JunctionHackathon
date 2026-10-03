@@ -42,7 +42,10 @@ results/                   ignored generated outputs
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt   # tests + lint
 ```
+
+Optional GNN experiments: `requirements-gnn.txt`.
 
 ## Run
 
