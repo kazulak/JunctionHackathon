@@ -119,7 +119,7 @@ def detector_model_with_uniform_noise(
         if instruction.name in _SINGLE_PROBABILITY_NOISE and args:
             args = [float(probability)]
         rewritten.append(instruction.name, instruction.targets_copy(), args)
-    return rewritten.detector_error_model(decompose_errors=True)
+    return rewritten.detector_error_model(decompose_errors=True, approximate_disjoint_errors=True)
 
 
 def _as_2d_bool(array: object) -> np.ndarray:

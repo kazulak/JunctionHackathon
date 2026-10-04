@@ -7,17 +7,24 @@ from qiskit import QuantumCircuit
 def stim_to_qiskit_minimal(
     stim_circuit: stim.Circuit,
     omit_initial_resets: bool = False,
-    omit_repeated_resets: bool = False,
+    group_measurements: bool = True,
 ) -> tuple:
-    """Convert our generated Stim memory circuit to Qiskit.
+    """Convert a Stim memory circuit to Qiskit, instruction by instruction.
 
-    OUR ADDITION.
+    The Stim circuit is the single source of truth: the mid-circuit reset strategy
+    (see `qec_pipeline.codes.reset_strategies`) is already encoded in it, and this
+    converter only translates.
 
-    Why this exists:
-        The challenge-provided `surface_code.stim_to_qiskit` is useful, but the
-        current Stim-generated memory-X circuit contains X-basis instructions
-        such as `RX` and `MX`. This minimal converter supports those instructions
-        so the same baseline pipeline can run `basis: both`.
+    - `MR` / `MRX`: measure, then Qiskit `reset` for qubits used later. On IQM a
+      `reset` compiles to a *second* measurement plus a feedback pulse.
+    - `M` / `MX`: measure only.
+    - `CX rec[-k] q` (Stim classical control): an X on `q` conditioned on that
+      measurement result (`if_test`, IQM `cc_prx`).
+
+    With `group_measurements` (default) every measurement instruction is emitted as
+    one block between barriers. IQM multiplexes consecutive measurements into one
+    readout window only when no other operation on those qubits sits between them;
+    emitting `measure, reset, measure, reset, ...` serializes the readouts.
 
     Output:
         (qiskit_circuit, stim_to_dense, measurement_order)
@@ -39,11 +46,18 @@ def stim_to_qiskit_minimal(
     qiskit_circuit = QuantumCircuit(len(all_stim_qubits), stim_circuit.num_measurements)
 
     measurement_index = 0
-    measurement_order = []
+    measurement_order: list[int] = []
 
-    for instruction_index, instruction in enumerate(flat):
+    instruction_index = -1
+    while instruction_index + 1 < len(flat):
+        instruction_index += 1
+        instruction = flat[instruction_index]
         name = instruction.name
         if name in _STIM_SKIP:
+            continue
+
+        if name in {"CX", "CZ"}:
+            _two_qubit_or_controlled(qiskit_circuit, instruction, stim_to_dense, measurement_index)
             continue
 
         targets = _qubit_targets(instruction)
@@ -72,55 +86,28 @@ def stim_to_qiskit_minimal(
             for qubit in dense_targets:
                 qiskit_circuit.z(qubit)
 
-        elif name == "CX":
-            _require_even_targets(name, dense_targets)
-            for i in range(0, len(dense_targets), 2):
-                qiskit_circuit.cx(dense_targets[i], dense_targets[i + 1])
-
-        elif name == "CZ":
-            _require_even_targets(name, dense_targets)
-            for i in range(0, len(dense_targets), 2):
-                qiskit_circuit.cz(dense_targets[i], dense_targets[i + 1])
-
-        elif name == "M":
-            measurement_index = _measure_z(
+        elif name in {"M", "MX", "MR", "MRX"}:
+            # Merge immediately following measurements of the same kind (the noise model
+            # emits one instruction per qubit) so they form one multiplexed readout block.
+            while (
+                instruction_index + 1 < len(flat)
+                and flat[instruction_index + 1].name == name
+                and not set(_qubit_targets(flat[instruction_index + 1])) & set(targets)
+            ):
+                instruction_index += 1
+                targets = targets + _qubit_targets(flat[instruction_index])
+            dense_targets = [stim_to_dense[target] for target in targets]
+            measurement_index = _measurement_block(
                 qiskit_circuit,
                 targets,
                 dense_targets,
-                measurement_index,
-                measurement_order,
+                basis="x" if name in {"MX", "MRX"} else "z",
+                reset=name in {"MR", "MRX"},
+                measurement_index=measurement_index,
+                measurement_order=measurement_order,
+                future_qubits=future_qubits[instruction_index],
+                group_measurements=group_measurements,
             )
-
-        elif name == "MX":
-            measurement_index = _measure_x(
-                qiskit_circuit,
-                targets,
-                dense_targets,
-                measurement_index,
-                measurement_order,
-                future_qubits[instruction_index],
-            )
-
-        elif name == "MR":
-            for stim_qubit, dense_qubit in zip(targets, dense_targets, strict=True):
-                qiskit_circuit.measure(dense_qubit, measurement_index)
-                measurement_order.append(stim_qubit)
-                measurement_index += 1
-                if stim_qubit in future_qubits[instruction_index] and not omit_repeated_resets:
-                    qiskit_circuit.reset(dense_qubit)
-
-        elif name == "MRX":
-            for stim_qubit, dense_qubit in zip(targets, dense_targets, strict=True):
-                qiskit_circuit.h(dense_qubit)
-                qiskit_circuit.measure(dense_qubit, measurement_index)
-                measurement_order.append(stim_qubit)
-                measurement_index += 1
-                if stim_qubit in future_qubits[instruction_index]:
-                    if omit_repeated_resets:
-                        qiskit_circuit.h(dense_qubit)
-                    else:
-                        qiskit_circuit.reset(dense_qubit)
-                        qiskit_circuit.h(dense_qubit)
 
         else:
             raise NotImplementedError(f"Stim instruction not supported in Qiskit converter: {name}")
@@ -132,6 +119,74 @@ def stim_to_qiskit_minimal(
         )
 
     return qiskit_circuit, stim_to_dense, measurement_order
+
+
+def _two_qubit_or_controlled(
+    qiskit_circuit: QuantumCircuit,
+    instruction: stim.CircuitInstruction,
+    stim_to_dense: dict[int, int],
+    measurement_index: int,
+) -> None:
+    targets = instruction.targets_copy()
+    if len(targets) % 2 != 0:
+        raise ValueError(f"Stim instruction {instruction.name} requires an even number of targets")
+    for index in range(0, len(targets), 2):
+        control, target = targets[index], targets[index + 1]
+        if control.is_measurement_record_target:
+            if instruction.name != "CX" or not target.is_qubit_target:
+                raise NotImplementedError(
+                    "Only classically controlled X (Stim `CX rec[-k] q`) is supported; IQM can "
+                    f"condition only X-type rotations. Got: {instruction}"
+                )
+            clbit = qiskit_circuit.clbits[measurement_index + control.value]
+            with qiskit_circuit.if_test((clbit, 1)):
+                qiskit_circuit.x(stim_to_dense[target.value])
+            continue
+        if not (control.is_qubit_target and target.is_qubit_target):
+            raise NotImplementedError(f"Unsupported targets in {instruction}")
+        if instruction.name == "CX":
+            qiskit_circuit.cx(stim_to_dense[control.value], stim_to_dense[target.value])
+        else:
+            qiskit_circuit.cz(stim_to_dense[control.value], stim_to_dense[target.value])
+
+
+def _measurement_block(
+    qiskit_circuit: QuantumCircuit,
+    stim_targets: list[int],
+    dense_targets: list[int],
+    basis: str,
+    reset: bool,
+    measurement_index: int,
+    measurement_order: list[int],
+    future_qubits: set[int],
+    group_measurements: bool,
+) -> int:
+    """Measure all targets of one Stim instruction as a single (multiplexable) block."""
+    if len(set(stim_targets)) != len(stim_targets):
+        raise NotImplementedError("Repeated targets inside one measurement instruction are not supported")
+
+    if basis == "x":
+        for qubit in dense_targets:
+            qiskit_circuit.h(qubit)
+    if group_measurements:
+        qiskit_circuit.barrier(dense_targets)
+    for stim_qubit, dense_qubit in zip(stim_targets, dense_targets, strict=True):
+        qiskit_circuit.measure(dense_qubit, measurement_index)
+        measurement_order.append(stim_qubit)
+        measurement_index += 1
+    if group_measurements:
+        qiskit_circuit.barrier(dense_targets)
+
+    for stim_qubit, dense_qubit in zip(stim_targets, dense_targets, strict=True):
+        if stim_qubit not in future_qubits:
+            continue
+        if reset:
+            qiskit_circuit.reset(dense_qubit)
+        if basis == "x":
+            # MX leaves the measured X eigenstate and MRX leaves |+>; Qiskit's
+            # H + Z-measurement leaves a Z eigenstate, so rotate back.
+            qiskit_circuit.h(dense_qubit)
+    return measurement_index
 
 
 def _qubit_targets(instruction: stim.CircuitInstruction) -> list[int]:
@@ -146,11 +201,6 @@ def _qubit_targets(instruction: stim.CircuitInstruction) -> list[int]:
             )
         targets.append(target.value)
     return targets
-
-
-def _require_even_targets(name: str, dense_targets: list[int]) -> None:
-    if len(dense_targets) % 2 != 0:
-        raise ValueError(f"Stim instruction {name} requires an even number of qubit targets")
 
 
 def _future_executable_qubits(instructions: list[stim.CircuitInstruction]) -> list[set[int]]:
@@ -180,43 +230,6 @@ def _initial_reset_instruction_indices(instructions: list[stim.CircuitInstructio
             continue
         break
     return indices
-
-
-def _measure_x(
-    qiskit_circuit: QuantumCircuit,
-    stim_targets: list[int],
-    dense_targets: list[int],
-    measurement_index: int,
-    measurement_order: list[int],
-    future_qubits: set[int],
-) -> int:
-    for index, (stim_qubit, dense_qubit) in enumerate(zip(stim_targets, dense_targets, strict=True)):
-        qiskit_circuit.h(dense_qubit)
-        qiskit_circuit.measure(dense_qubit, measurement_index)
-        measurement_order.append(stim_qubit)
-        measurement_index += 1
-
-        # Stim's MX leaves the qubit in the measured X eigenstate. Qiskit's
-        # H+Z-measurement leaves it in the Z eigenstate, so restore only when
-        # later instructions can observe the post-measurement state.
-        if stim_qubit in future_qubits or stim_qubit in stim_targets[index + 1 :]:
-            qiskit_circuit.h(dense_qubit)
-
-    return measurement_index
-
-
-def _measure_z(
-    qiskit_circuit: QuantumCircuit,
-    stim_targets: list[int],
-    dense_targets: list[int],
-    measurement_index: int,
-    measurement_order: list[int],
-) -> int:
-    for stim_qubit, dense_qubit in zip(stim_targets, dense_targets, strict=True):
-        qiskit_circuit.measure(dense_qubit, measurement_index)
-        measurement_order.append(stim_qubit)
-        measurement_index += 1
-    return measurement_index
 
 
 _STIM_SKIP = frozenset(

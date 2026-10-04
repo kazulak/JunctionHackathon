@@ -44,7 +44,9 @@ def apply_iqm_calibration_noise(
         options=options,
     )
     noisy_circuit = noise_builder.noisy_copy(stim_circuit)
-    detector_model = noisy_circuit.detector_error_model(decompose_errors=True)
+    # PAULI_CHANNEL_1 idle noise needs approximate_disjoint_errors: Stim then treats the
+    # disjoint X/Y/Z cases as independent, which is accurate for small probabilities.
+    detector_model = noisy_circuit.detector_error_model(decompose_errors=True, approximate_disjoint_errors=True)
 
     info = dict(circuit_info)
     info["noise_model"] = "iqm_calibration"
@@ -111,12 +113,17 @@ class _IqmNoiseBuilder:
         self.from_iqm_observations = hardware.get("source_schema") == "iqm_observation_set"
         self.rb_to_pauli = bool(options.get("rb_to_pauli", self.from_iqm_observations))
         self.round_duration_s = float(options.get("round_duration_s", DEFAULT_ROUND_DURATION_S))
+        # Ramsey T2 applies to idling without dynamical decoupling; use "echo" when DD is on.
+        self.idle_t2 = str(options.get("idle_t2", "ramsey"))
+        if self.idle_t2 not in {"ramsey", "echo"}:
+            raise ValueError("noise.options.idle_t2 must be 'ramsey' or 'echo'")
         default_idle_model = "pauli_twirl" if self.from_iqm_observations else "depolarize"
         self.idle_model = str(options.get("idle_model", default_idle_model))
         self.error_scales = {
             "one_qubit": float(options.get("one_qubit_scale", 1.0)),
             "two_qubit": float(options.get("two_qubit_scale", 1.0)),
             "measurement": float(options.get("measurement_scale", 1.0)),
+            "measurement_terminal": float(options.get("measurement_scale", 1.0)),
             "reset": float(options.get("reset_scale", 1.0)),
             "idle": float(options.get("idle_scale", 1.0)),
             "qnd": float(options.get("qnd_scale", 1.0)),
@@ -130,22 +137,19 @@ class _IqmNoiseBuilder:
             name = instruction.name
             targets = _qubit_targets(instruction)
 
-            if name in {"M", "MR"}:
-                self._append_measurement_noise(noisy, targets, basis="z")
-                noisy.append(instruction.name, instruction.targets_copy(), instruction.gate_args_copy())
-                if name == "MR":
-                    self._append_reset_noise(noisy, targets, basis="z")
+            if name in {"M", "MR", "MX", "MRX"}:
+                basis = "x" if name in {"MX", "MRX"} else "z"
+                self._append_noisy_measurement(noisy, name, targets, used_later[index])
+                if name in {"MR", "MRX"}:
+                    self._append_reset_noise(noisy, targets, basis=basis)
                 else:
-                    self._append_qnd_noise(noisy, targets, used_later[index], basis="z")
+                    self._append_qnd_noise(noisy, targets, used_later[index], basis=basis)
                 continue
 
-            if name in {"MX", "MRX"}:
-                self._append_measurement_noise(noisy, targets, basis="x")
+            if name == "CX" and _is_classically_controlled(instruction):
+                # Feed-forward reset: a feedback-conditioned single-qubit pulse (IQM cc_prx).
                 noisy.append(instruction.name, instruction.targets_copy(), instruction.gate_args_copy())
-                if name == "MRX":
-                    self._append_reset_noise(noisy, targets, basis="x")
-                else:
-                    self._append_qnd_noise(noisy, targets, used_later[index], basis="x")
+                self._append_one_qubit_noise(noisy, targets)
                 continue
 
             noisy.append(instruction.name, instruction.targets_copy(), instruction.gate_args_copy())
@@ -171,6 +175,7 @@ class _IqmNoiseBuilder:
             "operation_counts": self.operation_counts,
             "idle_tick_fraction": self.idle_tick_fraction,
             "idle_model": self.idle_model,
+            "idle_t2": self.idle_t2,
             "round_duration_s": self.round_duration_s,
             "rb_to_pauli": self.rb_to_pauli,
             "reset_error_available": not self.from_iqm_observations,
@@ -179,6 +184,7 @@ class _IqmNoiseBuilder:
             "error_scales": self.error_scales,
             "one_qubit_error": _stats(self._qubit_error_values("one_qubit")),
             "measurement_error": _stats(self._qubit_error_values("measurement")),
+            "measurement_terminal_error": _stats(self._qubit_error_values("measurement_terminal")),
             "qnd_error": _stats(self._qubit_error_values("qnd")),
             "idle_error_per_round": _stats(
                 [sum(self._idle_pauli_per_round(stim_qubit)) for stim_qubit in self.active_stim_qubits]
@@ -210,17 +216,28 @@ class _IqmNoiseBuilder:
         limit = 0.75 if kind == "one_qubit" else 15.0 / 16.0
         return min(infidelity * RB_TO_PAULI[kind], limit)
 
-    def _append_measurement_noise(
+    def _append_noisy_measurement(
         self,
         circuit: stim.Circuit,
+        name: str,
         stim_qubits: list[int],
-        basis: str,
+        used_later: set[int],
     ) -> None:
-        gate = "X_ERROR" if basis == "z" else "Z_ERROR"
+        """Emit one measurement per qubit with a *classical* readout flip, Stim `M(p)`.
+
+        A classification error flips only the recorded bit, not the qubit. With
+        unconditional reset this is equivalent to a flip before the measurement, but
+        with feed-forward or no reset the two differ (Gehér et al., arXiv:2408.00758).
+        Mid-circuit readouts use the `measure` calibration; final readouts of qubits
+        that are not used again use `measure_fidelity` (`measurement_terminal`).
+        The converter merges these consecutive per-qubit measurements back into one
+        multiplexed readout block.
+        """
         for stim_qubit in stim_qubits:
-            probability = self._qubit_error(stim_qubit, "measurement")
+            kind = "measurement" if stim_qubit in used_later else "measurement_terminal"
+            probability = self._qubit_error(stim_qubit, kind)
+            circuit.append(name, [stim_qubit], [probability] if probability else [])
             if probability:
-                circuit.append(gate, [stim_qubit], probability)
                 self.operation_counts["measurement_noise"] += 1
 
     def _append_qnd_noise(
@@ -276,7 +293,10 @@ class _IqmNoiseBuilder:
         if self.idle_model == "pauli_twirl":
             times = self.hardware["qubits"][label].get("calibration", {}) or {}
             t1 = times.get("t1_time")
-            t2 = times.get("t2_echo_time") or times.get("t2_time")
+            if self.idle_t2 == "echo":
+                t2 = times.get("t2_echo_time") or times.get("t2_time")
+            else:
+                t2 = times.get("t2_time") or times.get("t2_echo_time")
             if t1 and t2:
                 px, py, pz = _pauli_twirl_idle(self.round_duration_s, t1, t2)
                 return scale * px, scale * py, scale * pz
@@ -290,6 +310,8 @@ class _IqmNoiseBuilder:
             return 0.0
         errors = self.hardware["qubits"][label]["errors"]
         scale = self.error_scales.get(name, 1.0)
+        if name == "measurement_terminal" and name not in errors:
+            name = "measurement"  # calibrations without a separate terminal readout
         return _clamp_probability(scale * float(errors.get(name, 0.0)))
 
     def _two_qubit_error(self, left_stim: int, right_stim: int) -> float:
@@ -339,6 +361,10 @@ def _pauli_twirl_idle(duration: float, t1: float, t2: float) -> tuple[float, flo
     px = py = decay_1 / 4.0
     pz = max(0.0, decay_2 / 2.0 - decay_1 / 4.0)
     return float(px), float(py), float(pz)
+
+
+def _is_classically_controlled(instruction: stim.CircuitInstruction) -> bool:
+    return any(target.is_measurement_record_target for target in instruction.targets_copy())
 
 
 def _qubits_used_later(instructions: list[stim.CircuitInstruction]) -> list[set[int]]:

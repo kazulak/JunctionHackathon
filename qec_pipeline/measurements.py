@@ -49,27 +49,6 @@ def _bitstring_to_row(bitstring: str, num_measurements: int) -> np.ndarray:
     return np.array([bit == "1" for bit in bits_by_clbit[:num_measurements]], dtype=bool)
 
 
-def virtualize_omitted_repeated_resets(
-    measurements: np.ndarray,
-    measurement_order: list[int] | tuple[int, ...],
-) -> np.ndarray:
-    """Convert no-reset repeated ancilla records into reset-style records.
-
-    If an ancilla is measured and reused without an active reset, its next raw
-    measurement includes the previous measured state. XOR with the previous
-    physical measurement gives the virtual result expected by the Stim circuit
-    that used `MR`.
-    """
-    result = measurements.copy()
-    previous_index_by_qubit = {}
-    for index, stim_qubit in enumerate(measurement_order):
-        previous_index = previous_index_by_qubit.get(stim_qubit)
-        if previous_index is not None:
-            result[:, index] = measurements[:, index] ^ measurements[:, previous_index]
-        previous_index_by_qubit[stim_qubit] = index
-    return result
-
-
 def measurement_order_from_stim_circuit(stim_circuit: stim.Circuit) -> list[int]:
     """Return the measured Stim qubit for each measurement-record index."""
     order = []

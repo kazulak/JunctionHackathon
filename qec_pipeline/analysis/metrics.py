@@ -13,7 +13,9 @@ import numpy as np
 from scipy.optimize import minimize
 
 _EPS_BOUNDS = (1e-9, 0.5 - 1e-9)
-_AMPLITUDE_BOUNDS = (1e-6, 1.0)
+# A > 1 is allowed: the first round has fewer error locations (time boundary), which
+# Google handles by fitting only from round 3 (arXiv:2207.06431, Suppl. XIII).
+_AMPLITUDE_BOUNDS = (1e-6, 2.0)
 
 
 def binomial_standard_error(rate: float, shots: int) -> float:
@@ -64,7 +66,8 @@ def fit_per_round_error(rows: list[dict[str, Any]]) -> dict[str, Any]:
     """Fit P(r) = (1 - A (1 - 2e)^r) / 2 to binomial counts by maximum likelihood.
 
     `rows` need `rounds`, `logical_failures`, and `shots`. The amplitude A absorbs
-    state-preparation and final-readout error, as in Google's surface-code analysis.
+    state-preparation, final-readout, and first-round boundary effects, as in Google's
+    surface-code analysis.
     Postselected rows are excluded because their kept fraction changes with r.
 
     Returns the fitted error per round, its 1-sigma uncertainty (inverse Hessian),

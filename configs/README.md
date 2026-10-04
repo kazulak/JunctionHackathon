@@ -23,6 +23,8 @@ python main.py --dry-run --print-config configs/sweep_d3_baseline_sim.yaml
 | Config | Purpose |
 | --- | --- |
 | `demo_stim_no_noise.yaml` | No-noise simulator smoke test. |
+| `hw_d3_noreset_dd_iqm.yaml` | **Recommended hardware config**: d3, no mid-circuit reset, grouped readout, IQM DD, active reset between shots, Oct 2026 calibration. Run `--preflight` first; see `docs/HARDWARE_RUNBOOK.md`. |
+| `hw_d3_noreset_dd_sim.yaml` | Simulator twin of the hardware config (prediction). |
 | `sweep_d3_baseline_sim.yaml` | Main d3 calibration-informed simulator sweep (noise fitted to r=1 hardware), plain calibrated MWPM decoder (renamed from `sweep_d3_best_sim.yaml`, which used in-sample best-of-N decoder selection). |
 | `sweep_d3_postselected_sim.yaml` | D3 simulator with low-syndrome postselection. |
 | `sweep_d3_best_combined_sim.yaml` | Best reported-LER simulator recipe: postselection plus full PyMatching candidate set. |

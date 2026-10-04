@@ -12,7 +12,6 @@ from qec_pipeline.conversion_checks import (
     sample_qiskit_measurements,
     validate_conversion_metadata,
 )
-from qec_pipeline.measurements import virtualize_omitted_repeated_resets
 from qec_pipeline.syndrome_extraction import extract_syndromes
 
 NO_NOISE = {"model": "no_noise", "parameters": {}}
@@ -76,13 +75,16 @@ class StimToQiskitConversionTests(unittest.TestCase):
             self.assertEqual(int(result["det_events"].sum()), 0)
             self.assertEqual(int(result["obs_flips"].sum()), 0)
 
-    def test_generated_no_reset_qiskit_samples_virtualize_to_no_syndromes(self) -> None:
+    def test_no_reset_circuit_runs_in_qiskit_with_two_round_detectors(self) -> None:
+        # Gehér et al. (arXiv:2408.00758): without reset, detectors compare outcomes two
+        # rounds apart. The Stim circuit encodes that, so raw Qiskit records decode directly.
         small_code = {
             "family": "surface_code",
             "distance": 3,
-            "rounds": 2,
+            "rounds": 3,
             "basis": "both",
             "reset_mode": "reset",
+            "mid_circuit_reset": "none",
         }
 
         for basis in ("memory_z", "memory_x"):
@@ -91,25 +93,44 @@ class StimToQiskitConversionTests(unittest.TestCase):
                 NO_NOISE,
                 basis,
             )
-            qiskit_circuit, _stim_to_dense, qiskit_measurement_order = stim_to_qiskit_minimal(
-                stim_circuit,
-                omit_initial_resets=True,
-                omit_repeated_resets=True,
-            )
+            qiskit_circuit, _stim_to_dense, _order = stim_to_qiskit_minimal(stim_circuit, omit_initial_resets=True)
 
-            physical_measurements = sample_qiskit_measurements(qiskit_circuit, shots=8, seed=5)
-            virtual_measurements = virtualize_omitted_repeated_resets(
-                physical_measurements,
-                qiskit_measurement_order,
-            )
-            result = extract_syndromes(
-                virtual_measurements,
-                stim_circuit,
-            )
+            measurements = sample_qiskit_measurements(qiskit_circuit, shots=8, seed=5)
+            result = extract_syndromes(measurements, stim_circuit)
 
             self.assertEqual(qiskit_circuit.count_ops().get("reset", 0), 0)
             self.assertEqual(int(result["det_events"].sum()), 0)
             self.assertEqual(int(result["obs_flips"].sum()), 0)
+
+    def test_feedforward_reset_becomes_conditional_x_on_the_measured_bit(self) -> None:
+        stim_circuit, *_ = build_surface_code_circuit(
+            {"family": "surface_code", "distance": 3, "rounds": 3, "mid_circuit_reset": "feedforward"},
+            NO_NOISE,
+            "memory_z",
+        )
+        qiskit_circuit, stim_to_dense, _order = stim_to_qiskit_minimal(stim_circuit)
+
+        ops = qiskit_circuit.count_ops()
+        self.assertEqual(ops.get("if_else", 0), 8 * 2)  # 8 ancillas, conditional flip after rounds 1-2
+        self.assertEqual(ops.get("reset", 0), 17)  # only the initial resets
+        for item in qiskit_circuit.data:
+            if item.operation.name != "if_else":
+                continue
+            clbit, value = item.operation.condition
+            self.assertEqual(value, 1)
+            # the condition bit was written by a measurement of the same qubit as the flip
+            writer = max(
+                index
+                for index, previous in enumerate(qiskit_circuit.data)
+                if previous.operation.name == "measure" and previous.clbits[0] == clbit
+            )
+            self.assertEqual(qiskit_circuit.data[writer].qubits, item.qubits)
+
+    def test_measurements_are_grouped_between_barriers(self) -> None:
+        stim_circuit = stim.Circuit("R 0 1 2\nM(0.01) 0\nM(0.02) 1\nM(0.03) 2")
+        qiskit_circuit, *_ = stim_to_qiskit_minimal(stim_circuit)
+        names = [item.operation.name for item in qiskit_circuit.data]
+        self.assertEqual(names[-5:], ["barrier", "measure", "measure", "measure", "barrier"])
 
     def test_z_measure_reset_matches_stim(self) -> None:
         stim_circuit = stim.Circuit(

@@ -5,6 +5,7 @@ from typing import Any
 
 import stim
 
+from qec_pipeline.codes.reset_strategies import apply_mid_circuit_reset
 from qec_pipeline.measurements import measurement_order_from_stim_circuit
 
 
@@ -72,6 +73,8 @@ def build_surface_code_circuit(
     )
 
     _validate_generated_circuit(stim_circuit)
+    mid_circuit_reset = str(code.get("mid_circuit_reset", "reset"))
+    stim_circuit = apply_mid_circuit_reset(stim_circuit, mid_circuit_reset)
 
     detector_model = stim_circuit.detector_error_model(decompose_errors=True)
 
@@ -85,6 +88,7 @@ def build_surface_code_circuit(
 
         "requested_reset_mode": requested_reset_mode,
         "implemented_reset_mode": "active_reset",
+        "mid_circuit_reset": mid_circuit_reset,
         "forced_active_reset": force_active_reset,
 
         "num_qubits": stim_circuit.num_qubits,

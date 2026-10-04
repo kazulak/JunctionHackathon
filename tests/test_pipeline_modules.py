@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
+import pymatching
 import stim
 
 from qec_pipeline.analysis.diagnostics import build_run_diagnostics
@@ -18,6 +19,7 @@ from qec_pipeline.artifacts import utc_timestamp
 from qec_pipeline.backends import get_backend_runner
 from qec_pipeline.backends.iqm_hardware import (
     _check_layout_matches_mapping,
+    circuit_compilation_options,
     physical_loci,
     run_iqm_hardware_batch_backend,
 )
@@ -41,6 +43,7 @@ from qec_pipeline.decoders.pymatching_decoder import (
     detector_model_with_uniform_noise,
     pymatching_noise_sweep,
 )
+from qec_pipeline.decoders.pymatching_pij_decoder import estimate_edge_probabilities
 from qec_pipeline.mapping import parse_hardware_calibration
 from qec_pipeline.mapping.patch_selection import (
     rank_calibration_best_patches,
@@ -52,12 +55,11 @@ from qec_pipeline.mapping.patch_selection import (
 from qec_pipeline.measurements import (
     counts_to_measurement_array,
     memory_to_measurement_array,
-    virtualize_omitted_repeated_resets,
 )
 from qec_pipeline.noise.iqm_calibration import _IqmNoiseBuilder
 from qec_pipeline.pipeline import build_basis_metrics, describe_pipeline, run_pipeline
 from qec_pipeline.provenance import uuid7_time
-from qec_pipeline.sweeps import pin_sweep_mapping, round_values, run_rounds_sweep
+from qec_pipeline.sweeps import pin_sweep_mapping, redecode_sweep, round_values, run_rounds_sweep
 from qec_pipeline.syndrome_extraction import extract_syndromes
 from qec_pipeline.syndromes import extract_detection_events
 
@@ -128,29 +130,6 @@ class MeasurementTests(unittest.TestCase):
     def test_counts_to_measurement_array_checks_shot_count(self) -> None:
         with self.assertRaisesRegex(ValueError, "expected 3"):
             counts_to_measurement_array({"0": 2}, num_measurements=1, total_shots=3)
-
-    def test_virtualize_omitted_repeated_resets_xors_previous_measurement(self) -> None:
-        measurements = np.array(
-            [
-                [False, True, True, True],
-                [True, True, False, False],
-            ],
-            dtype=bool,
-        )
-
-        virtual = virtualize_omitted_repeated_resets(
-            measurements,
-            measurement_order=[2, 5, 2, 5],
-        )
-
-        expected = np.array(
-            [
-                [False, True, True, False],
-                [True, True, True, True],
-            ],
-            dtype=bool,
-        )
-        np.testing.assert_array_equal(virtual, expected)
 
 
 class CircuitAndBackendTests(unittest.TestCase):
@@ -1095,19 +1074,44 @@ class NoiseModelTests(unittest.TestCase):
 
     def test_qnd_flip_only_when_measured_qubit_is_reused_without_reset(self) -> None:
         reused = self._noisy("M 0\nH 0\nM 0")
-        # readout flip before each M (0.02) plus one QND flip (0.1) after the first M only
-        flips = sorted(args[0] for args in self._args(reused, "X_ERROR"))
-        self.assertEqual(len(flips), 3)
-        for actual, expected in zip(flips, [0.02, 0.02, 0.1], strict=True):
-            self.assertAlmostEqual(actual, expected)
-
-        # MR resets the qubit, so the non-QND post-measurement state never matters:
-        # only the two readout flips remain (IQM dumps have no reset error).
-        reset_mode = self._noisy("MR 0\nH 0\nM 0")
-        reset_flips = [args[0] for args in self._args(reset_mode, "X_ERROR")]
-        self.assertEqual(len(reset_flips), 2)
-        for actual in reset_flips:
+        # Readout is a classical flip on each measurement, M(0.02); the non-QND flip
+        # (0.1) acts on the qubit after the first M only, because it is reused.
+        readout = [args[0] for args in self._args(reused, "M")]
+        self.assertEqual(len(readout), 2)
+        for actual in readout:
             self.assertAlmostEqual(actual, 0.02)
+        qnd = [args[0] for args in self._args(reused, "X_ERROR")]
+        self.assertEqual(len(qnd), 1)
+        self.assertAlmostEqual(qnd[0], 0.1)
+
+        # MR resets the qubit, so the post-measurement state never matters.
+        reset_mode = self._noisy("MR 0\nH 0\nM 0")
+        self.assertEqual(self._args(reset_mode, "X_ERROR"), [])
+        self.assertAlmostEqual(self._args(reset_mode, "MR")[0][0], 0.02)
+
+    def test_terminal_and_mid_circuit_readout_use_their_own_calibration(self) -> None:
+        calibration = {
+            "dut_label": "fake_iqm",
+            "observations": list(self.CALIBRATION["observations"])
+            + [
+                {"dut_field": "metrics.ssro.measure_fidelity.shelved_constant.QB1.error_0_to_1", "value": 0.004},
+                {"dut_field": "metrics.ssro.measure_fidelity.shelved_constant.QB1.error_1_to_0", "value": 0.006},
+            ],
+        }
+        hardware = parse_hardware_calibration(calibration)
+        self.assertAlmostEqual(hardware["qubits"]["QB1"]["errors"]["measurement"], 0.02)
+        self.assertAlmostEqual(hardware["qubits"]["QB1"]["errors"]["measurement_terminal"], 0.005)
+        builder = _IqmNoiseBuilder(
+            hardware=hardware,
+            mapping_info={"stim_to_hardware": {"0": "QB1", "1": "QB2"}},
+            rounds=1,
+            num_ticks=1,
+            options={},
+        )
+        noisy = builder.noisy_copy(stim.Circuit("M 0\nH 0\nM 0"))
+        readout = [args[0] for args in self._args(noisy, "M")]
+        self.assertAlmostEqual(readout[0], 0.02)  # mid-circuit
+        self.assertAlmostEqual(readout[1], 0.005)  # terminal
 
     def test_fit_recovers_known_two_qubit_scale(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -1150,10 +1154,23 @@ class HardwarePathTests(unittest.TestCase):
             np.array([[True, False], [False, True], [True, True], [False, False]], dtype=bool),
         )
 
-    def test_dynamical_decoupling_request_fails_before_connecting(self) -> None:
-        backend = {"name": "iqm_hardware", "shots": 1, "options": {"dynamical_decoupling": True}}
-        with self.assertRaises(ValueError):
-            run_iqm_hardware_batch_backend(backend, [])
+    def test_moved_reset_options_fail_before_connecting(self) -> None:
+        for option in ("omit_repeated_resets", "mid_circuit_reset"):
+            backend = {"name": "iqm_hardware", "shots": 1, "options": {option: True}}
+            with self.assertRaises(ValueError):
+                run_iqm_hardware_batch_backend(backend, [])
+
+    def test_compilation_options_enable_active_reset_and_native_dd(self) -> None:
+        try:
+            from iqm.iqm_client import DDMode
+        except ImportError:
+            self.skipTest("IQM client is not installed")
+        options = circuit_compilation_options({"active_reset_cycles": 2, "dynamical_decoupling": True})
+        self.assertEqual(options.active_reset_cycles, 2)
+        self.assertEqual(options.dd_mode, DDMode.ENABLED)
+        default = circuit_compilation_options({})
+        self.assertIsNone(default.active_reset_cycles)
+        self.assertEqual(default.dd_mode, DDMode.DISABLED)
 
     def test_sweep_pins_one_layout_for_all_round_values(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1268,6 +1285,135 @@ class MidcircuitProbeTests(unittest.TestCase):
             )
             self.assertFalse(detections.any())
             self.assertFalse(observables.any())
+
+
+class ResetStrategyTests(unittest.TestCase):
+    """Mid-circuit reset strategies encoded in Stim (Gehér et al., arXiv:2408.00758)."""
+
+    @staticmethod
+    def _circuit(strategy: str, rounds: int = 5, basis: str = "memory_z") -> stim.Circuit:
+        code = {"family": "surface_code", "distance": 3, "rounds": rounds, "mid_circuit_reset": strategy}
+        return build_surface_code_circuit(code, NO_NOISE, basis)[0]
+
+    def test_all_strategies_have_deterministic_detectors(self) -> None:
+        for strategy in ["reset", "feedforward", "none"]:
+            for basis in ["memory_z", "memory_x"]:
+                for rounds in [1, 2, 4]:
+                    circuit = self._circuit(strategy, rounds, basis)
+                    circuit.detector_error_model()  # raises on non-deterministic detectors
+                    detections, observables = circuit.compile_detector_sampler(seed=1).sample(
+                        64, separate_observables=True
+                    )
+                    self.assertFalse(detections.any())
+                    self.assertFalse(observables.any())
+
+    def test_readout_classification_error_spans_two_rounds_without_unconditional_reset(self) -> None:
+        def readout_edge_gaps(strategy: str) -> set[float]:
+            circuit = stim.Circuit()
+            for instruction in self._circuit(strategy).flattened():
+                if instruction.name in {"M", "MR"}:
+                    circuit.append(instruction.name, instruction.targets_copy(), [0.01])
+                else:
+                    circuit.append(instruction)
+            coords = circuit.get_detector_coordinates()
+            gaps = set()
+            for error in circuit.detector_error_model(decompose_errors=True).flattened():
+                if error.type != "error":
+                    continue
+                dets = [t.val for t in error.targets_copy() if t.is_relative_detector_id()]
+                if len(dets) == 2 and coords[dets[0]][:2] == coords[dets[1]][:2]:
+                    gaps.add(abs(coords[dets[0]][2] - coords[dets[1]][2]))
+            return gaps
+
+        self.assertEqual(readout_edge_gaps("reset"), {1.0})
+        self.assertIn(2.0, readout_edge_gaps("feedforward"))
+        self.assertIn(2.0, readout_edge_gaps("none"))
+
+    def test_unknown_strategy_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            self._circuit("sometimes")
+
+
+class PijDecoderTests(unittest.TestCase):
+    """p_ij edge estimation from detection events (Google, Nature 595/614)."""
+
+    def test_edge_estimates_track_true_probabilities_and_fix_a_wrong_prior(self) -> None:
+        truth = stim.Circuit.generated(
+            "surface_code:rotated_memory_x",
+            distance=3,
+            rounds=3,
+            after_clifford_depolarization=0.006,
+            before_measure_flip_probability=0.01,
+        )
+        wrong = stim.Circuit.generated(
+            "surface_code:rotated_memory_x",
+            distance=3,
+            rounds=3,
+            after_clifford_depolarization=0.02,
+            before_measure_flip_probability=0.001,
+        )
+        detections, _observables = truth.compile_detector_sampler(seed=2).sample(60000, separate_observables=True)
+        prior = pymatching.Matching.from_detector_error_model(wrong.detector_error_model(decompose_errors=True))
+        estimates, summary = estimate_edge_probabilities(prior, detections)
+        exact = {
+            (a, b): data["error_probability"]
+            for a, b, data in pymatching.Matching.from_detector_error_model(
+                truth.detector_error_model(decompose_errors=True)
+            ).edges()
+        }
+        shared = [key for key in estimates if key in exact]
+        estimated_mean = np.mean([estimates[key] for key in shared])
+        exact_mean = np.mean([exact[key] for key in shared])
+        prior_mean = summary["mean_prior_probability"]
+        self.assertLess(abs(estimated_mean - exact_mean), 0.25 * exact_mean)
+        self.assertGreater(abs(prior_mean - exact_mean), abs(estimated_mean - exact_mean))
+
+    def test_pij_decoder_cross_fits_and_is_registered(self) -> None:
+        circuit_stim = stim.Circuit.generated(
+            "surface_code:rotated_memory_z", distance=3, rounds=3, after_clifford_depolarization=0.005
+        )
+        model = circuit_stim.detector_error_model(decompose_errors=True)
+        detections, observables = circuit_stim.compile_detector_sampler(seed=3).sample(4000, separate_observables=True)
+        circuit = (circuit_stim, model, (), {"num_observables": 1})
+        _p, failures, ler, _sigma, info = get_decoder("pymatching_pij")(
+            {"name": "pymatching_pij", "options": {"folds": 2}}, circuit, (detections, observables, {})
+        )
+        self.assertEqual(info["folds"], 2)
+        self.assertEqual(len(info["fold_summaries"]), 2)
+        self.assertEqual(info["fold_summaries"][0]["training_shots"], 2000)
+        self.assertEqual(len(failures), 4000)
+        self.assertLess(ler, 0.2)
+        with self.assertRaises(ValueError):
+            get_decoder("pymatching_pij")(
+                {"name": "pymatching_pij", "options": {"folds": 1}}, circuit, (detections, observables, {})
+            )
+
+    def test_redecode_sweep_reuses_saved_raw_measurements(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = {
+                "experiment": {"name": "unit_redecode", "description": "", "seed": 1},
+                "code": {
+                    "family": "surface_code",
+                    "distance": 3,
+                    "rounds": 1,
+                    "basis": "memory_z",
+                    "reset_mode": "reset",
+                },
+                "backend": {"name": "simulator", "shots": 200, "options": {"seed": 1}},
+                "noise": {
+                    "model": "simple_depolarizing",
+                    "parameters": {"one_qubit_error": 0.005, "measurement_error": 0.01},
+                },
+                "decoder": {"name": "pymatching", "options": {}},
+                "mapping": {"strategy": "none", "hardware_patch": None},
+                "artifacts": {"root": temp_dir, "save_raw_measurements": True},
+            }
+            sweep_dir = run_rounds_sweep(config, rounds=[1, 3], output_root=Path(temp_dir))
+            decoder = {"name": "pymatching_pij", "options": {"folds": 2}}
+            output = redecode_sweep(sweep_dir, decoder, Path(temp_dir) / "redo")
+            payload = json.loads((output / "sweep_results.json").read_text(encoding="utf-8"))
+            self.assertEqual(sorted(row["rounds"] for row in payload["rows"]), [1, 3])
+            self.assertTrue(all(row["shots"] == 200 for row in payload["rows"]))
 
 
 class ProvenanceTests(unittest.TestCase):
