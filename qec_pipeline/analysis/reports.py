@@ -109,7 +109,7 @@ def write_run_artifacts(
     if qiskit_circuit_text is not None:
         (run_dir / "qiskit_circuit.txt").write_text(qiskit_circuit_text, encoding="utf-8")
     if transpiled_circuit_text is not None:
-        (run_dir / "transpiled_circuit.txt").write_text(
+        (run_dir / "transpiled_circuit_virtual_order.txt").write_text(
             transpiled_circuit_text,
             encoding="utf-8",
         )

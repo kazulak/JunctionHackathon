@@ -18,6 +18,7 @@ from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_batch_backend
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.decoders import get_decoder
+from qec_pipeline.mapping import active_stim_to_dense, select_mapping_from_config
 from qec_pipeline.pipeline import basis_list, build_basis_metrics, run_pipeline
 from qec_pipeline.provenance import provenance_line, run_provenance
 from qec_pipeline.syndromes import extract_detection_events
@@ -51,7 +52,12 @@ def run_rounds_sweep(
     rounds: list[int],
     output_root: Path | None = None,
 ) -> Path:
-    """Run one pipeline job per round value and write CSV/JSON/plot summary."""
+    """Run one pipeline job per round value and write CSV/JSON/plot summary.
+
+    The qubit layout is selected once and pinned for every round value, so an
+    LER-vs-rounds curve never mixes different physical patches.
+    """
+    base_config = pin_sweep_mapping(base_config)
     if _use_iqm_batch_sweep(base_config):
         return _run_iqm_rounds_sweep_batch(base_config, rounds, output_root)
 
@@ -63,6 +69,7 @@ def run_rounds_sweep(
     sweep_dir.mkdir(parents=True, exist_ok=False)
 
     rows = []
+    layouts = []
     for rounds_value in rounds:
         config = copy.deepcopy(base_config)
         config["code"]["rounds"] = int(rounds_value)
@@ -70,11 +77,55 @@ def run_rounds_sweep(
         config["artifacts"]["root"] = str(runs_root)
 
         run_dir, basis_results, notes = run_pipeline(config)
-        for basis, _circuit, _raw, _syndromes, _decoded, metrics in basis_results:
+        for basis, circuit, _raw, _syndromes, _decoded, metrics in basis_results:
+            layouts.append(_layout_of(circuit))
             rows.append(_sweep_row(int(rounds_value), metrics, run_dir, notes))
 
+    _check_single_layout(layouts)
     _write_sweep_outputs(sweep_dir, base_config, rounds, rows)
     return sweep_dir
+
+
+def pin_sweep_mapping(base_config: dict[str, Any]) -> dict[str, Any]:
+    """Return a config whose mapping is a fixed Stim-to-hardware assignment.
+
+    Configs that already pin `mapping.hardware_patch.stim_to_hardware`, or use no
+    mapping, are returned unchanged.
+    """
+    mapping = base_config.get("mapping") or {}
+    if mapping.get("strategy", "none") in {"none", None}:
+        return base_config
+    if (mapping.get("hardware_patch") or {}).get("stim_to_hardware"):
+        return base_config
+
+    config = copy.deepcopy(base_config)
+    code = dict(config["code"])
+    basis = basis_list(code["basis"])[0]
+    stim_circuit = get_code_builder(code.get("family", "surface_code"))(
+        code,
+        {"model": "no_noise", "parameters": {}},
+        basis,
+    )[0]
+    selected = select_mapping_from_config(config["mapping"], stim_circuit, active_stim_to_dense(stim_circuit))
+    config["mapping"]["hardware_patch"] = {"stim_to_hardware": selected["stim_to_hardware"]}
+    config["mapping"]["pinned_from_strategy"] = mapping.get("strategy")
+    if selected.get("strategy") == "calibration_routed_layout" or selected.get("routed_code_edges"):
+        options = dict(config["mapping"].get("options") or {})
+        options["allow_routing"] = True
+        config["mapping"]["options"] = options
+    return config
+
+
+def _layout_of(circuit: tuple) -> tuple | None:
+    mapping = circuit[3].get("mapping") or {}
+    stim_to_hardware = mapping.get("stim_to_hardware")
+    return tuple(sorted(stim_to_hardware.items())) if stim_to_hardware else None
+
+
+def _check_single_layout(layouts: list[tuple | None]) -> None:
+    distinct = {layout for layout in layouts if layout is not None}
+    if len(distinct) > 1:
+        raise RuntimeError(f"Sweep used {len(distinct)} different qubit layouts; expected one.")
 
 
 def _run_iqm_rounds_sweep_batch(
@@ -124,6 +175,7 @@ def _run_iqm_rounds_sweep_batch(
                 }
             )
 
+    _check_single_layout([_layout_of(job["circuit"]) for job in jobs])
     raws = run_iqm_hardware_batch_backend(
         base_config["backend"],
         [

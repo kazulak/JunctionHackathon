@@ -102,7 +102,7 @@ Notes:
 - `shots`: number of samples.
 - `batch_submit: true`: sweeps submit all IQM jobs first, then wait.
 - `omit_initial_resets: true`: skips the initial hardware reset when converting to Qiskit; this was the best hardware-side reset choice in hackathon runs.
-- `dynamical_decoupling: true`: attempts Qiskit's XX DD pass after transpilation and records whether it applied.
+- `dynamical_decoupling`: not implemented for IQM. Requesting it raises an error (the old pass failed silently, ERRATA E6).
 - IQM token is read from `.env` or `IQM_TOKEN`.
 
 ### `noise`

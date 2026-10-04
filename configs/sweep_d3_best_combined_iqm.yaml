@@ -6,7 +6,6 @@
 # - Emerald calibration-selected fixed patch
 # - omitted initial resets, which helped the hackathon hardware runs
 # - batched IQM submission
-# - attempted dynamical decoupling after transpilation
 # - low-syndrome postselection plus the full PyMatching candidate set
 #
 # Important: postselection discards shots. This is best for reported LER and
@@ -39,8 +38,6 @@ backend:
     batch_submit: true
     omit_initial_resets: true
     omit_repeated_resets: false
-    dynamical_decoupling: true
-    dd_sequence: xx
 
 noise:
   model: iqm_calibration

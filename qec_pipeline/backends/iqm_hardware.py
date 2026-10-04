@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +32,7 @@ def run_iqm_hardware_batch_backend(
     requests: list[dict[str, Any]],
 ) -> list[tuple]:
     """Submit several IQM circuits in one batch job and return raw tuples."""
+    _validate_backend_options(backend.get("options", {}) or {})
     _load_dotenv()
 
     from iqm.qiskit_iqm import IQMProvider
@@ -53,9 +56,39 @@ def run_iqm_hardware_batch_backend(
 
     raws = []
     for index, item in enumerate(prepared):
-        counts = result.get_counts() if batch_size == 1 else result.get_counts(index)
-        raws.append(_raw_tuple_from_counts(backend, item, counts, job, index, batch_size))
+        counts = result.get_counts(index)
+        memory = _memory_or_none(result, index)
+        calibration_set_id = getattr(result.results[index], "calibration_set_id", None)
+        raws.append(
+            _raw_tuple_from_counts(
+                backend,
+                item,
+                counts,
+                job,
+                index,
+                batch_size,
+                memory=memory,
+                calibration_set_id=calibration_set_id,
+            )
+        )
     return raws
+
+
+def _validate_backend_options(options: dict[str, Any]) -> None:
+    """Reject options that would be silently ignored, before any IQM connection."""
+    if bool(options.get("dynamical_decoupling", False)):
+        raise ValueError(
+            "backend.options.dynamical_decoupling is not implemented for IQM backends. "
+            "The previous implementation failed silently (ERRATA E6); remove the option."
+        )
+
+
+def _memory_or_none(result: Any, index: int) -> list[str] | None:
+    """Per-shot bitstrings in shot order, or None if the backend did not return them."""
+    try:
+        return list(result.get_memory(index))
+    except Exception:  # noqa: BLE001 - Qiskit raises QiskitError subclasses without memory
+        return None
 
 
 def _prepare_iqm_request(
@@ -90,11 +123,8 @@ def _prepare_iqm_request(
     if mapping_info is not None:
         transpile_kwargs["initial_layout"] = mapping_info["initial_layout"]
     transpiled_circuit = transpile(qiskit_circuit, **transpile_kwargs)
-    transpiled_circuit, dd_info = _maybe_apply_dynamical_decoupling(
-        transpiled_circuit,
-        iqm_backend,
-        options,
-    )
+    loci = physical_loci(transpiled_circuit, iqm_backend)
+    _check_layout_matches_mapping(loci, mapping_info)
 
     return {
         "circuit": circuit,
@@ -102,7 +132,8 @@ def _prepare_iqm_request(
         "circuit_info": circuit_info,
         "qiskit_circuit": qiskit_circuit,
         "transpiled_circuit": transpiled_circuit,
-        "dynamical_decoupling": dd_info,
+        "physical_loci": loci,
+        "calibration_file_age": _calibration_file_age(mapping or {}, circuit_info),
         "stim_to_dense": stim_to_dense,
         "meas_order": meas_order,
         "mapping_info": mapping_info,
@@ -118,16 +149,25 @@ def _raw_tuple_from_counts(
     job: Any,
     batch_index: int,
     batch_size: int,
+    memory: list[str] | None = None,
+    calibration_set_id: Any = None,
 ) -> tuple:
-    from qec_pipeline.measurements import counts_to_measurement_array, virtualize_omitted_repeated_resets
+    from qec_pipeline.measurements import (
+        counts_to_measurement_array,
+        memory_to_measurement_array,
+        virtualize_omitted_repeated_resets,
+    )
 
     stim_circuit = item["stim_circuit"]
     circuit_info = item["circuit_info"]
-    physical_measurements = counts_to_measurement_array(
-        counts,
-        num_measurements=stim_circuit.num_measurements,
-        total_shots=int(backend["shots"]),
-    )
+    if memory is not None:
+        physical_measurements = memory_to_measurement_array(memory, stim_circuit.num_measurements)
+    else:
+        physical_measurements = counts_to_measurement_array(
+            counts,
+            num_measurements=stim_circuit.num_measurements,
+            total_shots=int(backend["shots"]),
+        )
     measurements = physical_measurements
     if item["omit_repeated_resets"]:
         measurements = virtualize_omitted_repeated_resets(
@@ -153,7 +193,10 @@ def _raw_tuple_from_counts(
             item["transpiled_circuit"].depth(),
             item["mapping_info"],
         ),
-        "dynamical_decoupling": item.get("dynamical_decoupling"),
+        "shot_order_preserved": memory is not None,
+        "calibration_set_id": str(calibration_set_id) if calibration_set_id else None,
+        "calibration_file_age": item.get("calibration_file_age"),
+        "physical_loci": item.get("physical_loci"),
         "omit_initial_resets": item["omit_initial_resets"],
         "omit_repeated_resets": item["omit_repeated_resets"],
         "measurement_record": (
@@ -174,7 +217,7 @@ def _raw_tuple_from_counts(
         "calibration_noise": circuit_info.get("calibration_noise"),
         "basis": circuit_info["basis"],
         "qiskit_circuit_text": str(item["qiskit_circuit"]),
-        "transpiled_circuit_text": str(item["transpiled_circuit"]),
+        "transpiled_circuit_text": TRANSPILED_DRAWING_HEADER + str(item["transpiled_circuit"]),
     }
 
     return measurements, counts, raw_info
@@ -269,40 +312,66 @@ def _optional_transpile_kwargs(options: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _maybe_apply_dynamical_decoupling(
-    circuit: Any,
-    backend: Any,
-    options: dict[str, Any],
-) -> tuple[Any, dict[str, Any]]:
-    if not bool(options.get("dynamical_decoupling", False)):
-        return circuit, {"enabled": False}
+TRANSPILED_DRAWING_HEADER = (
+    "# IQM's transpiler keeps qubits in virtual order, so the wire labels below are NOT\n"
+    "# the physical qubits. The physical loci sent to the QPU are in raw_metadata.json\n"
+    "# under physical_loci.\n\n"
+)
 
-    try:
-        from qiskit.circuit.library import XGate
-        from qiskit.transpiler import PassManager
-        from qiskit.transpiler.passes import ALAPScheduleAnalysis, PadDynamicalDecoupling
 
-        durations = backend.target.durations()
-        sequence_name = str(options.get("dd_sequence", "xx")).lower()
-        if sequence_name == "x_x":
-            sequence_name = "xx"
-        if sequence_name != "xx":
-            raise ValueError(f"unsupported dd_sequence={sequence_name!r}; supported: xx")
+def physical_loci(transpiled_circuit: Any, iqm_backend: Any) -> dict[str, Any]:
+    """Serialize the circuit the way IQM does and return the physical qubits it acts on."""
+    from iqm.qiskit_iqm.qiskit_to_iqm import serialize_instructions
 
-        pass_manager = PassManager(
-            [
-                ALAPScheduleAnalysis(durations),
-                PadDynamicalDecoupling(durations, [XGate(), XGate()]),
-            ]
+    index_to_name = {
+        index: iqm_backend.index_to_qubit_name(index) for index in range(transpiled_circuit.num_qubits)
+    }
+    instructions = serialize_instructions(transpiled_circuit, index_to_name)
+    qubits = sorted({name for op in instructions for name in op.locus}, key=_qubit_sort_key)
+    two_qubit = sorted({tuple(op.locus) for op in instructions if len(op.locus) == 2})
+    measured = sorted(
+        {name for op in instructions if op.name == "measure" for name in op.locus},
+        key=_qubit_sort_key,
+    )
+    return {
+        "physical_qubits": qubits,
+        "measured_qubits": measured,
+        "two_qubit_loci": [list(pair) for pair in two_qubit],
+    }
+
+
+def _check_layout_matches_mapping(loci: dict[str, Any], mapping_info: dict[str, Any] | None) -> None:
+    """Fail before submission if a native patch would run on different qubits."""
+    if not mapping_info or not mapping_info.get("dense_to_hardware"):
+        return
+    intended = set(mapping_info["dense_to_hardware"].values())
+    actual = set(loci["physical_qubits"])
+    routed = bool(mapping_info.get("routed_code_edges")) or mapping_info.get("strategy") == "calibration_routed_layout"
+    if actual != intended and not routed:
+        raise RuntimeError(
+            "Transpiled circuit does not act on the selected patch: "
+            f"unexpected={sorted(actual - intended)}, unused={sorted(intended - actual)}"
         )
-        return pass_manager.run(circuit), {
-            "enabled": True,
-            "applied": True,
-            "sequence": sequence_name,
-        }
-    except Exception as exc:
-        return circuit, {
-            "enabled": True,
-            "applied": False,
-            "error": str(exc),
-        }
+
+
+def _calibration_file_age(mapping: dict[str, Any], circuit_info: dict[str, Any]) -> dict[str, Any] | None:
+    """How old the calibration snapshot used for mapping/noise was at submission time."""
+    calibration_file = circuit_info.get("noise_calibration_file") or mapping.get("calibration_file")
+    if not calibration_file or not Path(calibration_file).exists():
+        return None
+    try:
+        created = json.loads(Path(calibration_file).read_text(encoding="utf-8")).get("created_timestamp")
+    except (OSError, ValueError):
+        return None
+    if not created:
+        return None
+    created_at = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
+    age_hours = (datetime.now(UTC) - created_at).total_seconds() / 3600.0
+    return {"file": str(calibration_file), "created_utc": str(created), "age_hours_at_submission": age_hours}
+
+
+def _qubit_sort_key(label: str) -> tuple[int, int | str]:
+    text = str(label)
+    if text.upper().startswith("QB") and text[2:].isdigit():
+        return (0, int(text[2:]))
+    return (1, text)

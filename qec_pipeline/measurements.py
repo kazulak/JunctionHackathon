@@ -14,17 +14,7 @@ def counts_to_measurement_array(
     row_index = 0
 
     for bitstring, count in counts.items():
-        bits_by_clbit = bitstring.replace(" ", "")[::-1]
-        if len(bits_by_clbit) < num_measurements:
-            raise ValueError(
-                "Qiskit bitstring is shorter than requested measurement count: "
-                f"{len(bits_by_clbit)} < {num_measurements}"
-            )
-
-        row = np.array(
-            [bit == "1" for bit in bits_by_clbit[:num_measurements]],
-            dtype=bool,
-        )
+        row = _bitstring_to_row(bitstring, num_measurements)
         for _ in range(count):
             if row_index >= total_shots:
                 raise ValueError("Counts contain more shots than total_shots")
@@ -35,6 +25,28 @@ def counts_to_measurement_array(
         raise ValueError(f"Counts contain {row_index} shots, expected {total_shots}")
 
     return result
+
+
+def memory_to_measurement_array(memory: list[str], num_measurements: int) -> np.ndarray:
+    """Convert per-shot Qiskit memory into a boolean array, keeping shot order.
+
+    Unlike counts, memory preserves the order in which shots were taken, which is
+    needed for drift analysis and time-ordered validation splits.
+    """
+    if not memory:
+        return np.zeros((0, num_measurements), dtype=bool)
+    return np.stack([_bitstring_to_row(bitstring, num_measurements) for bitstring in memory])
+
+
+def _bitstring_to_row(bitstring: str, num_measurements: int) -> np.ndarray:
+    """Qiskit bitstrings are little-endian: clbit 0 is the rightmost character."""
+    bits_by_clbit = bitstring.replace(" ", "")[::-1]
+    if len(bits_by_clbit) < num_measurements:
+        raise ValueError(
+            "Qiskit bitstring is shorter than requested measurement count: "
+            f"{len(bits_by_clbit)} < {num_measurements}"
+        )
+    return np.array([bit == "1" for bit in bits_by_clbit[:num_measurements]], dtype=bool)
 
 
 def virtualize_omitted_repeated_resets(

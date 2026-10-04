@@ -38,7 +38,16 @@ from qec_pipeline.decoders.pymatching_decoder import (
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.mapping import parse_hardware_calibration
 from qec_pipeline.noise.iqm_calibration import _IqmNoiseBuilder
-from qec_pipeline.measurements import counts_to_measurement_array, virtualize_omitted_repeated_resets
+from qec_pipeline.backends.iqm_hardware import (
+    _check_layout_matches_mapping,
+    physical_loci,
+    run_iqm_hardware_batch_backend,
+)
+from qec_pipeline.measurements import (
+    counts_to_measurement_array,
+    memory_to_measurement_array,
+    virtualize_omitted_repeated_resets,
+)
 from qec_pipeline.mapping.patch_selection import (
     select_calibration_best_patch,
     select_calibration_routed_layout,
@@ -49,7 +58,7 @@ from qec_pipeline.mapping.patch_selection import (
 from qec_pipeline.pipeline import build_basis_metrics, describe_pipeline, run_pipeline
 from qec_pipeline.syndrome_extraction import extract_syndromes
 from qec_pipeline.syndromes import extract_detection_events
-from qec_pipeline.sweeps import round_values, run_rounds_sweep
+from qec_pipeline.sweeps import pin_sweep_mapping, round_values, run_rounds_sweep
 
 
 NO_NOISE = {"model": "no_noise", "parameters": {}}
@@ -1123,6 +1132,88 @@ class NoiseModelTests(unittest.TestCase):
         result = fit_module.fit_scales(config, targets, grid, shots=shots, seed=5)
 
         self.assertEqual(result["best"]["scales"]["two_qubit_scale"], 2.0)
+
+
+class HardwarePathTests(unittest.TestCase):
+    """IQM path robustness (ERRATA E6 and audit phase 6); runs offline."""
+
+    def test_memory_conversion_keeps_shot_order(self) -> None:
+        memory = ["01", "10", "11", "00"]  # little-endian: clbit 0 is the rightmost bit
+        array = memory_to_measurement_array(memory, num_measurements=2)
+        np.testing.assert_array_equal(
+            array,
+            np.array([[True, False], [False, True], [True, True], [False, False]], dtype=bool),
+        )
+
+    def test_dynamical_decoupling_request_fails_before_connecting(self) -> None:
+        backend = {"name": "iqm_hardware", "shots": 1, "options": {"dynamical_decoupling": True}}
+        with self.assertRaises(ValueError):
+            run_iqm_hardware_batch_backend(backend, [])
+
+    def test_sweep_pins_one_layout_for_all_round_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            calibration_path = Path(temp_dir) / "calibration.yaml"
+            calibration_path.write_text(
+                yaml_dump(_grid_calibration(rows=6, cols=6, low_origin=(1, 1), low_size=5)),
+                encoding="utf-8",
+            )
+            config = {
+                "experiment": {"name": "unit_pinned_sweep", "description": "", "seed": 1},
+                "code": {
+                    "family": "surface_code_iqm",
+                    "distance": 3,
+                    "rounds": 1,
+                    "basis": "memory_z",
+                    "reset_mode": "reset",
+                },
+                "backend": {"name": "simulator", "shots": 16, "options": {"seed": 1}},
+                "noise": {"model": "iqm_calibration", "calibration_file": str(calibration_path), "options": {}},
+                "decoder": {"name": "pymatching_calibrated", "options": {}},
+                "mapping": {
+                    "strategy": "calibration_best_patch",
+                    "calibration_file": str(calibration_path),
+                    "hardware_patch": None,
+                },
+                "artifacts": {"root": temp_dir},
+            }
+
+            pinned = pin_sweep_mapping(config)
+            self.assertTrue(pinned["mapping"]["hardware_patch"]["stim_to_hardware"])
+            self.assertIsNone(config["mapping"]["hardware_patch"])  # input is not mutated
+
+            sweep_dir = run_rounds_sweep(config, rounds=[1, 3], output_root=Path(temp_dir))
+            layouts = {
+                json.dumps(json.loads(path.read_text(encoding="utf-8"))["mapping"]["stim_to_hardware"])
+                for path in sweep_dir.glob("runs/*/*/memory_z/circuit_metadata.json")
+            }
+            self.assertEqual(len(layouts), 1)
+
+    def test_physical_loci_follow_initial_layout_and_guard_rejects_mismatch(self) -> None:
+        try:
+            from iqm.qiskit_iqm.fake_backends.fake_garnet import IQMFakeGarnet
+            from qiskit import QuantumCircuit, transpile
+        except ImportError:
+            self.skipTest("IQM qiskit packages are not installed")
+
+        backend = IQMFakeGarnet()
+        neighbours = sorted(backend.coupling_map.neighbors(13))
+        layout = [13, neighbours[0]]
+        circuit = QuantumCircuit(2, 2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.measure([0, 1], [0, 1])
+        transpiled = transpile(circuit, backend, initial_layout=layout, optimization_level=3, seed_transpiler=1)
+
+        loci = physical_loci(transpiled, backend)
+        expected = sorted(backend.index_to_qubit_name(index) for index in layout)
+        self.assertEqual(sorted(loci["physical_qubits"]), expected)
+        self.assertEqual(sorted(loci["measured_qubits"]), expected)
+
+        matching = {"dense_to_hardware": {"0": expected[0], "1": expected[1]}}
+        _check_layout_matches_mapping(loci, matching)
+        wrong = {"dense_to_hardware": {"0": "QB1", "1": "QB2"}}
+        with self.assertRaises(RuntimeError):
+            _check_layout_matches_mapping(loci, wrong)
 
 
 class ProvenanceTests(unittest.TestCase):

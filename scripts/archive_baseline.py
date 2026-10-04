@@ -164,6 +164,7 @@ def _build_hardware_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         transpilation = raw_metadata.get("transpilation_metrics", {}) or {}
         mapping = raw_metadata.get("mapping", {}) or {}
         dd = raw_metadata.get("dynamical_decoupling", {}) or {}
+        loci = raw_metadata.get("physical_loci", {}) or {}
         decoder_info = metrics.get("decoder_info", {}) if metrics else {}
 
         hardware_rows.append(
@@ -204,6 +205,9 @@ def _build_hardware_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "dynamical_decoupling_enabled": dd.get("enabled"),
                 "dynamical_decoupling_applied": dd.get("applied"),
                 "dynamical_decoupling_error": dd.get("error"),
+                "calibration_set_id": raw_metadata.get("calibration_set_id"),
+                "shot_order_preserved": raw_metadata.get("shot_order_preserved"),
+                "physical_qubits": " ".join(loci.get("physical_qubits", [])) or None,
                 "selected_candidate": decoder_info.get("selected_candidate"),
             }
         )

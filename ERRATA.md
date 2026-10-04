@@ -72,4 +72,4 @@ Status: offline diagnostics and a characterization experiment are planned (audit
 - The per-round fit was an unweighted least-squares fit of log(1 − 2·LER) without an uncertainty.
 - The IQM `dynamical_decoupling` option failed silently: the post-hackathon "combined" hardware run requested it, but it was never applied.
 
-Status: postselection labelling, Wilson intervals, and the per-round fit (binomial maximum likelihood with uncertainty; postselected rows excluded) are **fixed on `main`** (audit phase 4). Dynamical decoupling: planned (audit phase 6).
+Status: postselection labelling, Wilson intervals, and the per-round fit (binomial maximum likelihood with uncertainty; postselected rows excluded) are **fixed on `main`** (audit phase 4). Dynamical decoupling: **fixed on `main`** (audit phase 6): requesting it on IQM now raises an error before any job is submitted. The hardware path also records per-shot memory (shot order), the IQM calibration-set ID, the calibration-file age, and the physical qubits actually sent to the QPU, and refuses to submit if a native patch would run on other qubits. Sweeps pin one qubit layout for all round values.

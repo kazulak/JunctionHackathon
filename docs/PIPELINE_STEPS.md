@@ -64,7 +64,7 @@ detection_events_head.csv
 observable_flips_head.csv
 counts.json                 # hardware only
 qiskit_circuit.txt          # hardware only
-transpiled_circuit.txt      # hardware only
+transpiled_circuit_virtual_order.txt  # hardware only; physical qubits are in raw_metadata.json physical_loci
 ```
 
 ## Expected Smoke Test
@@ -93,6 +93,6 @@ When LER is strange, inspect:
 4. `detection_events_head.csv`
 5. `syndrome_metadata.json`
 6. `metrics.json`
-7. `transpiled_circuit.txt` for hardware runs
+7. `transpiled_circuit_virtual_order.txt` for hardware runs (wire labels are virtual; see `physical_loci` in `raw_metadata.json`)
 
 LER near `0.5` means the logical output is basically random. Check detector firing rates and transpiled depth before assuming the decoder is the only issue.
