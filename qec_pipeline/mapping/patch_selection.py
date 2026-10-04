@@ -799,7 +799,8 @@ def _coordinate_transforms(points: dict[int, np.ndarray]) -> list[dict[int, np.n
 def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
     qubit_labels = set()
     one_qubit_errors: dict[str, list[float]] = {}
-    measurement_errors: dict[str, list[float]] = {}
+    assignment_errors: dict[str, list[float]] = {}
+    readout_infidelities: dict[str, list[float]] = {}
     qnd_values: dict[str, list[float]] = {}
     t1_times: dict[str, float] = {}
     t2_times: dict[str, float] = {}
@@ -815,9 +816,9 @@ def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
         if len(labels) == 1:
             label = labels[0]
             if "ssro.measure" in field and field.endswith(("error_0_to_1", "error_1_to_0")):
-                measurement_errors.setdefault(label, []).append(value)
+                assignment_errors.setdefault(label, []).append(value)
             elif "ssro.measure" in field and field.endswith(".fidelity"):
-                measurement_errors.setdefault(label, []).append(1.0 - value)
+                readout_infidelities.setdefault(label, []).append(1.0 - value)
             elif ".rb.prx." in field and ".fidelity" in field:
                 one_qubit_errors.setdefault(label, []).append(1.0 - value)
             elif ".rb.clifford." in field and ".fidelity" in field:
@@ -846,7 +847,10 @@ def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
             "index": _index_from_label(label),
             "errors": {
                 "one_qubit": min(one_qubit_errors.get(label, [0.0])),
-                "measurement": max(measurement_errors.get(label, [0.0])),
+                "measurement": _readout_error(
+                    assignment_errors.get(label, []),
+                    readout_infidelities.get(label, []),
+                ),
                 "reset": 0.0,
                 "idle": idle_error,
                 "qnd": qnd_error,
@@ -876,6 +880,21 @@ def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
         "has_couplers": bool(couplers),
         "source_schema": "iqm_observation_set",
     }
+
+
+def _readout_error(assignment_errors: list[float], infidelities: list[float]) -> float:
+    """Symmetric readout flip probability for a qubit.
+
+    The mean of the 0->1 and 1->0 assignment errors is the error averaged over
+    the two prepared states. Stim's pre-measurement flip is symmetric, so this
+    is the closest single number (the old code took the maximum of all fields,
+    which overstated readout error for the 0 state).
+    """
+    if assignment_errors:
+        return float(np.mean(assignment_errors))
+    if infidelities:
+        return float(np.mean(infidelities))
+    return 0.0
 
 
 def _index_from_label(label: str) -> int:

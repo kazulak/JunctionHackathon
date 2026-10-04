@@ -1,0 +1,39 @@
+{
+  "description": "IQM hardware r=1 detector firing counts used to fit simulator noise scales.",
+  "exported_utc": "2026-10-04T11:13:03+00:00",
+  "config": "configs\\sweep_d3_baseline_sim.yaml",
+  "sources": [
+    "results\\sweep_d3_best_iqm_rounds_sweep\\20260608T203833Z\\runs\\sweep_d3_best_iqm_rounds_1\\20260608T203833Z",
+    "results\\sweep_d3_best_combined_iqm_rounds_sweep\\20260608T204021Z\\runs\\sweep_d3_best_combined_iqm_rounds_1\\20260608T204021Z"
+  ],
+  "bases": {
+    "memory_z": {
+      "shots": 4000,
+      "detector_counts": [
+        382,
+        418,
+        995,
+        681,
+        558,
+        625,
+        720,
+        511
+      ],
+      "observable_flip_count": 529
+    },
+    "memory_x": {
+      "shots": 4000,
+      "detector_counts": [
+        196,
+        727,
+        410,
+        542,
+        384,
+        797,
+        678,
+        255
+      ],
+      "observable_flip_count": 528
+    }
+  }
+}

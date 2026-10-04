@@ -23,7 +23,11 @@ from qec_pipeline.pipeline import run_pipeline
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Rapid local search over calibrated simulator variants."
+        description=(
+            "Error budget for the calibration-informed simulator: halve one noise source at a "
+            "time and see how much LER moves. This is a sensitivity study, NOT a calibration; "
+            "use scripts/fit_noise_to_hardware.py to fit scales to hardware."
+        )
     )
     parser.add_argument("config", type=Path, help="Base calibrated simulator YAML.")
     parser.add_argument("--basis", default="memory_z", choices=["memory_z", "memory_x", "both"])
@@ -75,12 +79,9 @@ def main() -> int:
             )
 
     _write_outputs(search_dir, rows, configs)
-    best = min(rows, key=lambda row: row["ler"])
-    print(f"Search artifacts: {search_dir}")
-    print(
-        "Best: "
-        f"{best['variant']} {best['basis']} LER {best['ler']:.6g} +/- {best['uncertainty']:.3g}"
-    )
+    print(f"Error-budget artifacts: {search_dir}")
+    for row in rows:
+        print(f"{row['variant']:28s} {row['basis']}: LER {row['ler']:.4g} +/- {row['uncertainty']:.2g}")
     return 0
 
 
@@ -90,14 +91,11 @@ def _noise_variant_configs(
     shots: int,
     run_root: Path,
 ) -> list[dict[str, Any]]:
-    variants = [
-        ("baseline", {}),
-        ("qnd_x0", {"qnd_scale": 0.0}),
-        ("qnd_x0_idle_x0_5", {"qnd_scale": 0.0, "idle_scale": 0.5}),
-        ("qnd_x0_idle_x0", {"qnd_scale": 0.0, "idle_scale": 0.0}),
-        ("qnd_x0_meas_x0_5", {"qnd_scale": 0.0, "measurement_scale": 0.5}),
-        ("qnd_x0_twoq_x0_5", {"qnd_scale": 0.0, "two_qubit_scale": 0.5}),
-    ]
+    base_options = base_config["noise"].get("options", {}) or {}
+    variants = [("baseline", {})]
+    for option in ["two_qubit_scale", "measurement_scale", "idle_scale", "one_qubit_scale"]:
+        halved = 0.5 * float(base_options.get(option, 1.0))
+        variants.append((f"{option.removesuffix('_scale')}_halved", {option: halved}))
     return [
         _config_with_noise_options(base_config, basis, shots, run_root, name, options)
         for name, options in variants
@@ -140,8 +138,8 @@ def _patch_variant_configs(
             basis,
             shots,
             run_root,
-            f"patch_{index:02d}_qnd_x0",
-            {"qnd_scale": 0.0},
+            f"patch_{index:02d}",
+            {},
         )
         config["mapping"]["hardware_patch"] = {
             "stim_to_hardware": patch["stim_to_hardware"],
@@ -173,7 +171,7 @@ def _config_with_noise_options(
 def _make_search_dir(base_config: dict[str, Any], output_root: Path | None) -> Path:
     timestamp = utc_timestamp()
     root = output_root or Path(base_config["artifacts"].get("root", "results"))
-    search_dir = root / f"{base_config['experiment']['name']}_calibrated_search" / timestamp
+    search_dir = root / f"{base_config['experiment']['name']}_error_budget" / timestamp
     search_dir.mkdir(parents=True, exist_ok=False)
     return search_dir
 
@@ -214,12 +212,14 @@ def _write_outputs(
     )
 
     lines = [
-        "# Calibrated Simulator Search",
+        "# Simulator Error Budget",
+        "",
+        "Each variant halves one noise source. This is a sensitivity study, not a calibration.",
         "",
         "| Variant | Basis | LER | Uncertainty | Failures | Shots |",
         "| --- | --- | ---: | ---: | ---: | ---: |",
     ]
-    for row in sorted(rows, key=lambda item: item["ler"]):
+    for row in rows:
         lines.append(
             f"| {row['variant']} | {row['basis']} | {row['ler']} | "
             f"{row['uncertainty']} | {row['logical_failures']} | {row['shots']} |"

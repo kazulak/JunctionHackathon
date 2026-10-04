@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import networkx as nx
+import numpy as np
 import stim
 import yaml
 
@@ -55,7 +56,26 @@ def apply_iqm_calibration_noise(
     return noisy_circuit, detector_model, measurement_order, info
 
 
+# Converting average gate infidelity r (randomized benchmarking) to the probability p
+# of a uniformly random non-identity Pauli: r = p * d / (d + 1), with d = 2**n.
+RB_TO_PAULI = {"one_qubit": 3.0 / 2.0, "two_qubit": 5.0 / 4.0}
+DEFAULT_ROUND_DURATION_S = 1e-6
+
+
 class _IqmNoiseBuilder:
+    """Inject per-qubit / per-coupler calibration noise into a Stim circuit.
+
+    Model (see docs/CALIBRATED_SIMULATION.md):
+    - gates: DEPOLARIZE1/2 after H/X/Z and CX/CZ; randomized-benchmarking
+      infidelities are converted to Pauli probabilities for IQM observation sets;
+    - readout: symmetric flip before M/MX/MR/MRX with the mean assignment error;
+    - idle: per round, a Pauli-twirled T1/T2 channel for `round_duration_s`,
+      spread evenly over the TICKs of one round;
+    - QND: a flip after a measurement only when the qubit is reused without a
+      reset (never in reset-based memory circuits);
+    - reset: IQM dumps carry no reset error (recorded in metadata).
+    """
+
     def __init__(
         self,
         hardware: dict[str, Any],
@@ -78,6 +98,7 @@ class _IqmNoiseBuilder:
             "one_qubit_noise": 0,
             "two_qubit_noise": 0,
             "measurement_noise": 0,
+            "qnd_noise": 0,
             "reset_noise": 0,
             "idle_noise": 0,
             "routed_two_qubit_interactions": 0,
@@ -87,6 +108,11 @@ class _IqmNoiseBuilder:
         self.idle_tick_fraction = float(options.get("idle_tick_fraction", rounds / ticks))
         self.route_error_multiplier = float(options.get("route_error_multiplier", 1.0))
         self.missing_coupler_error = float(options.get("missing_coupler_error", 0.25))
+        self.from_iqm_observations = hardware.get("source_schema") == "iqm_observation_set"
+        self.rb_to_pauli = bool(options.get("rb_to_pauli", self.from_iqm_observations))
+        self.round_duration_s = float(options.get("round_duration_s", DEFAULT_ROUND_DURATION_S))
+        default_idle_model = "pauli_twirl" if self.from_iqm_observations else "depolarize"
+        self.idle_model = str(options.get("idle_model", default_idle_model))
         self.error_scales = {
             "one_qubit": float(options.get("one_qubit_scale", 1.0)),
             "two_qubit": float(options.get("two_qubit_scale", 1.0)),
@@ -97,8 +123,10 @@ class _IqmNoiseBuilder:
         }
 
     def noisy_copy(self, stim_circuit: stim.Circuit) -> stim.Circuit:
+        instructions = list(stim_circuit.flattened())
+        used_later = _qubits_used_later(instructions)
         noisy = stim.Circuit()
-        for instruction in stim_circuit.flattened():
+        for index, instruction in enumerate(instructions):
             name = instruction.name
             targets = _qubit_targets(instruction)
 
@@ -107,6 +135,8 @@ class _IqmNoiseBuilder:
                 noisy.append(instruction.name, instruction.targets_copy(), instruction.gate_args_copy())
                 if name == "MR":
                     self._append_reset_noise(noisy, targets, basis="z")
+                else:
+                    self._append_qnd_noise(noisy, targets, used_later[index], basis="z")
                 continue
 
             if name in {"MX", "MRX"}:
@@ -114,6 +144,8 @@ class _IqmNoiseBuilder:
                 noisy.append(instruction.name, instruction.targets_copy(), instruction.gate_args_copy())
                 if name == "MRX":
                     self._append_reset_noise(noisy, targets, basis="x")
+                else:
+                    self._append_qnd_noise(noisy, targets, used_later[index], basis="x")
                 continue
 
             noisy.append(instruction.name, instruction.targets_copy(), instruction.gate_args_copy())
@@ -138,19 +170,25 @@ class _IqmNoiseBuilder:
             "mapped_qubits": len(self.stim_to_hardware),
             "operation_counts": self.operation_counts,
             "idle_tick_fraction": self.idle_tick_fraction,
+            "idle_model": self.idle_model,
+            "round_duration_s": self.round_duration_s,
+            "rb_to_pauli": self.rb_to_pauli,
+            "reset_error_available": not self.from_iqm_observations,
             "route_error_multiplier": self.route_error_multiplier,
             "missing_coupler_error": self.missing_coupler_error,
             "error_scales": self.error_scales,
             "one_qubit_error": _stats(self._qubit_error_values("one_qubit")),
             "measurement_error": _stats(self._qubit_error_values("measurement")),
             "qnd_error": _stats(self._qubit_error_values("qnd")),
-            "idle_error_per_round": _stats(self._qubit_error_values("idle")),
+            "idle_error_per_round": _stats(
+                [sum(self._idle_pauli_per_round(stim_qubit)) for stim_qubit in self.active_stim_qubits]
+            ),
             "two_qubit_error": _stats(self._mapped_two_qubit_values()),
         }
 
     def _append_one_qubit_noise(self, circuit: stim.Circuit, stim_qubits: list[int]) -> None:
         for stim_qubit in stim_qubits:
-            probability = self._qubit_error(stim_qubit, "one_qubit")
+            probability = self._gate_probability(self._qubit_error(stim_qubit, "one_qubit"), "one_qubit")
             if probability:
                 circuit.append("DEPOLARIZE1", [stim_qubit], probability)
                 self.operation_counts["one_qubit_noise"] += 1
@@ -160,10 +198,17 @@ class _IqmNoiseBuilder:
         for index in range(0, len(stim_qubits), 2):
             left = stim_qubits[index]
             right = stim_qubits[index + 1]
-            probability = self._two_qubit_error(left, right)
+            probability = self._gate_probability(self._two_qubit_error(left, right), "two_qubit")
             if probability:
                 circuit.append("DEPOLARIZE2", [left, right], probability)
                 self.operation_counts["two_qubit_noise"] += 1
+
+    def _gate_probability(self, infidelity: float, kind: str) -> float:
+        if not self.rb_to_pauli:
+            return infidelity
+        # DEPOLARIZE1 accepts p <= 3/4 and DEPOLARIZE2 accepts p <= 15/16.
+        limit = 0.75 if kind == "one_qubit" else 15.0 / 16.0
+        return min(infidelity * RB_TO_PAULI[kind], limit)
 
     def _append_measurement_noise(
         self,
@@ -173,12 +218,27 @@ class _IqmNoiseBuilder:
     ) -> None:
         gate = "X_ERROR" if basis == "z" else "Z_ERROR"
         for stim_qubit in stim_qubits:
-            measurement = self._qubit_error(stim_qubit, "measurement")
-            qnd = self._qubit_error(stim_qubit, "qnd")
-            probability = _combined_probability([measurement, qnd])
+            probability = self._qubit_error(stim_qubit, "measurement")
             if probability:
                 circuit.append(gate, [stim_qubit], probability)
                 self.operation_counts["measurement_noise"] += 1
+
+    def _append_qnd_noise(
+        self,
+        circuit: stim.Circuit,
+        stim_qubits: list[int],
+        used_later: set[int],
+        basis: str,
+    ) -> None:
+        """Non-QND flip of the post-measurement state, only if the qubit is reused."""
+        gate = "X_ERROR" if basis == "z" else "Z_ERROR"
+        for stim_qubit in stim_qubits:
+            if stim_qubit not in used_later:
+                continue
+            probability = self._qubit_error(stim_qubit, "qnd")
+            if probability:
+                circuit.append(gate, [stim_qubit], probability)
+                self.operation_counts["qnd_noise"] += 1
 
     def _append_reset_noise(
         self,
@@ -195,11 +255,34 @@ class _IqmNoiseBuilder:
 
     def _append_idle_noise(self, circuit: stim.Circuit) -> None:
         for stim_qubit in self.active_stim_qubits:
-            probability = self.idle_tick_fraction * self._qubit_error(stim_qubit, "idle")
-            probability = _clamp_probability(probability)
-            if probability:
-                circuit.append("DEPOLARIZE1", [stim_qubit], probability)
-                self.operation_counts["idle_noise"] += 1
+            px, py, pz = (
+                _clamp_probability(self.idle_tick_fraction * value)
+                for value in self._idle_pauli_per_round(stim_qubit)
+            )
+            if not (px or py or pz):
+                continue
+            if self.idle_model == "pauli_twirl":
+                circuit.append("PAULI_CHANNEL_1", [stim_qubit], [px, py, pz])
+            else:
+                circuit.append("DEPOLARIZE1", [stim_qubit], px + py + pz)
+            self.operation_counts["idle_noise"] += 1
+
+    def _idle_pauli_per_round(self, stim_qubit: int) -> tuple[float, float, float]:
+        """(px, py, pz) for one round of idling, already scaled by idle_scale."""
+        label = self.stim_to_hardware.get(stim_qubit)
+        if label is None:
+            return 0.0, 0.0, 0.0
+        scale = self.error_scales["idle"]
+        if self.idle_model == "pauli_twirl":
+            times = self.hardware["qubits"][label].get("calibration", {}) or {}
+            t1 = times.get("t1_time")
+            t2 = times.get("t2_echo_time") or times.get("t2_time")
+            if t1 and t2:
+                px, py, pz = _pauli_twirl_idle(self.round_duration_s, t1, t2)
+                return scale * px, scale * py, scale * pz
+        # Fallback: depolarizing idle with the per-round idle error from the calibration.
+        probability = self._qubit_error(stim_qubit, "idle")
+        return probability / 3.0, probability / 3.0, probability / 3.0
 
     def _qubit_error(self, stim_qubit: int, name: str) -> float:
         label = self.stim_to_hardware.get(stim_qubit)
@@ -247,6 +330,27 @@ class _IqmNoiseBuilder:
             if pair[0] in self.stim_to_hardware.values() and pair[1] in self.stim_to_hardware.values():
                 values.append(float(self.hardware["couplers"][pair]))
         return values
+
+
+def _pauli_twirl_idle(duration: float, t1: float, t2: float) -> tuple[float, float, float]:
+    """Pauli-twirled amplitude and phase damping for an idle of `duration` seconds."""
+    decay_1 = 1.0 - np.exp(-duration / t1)
+    decay_2 = 1.0 - np.exp(-duration / t2)
+    px = py = decay_1 / 4.0
+    pz = max(0.0, decay_2 / 2.0 - decay_1 / 4.0)
+    return float(px), float(py), float(pz)
+
+
+def _qubits_used_later(instructions: list[stim.CircuitInstruction]) -> list[set[int]]:
+    """For each instruction, the qubits touched by any later gate, reset, or measurement."""
+    ignored = {"TICK", "DETECTOR", "OBSERVABLE_INCLUDE", "QUBIT_COORDS", "SHIFT_COORDS"}
+    used_later: list[set[int]] = [set() for _ in instructions]
+    seen: set[int] = set()
+    for index in range(len(instructions) - 1, -1, -1):
+        used_later[index] = set(seen)
+        if instructions[index].name not in ignored:
+            seen.update(_qubit_targets(instructions[index]))
+    return used_later
 
 
 def _hardware_graph(hardware: dict[str, Any]) -> nx.Graph:

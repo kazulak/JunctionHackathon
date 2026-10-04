@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import tempfile
 import unittest
@@ -35,6 +36,8 @@ from qec_pipeline.decoders.pymatching_decoder import (
     pymatching_noise_sweep,
 )
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
+from qec_pipeline.mapping import parse_hardware_calibration
+from qec_pipeline.noise.iqm_calibration import _IqmNoiseBuilder
 from qec_pipeline.measurements import counts_to_measurement_array, virtualize_omitted_repeated_resets
 from qec_pipeline.mapping.patch_selection import (
     select_calibration_best_patch,
@@ -1018,6 +1021,108 @@ class DecoderSelectionAndStatisticsTests(unittest.TestCase):
         )
         self.assertEqual(fit["fit_points"], 0)
         self.assertEqual(len(fit["excluded_points"]), 2)
+
+
+class NoiseModelTests(unittest.TestCase):
+    """Calibration-informed noise model (ERRATA E2)."""
+
+    CALIBRATION = {
+        "dut_label": "fake_iqm",
+        "observations": [
+            {"dut_field": "metrics.rb.prx.drag_crf_sx.QB1.fidelity:par=d2", "value": 0.999},
+            {"dut_field": "metrics.rb.prx.drag_crf_sx.QB2.fidelity:par=d2", "value": 0.999},
+            {"dut_field": "metrics.irb.cz.crf_crf.QB1__QB2.fidelity:par=d2", "value": 0.99},
+            {"dut_field": "metrics.ssro.measure.constant.QB1.error_0_to_1", "value": 0.01},
+            {"dut_field": "metrics.ssro.measure.constant.QB1.error_1_to_0", "value": 0.03},
+            {"dut_field": "metrics.ssro.measure.constant.QB1.fidelity", "value": 0.5},
+            {"dut_field": "metrics.ssro.measure.constant.QB2.error_0_to_1", "value": 0.01},
+            {"dut_field": "metrics.ssro.measure.constant.QB2.error_1_to_0", "value": 0.03},
+            {"dut_field": "metrics.qndness.measure.constant.QB1.qndness_0", "value": 0.9},
+            {"dut_field": "characterization.model.QB1.t1_time", "value": 50e-6},
+            {"dut_field": "characterization.model.QB1.t2_echo_time", "value": 40e-6},
+        ],
+    }
+
+    def _noisy(self, circuit_text: str, options: dict | None = None) -> stim.Circuit:
+        hardware = parse_hardware_calibration(self.CALIBRATION)
+        builder = _IqmNoiseBuilder(
+            hardware=hardware,
+            mapping_info={"stim_to_hardware": {"0": "QB1", "1": "QB2"}},
+            rounds=1,
+            num_ticks=1,
+            options=options or {},
+        )
+        return builder.noisy_copy(stim.Circuit(circuit_text))
+
+    @staticmethod
+    def _args(circuit: stim.Circuit, name: str) -> list[list[float]]:
+        return [item.gate_args_copy() for item in circuit if item.name == name]
+
+    def test_parser_uses_mean_assignment_error_for_readout(self) -> None:
+        hardware = parse_hardware_calibration(self.CALIBRATION)
+        self.assertAlmostEqual(hardware["qubits"]["QB1"]["errors"]["measurement"], 0.02)
+
+    def test_rb_infidelity_is_converted_to_pauli_probability(self) -> None:
+        noisy = self._noisy("H 0\nCX 0 1\nM 0 1")
+        self.assertAlmostEqual(self._args(noisy, "DEPOLARIZE1")[0][0], 1.5 * 0.001)
+        self.assertAlmostEqual(self._args(noisy, "DEPOLARIZE2")[0][0], 1.25 * 0.01)
+
+        raw = self._noisy("H 0\nCX 0 1\nM 0 1", {"rb_to_pauli": False})
+        self.assertAlmostEqual(self._args(raw, "DEPOLARIZE2")[0][0], 0.01)
+
+    def test_idle_uses_pauli_twirled_t1_t2(self) -> None:
+        noisy = self._noisy("TICK\nM 0")
+        px, py, pz = self._args(noisy, "PAULI_CHANNEL_1")[0]
+        decay_1 = 1 - np.exp(-1e-6 / 50e-6)
+        decay_2 = 1 - np.exp(-1e-6 / 40e-6)
+        self.assertAlmostEqual(px, decay_1 / 4)
+        self.assertAlmostEqual(py, decay_1 / 4)
+        self.assertAlmostEqual(pz, decay_2 / 2 - decay_1 / 4)
+
+    def test_qnd_flip_only_when_measured_qubit_is_reused_without_reset(self) -> None:
+        reused = self._noisy("M 0\nH 0\nM 0")
+        # readout flip before each M (0.02) plus one QND flip (0.1) after the first M only
+        flips = sorted(args[0] for args in self._args(reused, "X_ERROR"))
+        self.assertEqual(len(flips), 3)
+        for actual, expected in zip(flips, [0.02, 0.02, 0.1], strict=True):
+            self.assertAlmostEqual(actual, expected)
+
+        # MR resets the qubit, so the non-QND post-measurement state never matters:
+        # only the two readout flips remain (IQM dumps have no reset error).
+        reset_mode = self._noisy("MR 0\nH 0\nM 0")
+        reset_flips = [args[0] for args in self._args(reset_mode, "X_ERROR")]
+        self.assertEqual(len(reset_flips), 2)
+        for actual in reset_flips:
+            self.assertAlmostEqual(actual, 0.02)
+
+    def test_fit_recovers_known_two_qubit_scale(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location(
+            "fit_noise_to_hardware", repo_root / "scripts" / "fit_noise_to_hardware.py"
+        )
+        fit_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fit_module)
+
+        config = load_experiment_config(repo_root / "configs" / "sweep_d3_baseline_sim.yaml")
+        calibration_file = str(repo_root / config["noise"]["calibration_file"])
+        config["noise"]["calibration_file"] = calibration_file
+        config["mapping"]["calibration_file"] = calibration_file
+        truth = {"two_qubit_scale": 2.0, "measurement_scale": 1.0, "idle_scale": 1.0}
+        shots = 20000
+        targets = {"bases": {}}
+        for basis in ["memory_z", "memory_x"]:
+            rates = fit_module.simulated_rates(config, basis, truth, shots, seed=11)
+            counts = np.rint(rates * shots).astype(int)
+            targets["bases"][basis] = {
+                "shots": shots,
+                "detector_counts": counts[:-1].tolist(),
+                "observable_flip_count": int(counts[-1]),
+            }
+
+        grid = {"two_qubit_scale": [1.0, 2.0, 3.0], "measurement_scale": [1.0], "idle_scale": [1.0]}
+        result = fit_module.fit_scales(config, targets, grid, shots=shots, seed=5)
+
+        self.assertEqual(result["best"]["scales"]["two_qubit_scale"], 2.0)
 
 
 class ProvenanceTests(unittest.TestCase):
