@@ -7,6 +7,7 @@ import networkx as nx
 import stim
 import yaml
 
+from qec_pipeline.codes.surface_code import count_flattened_ticks
 from qec_pipeline.mapping import parse_hardware_calibration
 
 
@@ -36,7 +37,9 @@ def apply_iqm_calibration_noise(
         hardware=hardware,
         mapping_info=mapping_info,
         rounds=int(circuit_info.get("rounds", 1)),
-        num_ticks=int(circuit_info.get("num_ticks", 1)),
+        # Count ticks on the circuit being noised. Idle noise is applied at every
+        # flattened TICK, so the per-tick share must use the flattened count too.
+        num_ticks=count_flattened_ticks(stim_circuit),
         options=options,
     )
     noisy_circuit = noise_builder.noisy_copy(stim_circuit)

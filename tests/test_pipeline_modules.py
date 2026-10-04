@@ -45,6 +45,7 @@ from qec_pipeline.mapping.patch_selection import (
 )
 from qec_pipeline.pipeline import describe_pipeline, run_pipeline
 from qec_pipeline.syndrome_extraction import extract_syndromes
+from qec_pipeline.syndromes import extract_detection_events
 from qec_pipeline.sweeps import round_values, run_rounds_sweep
 
 
@@ -809,6 +810,84 @@ class DiagnosticAndSweepTests(unittest.TestCase):
             self.assertTrue((sweep_dir / "summary.md").exists())
             sweep_json = json.loads((sweep_dir / "sweep_results.json").read_text(encoding="utf-8"))
             self.assertIn("provenance", sweep_json)
+
+
+class CalibratedNoiseScalingTests(unittest.TestCase):
+    """Regression tests for the idle-noise scaling bug (ERRATA E1)."""
+
+    def test_num_ticks_counts_ticks_inside_repeat_blocks(self) -> None:
+        for rounds in [1, 3, 5, 7]:
+            code = {"family": "surface_code", "distance": 3, "rounds": rounds, "basis": "memory_z"}
+            stim_circuit, _model, _order, circuit_info = build_surface_code_circuit(code, NO_NOISE, "memory_z")
+            flattened = sum(1 for item in stim_circuit.flattened() if item.name == "TICK")
+            self.assertEqual(circuit_info["num_ticks"], flattened)
+
+    def test_idle_noise_per_round_does_not_depend_on_round_count(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            calibration_path = Path(temp_dir) / "calibration.yaml"
+            calibration_path.write_text(
+                yaml_dump(_grid_calibration(rows=6, cols=6, low_origin=(1, 1), low_size=5)),
+                encoding="utf-8",
+            )
+            idle_per_round = []
+            for rounds in [1, 3, 5, 7]:
+                config = {
+                    "code": {"family": "surface_code_iqm", "distance": 3, "rounds": rounds},
+                    "noise": {
+                        "model": "iqm_calibration",
+                        "calibration_file": str(calibration_path),
+                        # Only idle noise, so every DEPOLARIZE1 below is an idle location.
+                        "options": {
+                            "apply_idle": True,
+                            "one_qubit_scale": 0.0,
+                            "two_qubit_scale": 0.0,
+                            "measurement_scale": 0.0,
+                            "reset_scale": 0.0,
+                            "qnd_scale": 0.0,
+                        },
+                    },
+                    "mapping": {
+                        "strategy": "calibration_best_patch",
+                        "calibration_file": str(calibration_path),
+                        "hardware_patch": None,
+                    },
+                }
+                circuit = build_iqm_surface_code_circuit(config["code"], config["noise"], "memory_z")
+                noisy, _model, _order, _info = prepare_circuit_for_execution(config, circuit)
+                totals: dict[int, float] = {}
+                for item in noisy.flattened():
+                    if item.name == "DEPOLARIZE1":
+                        probability = item.gate_args_copy()[0]
+                        for target in item.targets_copy():
+                            totals[target.value] = totals.get(target.value, 0.0) + probability
+                idle_per_round.append({qubit: total / rounds for qubit, total in totals.items()})
+
+            for per_round in idle_per_round[1:]:
+                self.assertEqual(set(per_round), set(idle_per_round[0]))
+                for qubit, value in per_round.items():
+                    self.assertAlmostEqual(value, idle_per_round[0][qubit], places=12)
+
+    def test_calibrated_simulator_error_per_round_is_stationary(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        base = load_experiment_config(repo_root / "configs" / "sweep_d3_best_sim.yaml")
+        calibration_file = str(repo_root / base["noise"]["calibration_file"])
+        error_per_round = {}
+        for rounds in [3, 7]:
+            config = json.loads(json.dumps(base))
+            config["code"]["rounds"] = rounds
+            config["noise"]["calibration_file"] = calibration_file
+            config["mapping"]["calibration_file"] = calibration_file
+            circuit = get_code_builder(config["code"]["family"])(config["code"], config["noise"], "memory_z")
+            circuit = prepare_circuit_for_execution(config, circuit)
+            raw = run_simulator_backend({"name": "simulator", "shots": 20000, "options": {"seed": 7}}, circuit)
+            syndromes = extract_detection_events(circuit, raw)
+            _predicted, _failures, ler, _sigma, _info = decode_with_calibrated_pymatching(
+                {"name": "pymatching_calibrated"}, circuit, syndromes
+            )
+            error_per_round[rounds] = (1.0 - (1.0 - 2.0 * ler) ** (1.0 / rounds)) / 2.0
+
+        # Before the fix this difference was ~0.095 (0.069 -> 0.163); after it, ~0.002.
+        self.assertLess(abs(error_per_round[7] - error_per_round[3]), 0.006)
 
 
 class ProvenanceTests(unittest.TestCase):

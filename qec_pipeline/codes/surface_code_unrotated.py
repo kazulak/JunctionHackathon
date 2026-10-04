@@ -6,8 +6,8 @@ import stim
 
 from qec_pipeline.codes.surface_code import (
     _count_detector_model_errors,
-    _count_top_level_ticks,
     _stim_noise_parameters,
+    count_flattened_ticks,
 )
 from qec_pipeline.measurements import measurement_order_from_stim_circuit
 
@@ -55,7 +55,7 @@ def build_unrotated_surface_code_circuit(
         "num_measurements": stim_circuit.num_measurements,
         "num_detectors": stim_circuit.num_detectors,
         "num_observables": stim_circuit.num_observables,
-        "num_ticks": _count_top_level_ticks(stim_circuit),
+        "num_ticks": count_flattened_ticks(stim_circuit),
         "noise_model": noise.get("model", "no_noise"),
         "noise_parameters": dict(noise.get("parameters", {})),
         "stim_noise_kwargs": noise_kwargs,
