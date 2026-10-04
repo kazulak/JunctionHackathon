@@ -23,6 +23,7 @@ from qec_pipeline.codes.color_code import build_color_code_circuit
 from qec_pipeline.codes.surface_code_iqm import build_iqm_surface_code_circuit
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
 from qec_pipeline.codes.surface_code_unrotated import build_unrotated_surface_code_circuit
+from qec_pipeline.conversion_checks import convert_and_sample
 from qec_pipeline.config import config_summary, load_experiment_config
 from qec_pipeline.decoders import get_decoder
 from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
@@ -1214,6 +1215,55 @@ class HardwarePathTests(unittest.TestCase):
         wrong = {"dense_to_hardware": {"0": "QB1", "1": "QB2"}}
         with self.assertRaises(RuntimeError):
             _check_layout_matches_mapping(loci, wrong)
+
+
+class MidcircuitProbeTests(unittest.TestCase):
+    """The mid-circuit probe used to diagnose ERRATA E5."""
+
+    def test_noiseless_probe_never_flips_data_in_any_mode(self) -> None:
+        for mode in ["measure_reset", "measure", "none"]:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                config = {
+                    "experiment": {"name": f"unit_probe_{mode}", "description": "", "seed": 1},
+                    "code": {
+                        "family": "midcircuit_probe",
+                        "probe_mode": mode,
+                        "distance": 3,
+                        "rounds": 3,
+                        "basis": "both",
+                        "reset_mode": "reset",
+                    },
+                    "backend": {"name": "simulator", "shots": 64, "options": {"seed": 1}},
+                    "noise": NO_NOISE,
+                    "decoder": {"name": "observable_rate", "options": {}},
+                    "mapping": {"strategy": "none", "hardware_patch": None},
+                    "artifacts": {"root": temp_dir},
+                }
+                _run_dir, basis_results, _notes = run_pipeline(config)
+                for _basis, _circuit, _raw, _syndromes, decoded, metrics in basis_results:
+                    self.assertEqual(decoded[2], 0.0)
+                    self.assertFalse(metrics["memory_experiment"])
+                    self.assertIsNone(metrics["logical_error_per_round"])
+
+    def test_probe_uses_surface_code_qubits_and_converts_to_qiskit(self) -> None:
+        probe, *_ = get_code_builder("midcircuit_probe")(
+            {"distance": 3, "rounds": 2, "probe_mode": "measure_reset"}, NO_NOISE, "memory_z"
+        )
+        surface, *_ = build_surface_code_circuit(
+            {"family": "surface_code", "distance": 3, "rounds": 2}, NO_NOISE, "memory_z"
+        )
+        self.assertEqual(probe.get_final_qubit_coordinates(), surface.get_final_qubit_coordinates())
+
+        for mode in ["measure_reset", "measure"]:
+            probe, *_ = get_code_builder("midcircuit_probe")(
+                {"distance": 3, "rounds": 2, "probe_mode": mode}, NO_NOISE, "memory_x"
+            )
+            _stim_samples, qiskit_samples, *_ = convert_and_sample(probe, shots=8, seed=1)
+            detections, observables = probe.compile_m2d_converter().convert(
+                measurements=qiskit_samples, separate_observables=True
+            )
+            self.assertFalse(detections.any())
+            self.assertFalse(observables.any())
 
 
 class ProvenanceTests(unittest.TestCase):

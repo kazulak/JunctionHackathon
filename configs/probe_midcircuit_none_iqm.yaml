@@ -1,0 +1,82 @@
+# Mid-circuit probe (none, IQM hardware). See baselines/post_hackathon/midcircuit_diagnosis_20261004.
+# Same qubits and pinned Emerald patch as sweep_d3_baseline_iqm.yaml, no entangling gates.
+# Ancillas repeat H + nothing; data qubits idle. LER = P(any data qubit flipped).
+#
+# Run:
+#   python scripts/sweep_rounds.py configs/probe_midcircuit_none_iqm.yaml --rounds 1 7 4  --dry-run   # needs IQM credits without --dry-run
+
+experiment:
+  name: probe_midcircuit_none_iqm
+  description: 'Mid-circuit probe, ancillas: H + nothing (IQM hardware).'
+  seed: 1
+code:
+  family: midcircuit_probe
+  probe_mode: none
+  distance: 3
+  rounds: 1
+  basis: both
+  reset_mode: reset
+backend:
+  name: iqm_hardware
+  shots: 2000
+  options:
+    server_url: https://resonance.meetiqm.com
+    quantum_computer: emerald
+    optimization_level: 3
+    seed_transpiler: 11
+    routing_method: sabre
+    batch_submit: true
+    omit_initial_resets: true
+    omit_repeated_resets: false
+noise:
+  model: iqm_calibration
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  options:
+    apply_idle: true
+    route_error_multiplier: 1.0
+    two_qubit_scale: 2.0
+decoder:
+  name: observable_rate
+  options: {}
+mapping:
+  strategy: calibration_best_patch
+  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  weights:
+    one_qubit: 1.0
+    two_qubit: 1.0
+    measurement: 1.0
+    reset: 1.0
+    idle: 1.0
+    qnd: 1.0
+    max_coupler: 10.0
+  options:
+    exclude_qubits:
+    - QB9
+    - QB25
+    - QB41
+    - QB46
+    - QB47
+  hardware_patch:
+    stim_to_hardware:
+      '1': QB31
+      '2': QB39
+      '3': QB38
+      '5': QB45
+      '8': QB22
+      '9': QB30
+      '10': QB29
+      '11': QB37
+      '12': QB36
+      '13': QB44
+      '14': QB14
+      '15': QB13
+      '16': QB21
+      '17': QB20
+      '18': QB28
+      '19': QB27
+      '25': QB19
+artifacts:
+  root: results
+  save_raw_measurements: true
+  save_syndromes: true
+  save_report: true

@@ -1,0 +1,7 @@
+label,basis,fit_points,fitted_logical_error_per_round,fitted_logical_error_per_round_uncertainty,fit_amplitude,fit_method,note,excluded_points
+measure,memory_x,0,,,,binomial_mle,need at least two distinct round values,4
+measure,memory_z,0,,,,binomial_mle,need at least two distinct round values,4
+measure_reset,memory_x,0,,,,binomial_mle,need at least two distinct round values,4
+measure_reset,memory_z,0,,,,binomial_mle,need at least two distinct round values,4
+none,memory_x,0,,,,binomial_mle,need at least two distinct round values,4
+none,memory_z,0,,,,binomial_mle,need at least two distinct round values,4

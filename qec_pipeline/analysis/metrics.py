@@ -75,6 +75,9 @@ def fit_per_round_error(rows: list[dict[str, Any]]) -> dict[str, Any]:
         if is_postselected(row):
             excluded.append({"rounds": int(row["rounds"]), "reason": "postselected"})
             continue
+        if str(row.get("memory_experiment", True)).lower() in {"false", "0"}:
+            excluded.append({"rounds": int(row["rounds"]), "reason": "not a memory experiment"})
+            continue
         if int(row.get("shots") or 0) <= 0:
             excluded.append({"rounds": int(row["rounds"]), "reason": "no shots"})
             continue

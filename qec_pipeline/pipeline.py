@@ -92,6 +92,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
             int(config["code"].get("rounds", 1)),
             decoded,
             syndrome_info,
+            memory_experiment=is_memory_experiment(circuit),
         )
 
         basis_run_dir = run_dir / basis
@@ -103,6 +104,11 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
 
     write_run_summary(run_dir, config, basis_results, notes)
     return run_dir, basis_results, notes
+
+
+def is_memory_experiment(circuit: tuple) -> bool:
+    """False for code families whose LER is not a logical-memory failure probability."""
+    return circuit[3].get("code_family") != "midcircuit_probe"
 
 
 def basis_list(config_basis: str) -> list[str]:
@@ -139,10 +145,13 @@ def build_basis_metrics(
     rounds: int,
     decoded: tuple,
     syndrome_info: dict[str, Any],
+    memory_experiment: bool = True,
 ) -> dict[str, Any]:
     """Build the metrics dictionary for one decoded basis run.
 
     Shared by single runs and IQM batch sweeps so both report identical fields.
+    `memory_experiment=False` (e.g. the mid-circuit probe) leaves the per-round
+    LER empty, because P(r) = (1 - (1-2e)^r)/2 does not describe it.
     """
     _predicted, _failures, ler, uncertainty, decoder_info = decoded
     failures = int(decoder_info["logical_failures"])
@@ -161,6 +170,7 @@ def build_basis_metrics(
         "max_detector_firing_rate": syndrome_info["max_detector_firing_rate"],
         "mean_syndrome_weight": syndrome_info["mean_syndrome_weight"],
         "selection_is_in_sample": bool(decoder_info.get("selection_is_in_sample", False)),
+        "memory_experiment": bool(memory_experiment),
         "decoder_info": decoder_info,
     }
     if "original_shots" in decoder_info:
@@ -168,8 +178,9 @@ def build_basis_metrics(
         metrics["kept_shots"] = decoder_info.get("kept_shots", decoder_info["shots"])
         metrics["postselection_fraction"] = decoder_info.get("postselection_fraction", 1.0)
 
-    if is_postselected(metrics):
-        # The kept fraction changes with r, so a per-round conversion is not meaningful.
+    if is_postselected(metrics) or not memory_experiment:
+        # Postselection changes the kept fraction with r, and non-memory experiments
+        # do not follow the memory decay law, so a per-round conversion is not meaningful.
         metrics["logical_error_per_round"] = None
         metrics["logical_error_per_round_uncertainty"] = None
     else:

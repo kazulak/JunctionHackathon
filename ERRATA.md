@@ -63,7 +63,7 @@ From the raw IQM Emerald data of the two post-hackathon sweeps (the hackathon sw
 
 r=1 circuits contain no mid-circuit operations; r ≥ 2 circuits contain mid-circuit measurements and `reset`s. Once those appear, the data qubits themselves are scrambled in both bases. No decoder, prior tuning, or postselection can recover this, so decoder-side "improvements" on these hardware runs are not meaningful. The submission's reading ("repeated reset/readout behaviour, timing, leakage, crosstalk") points in the right direction but understated how abrupt the failure is.
 
-Status: offline diagnostics and a characterization experiment are planned (audit phase 7).
+Status: offline diagnostics done (audit phase 7). `scripts/diagnose_hardware_rounds.py` reproduces these numbers (`baselines/post_hackathon/midcircuit_diagnosis_20261004`). A characterization experiment is ready but **not yet run** on hardware (needs IQM credits): the `midcircuit_probe` code family (`configs/probe_midcircuit_{measure_reset,measure,none}_{sim,iqm}.yaml`) and `configs/sweep_d3_no_reset_iqm.yaml`. Simulator reference: `baselines/post_hackathon/midcircuit_probe_sim_reference_20261004`.
 
 ## E6. Statistics and reporting
 

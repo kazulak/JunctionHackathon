@@ -111,7 +111,8 @@ def _read_rows(label: str, path: Path) -> list[dict[str, Any]]:
             rounds = int(row["rounds"])
             ler = float(row["ler"])
             uncertainty = float(row["uncertainty"])
-            postselected = is_postselected(row)
+            memory_experiment = str(row.get("memory_experiment", "True")).lower() not in {"false", "0"}
+            postselected = is_postselected(row) or not memory_experiment
             per_round, per_round_uncertainty = (
                 (None, None) if postselected else per_round_ler(ler, uncertainty, rounds)
             )
@@ -134,6 +135,7 @@ def _read_rows(label: str, path: Path) -> list[dict[str, Any]]:
                     "original_shots": _int_or(row, "original_shots", int(row["shots"])),
                     "kept_shots": _int_or(row, "kept_shots", int(row["shots"])),
                     "postselection_fraction": _float_or(row, "postselection_fraction", 1.0),
+                    "memory_experiment": memory_experiment,
                     "logical_failures": int(row["logical_failures"]),
                     "shots": int(row["shots"]),
                     "source_csv": str(path),

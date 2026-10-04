@@ -39,6 +39,8 @@ See [PROVENANCE.md](../PROVENANCE.md) for the full timeline and [ERRATA.md](../E
 | `noise_fit_targets_r1/` | hardware r=1 data from 2026-06-08; fit 2026-10-04 | Hardware detector counts and the noise-scale fit that replaced the hand-tuned simulator scales. |
 | `surface_d3_sim_fitted_noise_20261004/` | 2026-10-04 11:25 | d3 baseline with the hardware-fitted noise model and plain MWPM (current reference simulator). |
 | `surface_d5_sim_fitted_noise_20261004/` | 2026-10-04 11:25 | Routed d5 with the fitted model: above threshold on this layout. |
+| `midcircuit_diagnosis_20261004/` | hardware data from 2026-06-08; analysis 2026-10-04 | Round-by-round diagnosis of the hardware failure: data qubits are scrambled once mid-circuit measure/reset begins. Includes the hypothesis table and the probe experiment. |
+| `midcircuit_probe_sim_reference_20261004/` | 2026-10-04 11:39–11:40 | Simulator reference for the mid-circuit probe (all three modes agree; expected hardware signature described). |
 | `decoder_validation_idlefix_20261004/` | 2026-10-04 11:05–11:07 | Decoder comparison on the corrected simulator: plain MWPM baseline vs in-sample vs k-fold selection. k-fold gives a real gain for memory_x only. |
 
 ## Archiving a new sweep

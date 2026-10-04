@@ -1,5 +1,14 @@
 # Research Roadmap
 
+## Priority 1: mid-circuit operations on hardware
+
+Hardware data is destroyed from the first mid-circuit measure/reset (ERRATA E5). Nothing else matters for hardware LER until this is understood.
+
+1. Run the probe experiment (needs IQM credits): `configs/probe_midcircuit_{measure_reset,measure,none}_iqm.yaml`, r = 1/3/5/7, plus `configs/sweep_d3_no_reset_iqm.yaml`.
+2. Compare the per-data-qubit flip rate with the simulator reference (`baselines/post_hackathon/midcircuit_probe_sim_reference_20261004`).
+3. Read the outcome against the hypothesis table in `baselines/post_hackathon/midcircuit_diagnosis_20261004/README.md`.
+4. Ask IQM which `reset` implementation and mid-circuit readout timing Emerald uses.
+
 Keep the workflow simulator-first. Spend QPU credits only after local sweeps show a clear reason.
 
 ## Ideas From Google's Surface-Code Paper

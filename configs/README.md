@@ -32,6 +32,8 @@ python main.py --dry-run --print-config configs/sweep_d3_baseline_sim.yaml
 | `sweep_d3_decoder_improvements_sim.yaml` | D3 simulator with correlated MWPM, MWPM ensembles, and gated candidates, selected **in-sample** on purpose (optimistic; diagnostic only). |
 | `sweep_d3_decoder_holdout_sim.yaml` | Same decoder candidates as above, but selected on one shot split and reported on held-out shots. |
 | `sweep_d3_decoder_kfold_sim.yaml` | Same decoder candidates as above, evaluated with k-fold out-of-fold candidate selection. |
+| `probe_midcircuit_{measure_reset,measure,none}_{sim,iqm}.yaml` | Mid-circuit probe (ERRATA E5): surface-code qubits without entangling gates; ancillas repeat H + measure/reset, measure, or nothing while data qubits idle. IQM versions need credits. |
+| `sweep_d3_no_reset_iqm.yaml` | d3 IQM sweep without mid-circuit resets (records virtualized in software). |
 | `sim_iqm_emerald_surface_d3_calibrated.yaml` | Single d3 calibrated simulator run. |
 | `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator variant. |
 | `sim_iqm_emerald_surface_d5_calibrated.yaml` | D5 calibrated simulator with routed layout. |
