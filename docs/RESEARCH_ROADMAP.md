@@ -1,5 +1,14 @@
 # Research Roadmap
 
+## Priority 1: mid-circuit operations on hardware
+
+Hardware data is destroyed from the first mid-circuit measure/reset (ERRATA E5). Nothing else matters for hardware LER until this is understood.
+
+1. Run the probe experiment (needs IQM credits): `configs/probe_midcircuit_{measure_reset,measure,none}_iqm.yaml`, r = 1/3/5/7, plus `configs/sweep_d3_no_reset_iqm.yaml`.
+2. Compare the per-data-qubit flip rate with the simulator reference (`baselines/post_hackathon/midcircuit_probe_sim_reference_20261004`).
+3. Read the outcome against the hypothesis table in `baselines/post_hackathon/midcircuit_diagnosis_20261004/README.md`.
+4. Ask IQM which `reset` implementation and mid-circuit readout timing Emerald uses.
+
 Keep the workflow simulator-first. Spend QPU credits only after local sweeps show a clear reason.
 
 ## Ideas From Google's Surface-Code Paper
@@ -60,19 +69,21 @@ Gated decoding keeps all shots. It tries no correction on low-syndrome shots and
 
 Correlation-aware MWPM and ensemble decoding also keep all shots. These test whether the detector error model contains useful correlated-error information or whether several MWPM priors make different useful mistakes.
 
-Current conclusion:
+Current conclusion (final simulator, 2026-10-04, `baselines/post_hackathon/decoder_and_postselection_fitted_noise_20261004`):
 
 ```text
-same-batch candidate tuning: looks better, but optimistic
-single holdout / k-fold: does not beat baseline
+same-batch candidate tuning: optimistic by construction, diagnostic only
+k-fold selection (correlated matching): memory_z 0.068 -> 0.064, memory_x 0.092 -> 0.083 per round
+postselection: diagnostic only (keeps 25-43% of shots)
 ```
 
-Do not spend QPU credits on adaptive decoder candidate selection until it improves out-of-fold in simulation.
+The June conclusion ("k-fold does not beat baseline") was drawn on the buggy noise model (ERRATA E1).
+Decoder work does not matter on hardware until mid-circuit operations stop destroying the data (ERRATA E5).
 
 Run:
 
 ```bash
-python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_baseline_sim.yaml --rounds 1 7 4
 python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
 python scripts/sweep_rounds.py configs/sweep_d3_gated_decoder_sim.yaml --rounds 1 7 4
 python scripts/sweep_rounds.py configs/sweep_d3_decoder_improvements_sim.yaml --rounds 1 7 4

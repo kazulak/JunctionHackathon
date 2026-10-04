@@ -23,8 +23,10 @@ noise:
     apply_idle: true
     route_error_multiplier: 1.0
     missing_coupler_error: 0.25
-    qnd_scale: 0.0
-    idle_scale: 0.5
+    # Fitted to IQM Emerald r=1 hardware data (scripts/fit_noise_to_hardware.py,
+    # baselines/post_hackathon/noise_fit_targets_r1). Readout and idle stay at their
+    # calibration values; the r=1 data cannot separate them from two-qubit error.
+    two_qubit_scale: 2.0
 
 decoder:
   name: pymatching_calibrated

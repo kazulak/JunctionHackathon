@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -12,6 +12,17 @@ import matplotlib
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from qec_pipeline.analysis.metrics import (
+    fit_per_round_error,
+    is_postselected,
+    per_round_ler,
+    wilson_interval,
+)
 
 
 def main() -> int:
@@ -105,10 +116,10 @@ def _read_rows(label: str, path: Path) -> list[dict[str, Any]]:
             rounds = int(row["rounds"])
             ler = float(row["ler"])
             uncertainty = float(row["uncertainty"])
-            per_round, per_round_uncertainty = _per_round_ler(
-                ler,
-                uncertainty,
-                rounds,
+            memory_experiment = str(row.get("memory_experiment", "True")).lower() not in {"false", "0"}
+            postselected = is_postselected(row) or not memory_experiment
+            per_round, per_round_uncertainty = (
+                (None, None) if postselected else per_round_ler(ler, uncertainty, rounds)
             )
             rows.append(
                 {
@@ -117,18 +128,19 @@ def _read_rows(label: str, path: Path) -> list[dict[str, Any]]:
                     "rounds": rounds,
                     "ler": ler,
                     "uncertainty": uncertainty,
-                    "logical_error_per_round": _float_or(row, "logical_error_per_round", per_round),
-                    "logical_error_per_round_uncertainty": _float_or(
-                        row,
-                        "logical_error_per_round_uncertainty",
-                        per_round_uncertainty,
-                    ),
+                    "logical_error_per_round": None
+                    if postselected
+                    else _float_or(row, "logical_error_per_round", per_round),
+                    "logical_error_per_round_uncertainty": None
+                    if postselected
+                    else _float_or(row, "logical_error_per_round_uncertainty", per_round_uncertainty),
                     "mean_detector_firing_rate": _float_or(row, "mean_detector_firing_rate", None),
                     "max_detector_firing_rate": _float_or(row, "max_detector_firing_rate", None),
                     "mean_syndrome_weight": _float_or(row, "mean_syndrome_weight", None),
                     "original_shots": _int_or(row, "original_shots", int(row["shots"])),
                     "kept_shots": _int_or(row, "kept_shots", int(row["shots"])),
                     "postselection_fraction": _float_or(row, "postselection_fraction", 1.0),
+                    "memory_experiment": memory_experiment,
                     "logical_failures": int(row["logical_failures"]),
                     "shots": int(row["shots"]),
                     "source_csv": str(path),
@@ -145,45 +157,12 @@ def _fit_all(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             [row for row in rows if row["label"] == label and row["basis"] == basis],
             key=lambda row: row["rounds"],
         )
-        fit = _fit_per_round_error(series)
-        fit_rows.append({"label": label, "basis": basis, **fit})
+        fit = fit_per_round_error(series)
+        excluded = fit.pop("excluded_points")
+        fit_rows.append(
+            {"label": label, "basis": basis, **fit, "excluded_points": len(excluded)}
+        )
     return fit_rows
-
-
-def _fit_per_round_error(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    xs = []
-    ys = []
-    for row in rows:
-        ler = float(row["ler"])
-        if 0.0 <= ler < 0.5:
-            survival = 1.0 - 2.0 * ler
-            if survival > 0.0:
-                xs.append(float(row["rounds"]))
-                ys.append(math.log(survival))
-
-    if len(xs) < 2:
-        return {
-            "fit_points": len(xs),
-            "fitted_logical_error_per_round": None,
-            "fit_slope": None,
-            "fit_intercept": None,
-        }
-
-    mean_x = sum(xs) / len(xs)
-    mean_y = sum(ys) / len(ys)
-    denominator = sum((x - mean_x) ** 2 for x in xs)
-    if denominator == 0.0:
-        slope = 0.0
-    else:
-        slope = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys)) / denominator
-    intercept = mean_y - slope * mean_x
-    per_round = (1.0 - math.exp(slope)) / 2.0
-    return {
-        "fit_points": len(xs),
-        "fitted_logical_error_per_round": per_round,
-        "fit_slope": slope,
-        "fit_intercept": intercept,
-    }
 
 
 def _plot_metric(
@@ -241,33 +220,47 @@ def _write_summary(
         "",
         "## Per-Round Fits",
         "",
-        "| Label | Basis | Fit points | Fitted logical error per round |",
-        "| --- | --- | ---: | ---: |",
+        "Binomial maximum-likelihood fit of P(r) = (1 - A(1-2e)^r)/2. "
+        "Postselected series are excluded (their kept fraction changes with r).",
+        "",
+        "| Label | Basis | Fit points | Error per round | 1-sigma | Amplitude A | Excluded points |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in fit_rows:
-        value = row["fitted_logical_error_per_round"]
-        value_text = "" if value is None else f"{value:.6g}"
-        lines.append(f"| {row['label']} | {row['basis']} | {row['fit_points']} | {value_text} |")
+        lines.append(
+            f"| {row['label']} | {row['basis']} | {row['fit_points']} | "
+            f"{_format_optional(row['fitted_logical_error_per_round'])} | "
+            f"{_format_optional(row['fitted_logical_error_per_round_uncertainty'])} | "
+            f"{_format_optional(row['fit_amplitude'])} | {row['excluded_points']} |"
+        )
 
     lines.extend(
         [
             "",
             "## Sweep Rows",
             "",
-            "| Label | Basis | Rounds | LER | Uncertainty | Per-round LER | Mean detector rate | Kept fraction | Failures | Shots |",
+            "| Label | Basis | Rounds | LER | 68% Wilson interval | Per-round LER | Mean detector rate "
+            "| Kept fraction | Failures | Shots |",
             "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
     for row in sorted(rows, key=lambda item: (item["label"], item["basis"], item["rounds"])):
         lines.append(
             f"| {row['label']} | {row['basis']} | {row['rounds']} | "
-            f"{row['ler']:.6g} | {row['uncertainty']:.3g} | "
-            f"{row['logical_error_per_round']:.6g} | "
+            f"{row['ler']:.6g} | {_interval(row)} | "
+            f"{_format_optional(row['logical_error_per_round'])} | "
             f"{_format_optional(row.get('mean_detector_firing_rate'))} | "
             f"{_format_optional(row.get('postselection_fraction'))} | "
             f"{row['logical_failures']} | {row['shots']} |"
         )
     (output_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _interval(row: dict[str, Any]) -> str:
+    if not row["shots"]:
+        return ""
+    low, high = wilson_interval(row["logical_failures"], row["shots"])
+    return f"{low:.4g}–{high:.4g}"
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -278,16 +271,6 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
-
-
-def _per_round_ler(total_ler: float, total_uncertainty: float, rounds: int) -> tuple[float, float]:
-    if rounds <= 1:
-        return total_ler, total_uncertainty
-    clamped = min(max(float(total_ler), 0.0), 0.499999999)
-    survival = 1.0 - 2.0 * clamped
-    per_round = (1.0 - survival ** (1.0 / rounds)) / 2.0
-    derivative = (1.0 / rounds) * survival ** ((1.0 / rounds) - 1.0)
-    return float(per_round), float(abs(derivative) * total_uncertainty)
 
 
 def _float_or(row: dict[str, str], key: str, fallback: float | None) -> float | None:

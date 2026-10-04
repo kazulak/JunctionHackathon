@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
 import warnings
+from typing import Any
 
 import stim
 
@@ -58,6 +58,7 @@ def build_surface_code_circuit(
             "does not implement no-reset surface-code circuits. Falling back "
             "to standard active-reset Stim rotated memory circuit.",
             RuntimeWarning,
+            stacklevel=2,
         )
 
     task = _stim_task_for_basis(basis)
@@ -90,7 +91,7 @@ def build_surface_code_circuit(
         "num_measurements": stim_circuit.num_measurements,
         "num_detectors": stim_circuit.num_detectors,
         "num_observables": stim_circuit.num_observables,
-        "num_ticks": _count_top_level_ticks(stim_circuit),
+        "num_ticks": count_flattened_ticks(stim_circuit),
 
         "noise_model": noise.get("model", "no_noise"),
         "noise_parameters": dict(noise.get("parameters", {})),
@@ -214,8 +215,9 @@ def _validate_generated_circuit(stim_circuit: stim.Circuit) -> None:
         raise RuntimeError("Generated circuit has zero logical observables.")
 
 
-def _count_top_level_ticks(circuit: stim.Circuit) -> int:
-    return sum(1 for instruction in circuit if instruction.name == "TICK")
+def count_flattened_ticks(circuit: stim.Circuit) -> int:
+    """Count TICKs in the fully unrolled circuit, including those inside REPEAT blocks."""
+    return sum(1 for instruction in circuit.flattened() if instruction.name == "TICK")
 
 
 def _count_detector_model_errors(

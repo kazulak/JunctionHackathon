@@ -21,7 +21,7 @@ Consequences:
 - The real gap between hardware (≈0.49 at r=3) and the model is therefore much larger than reported, so the hardware failure is not "missing physics in the noise model" (see E5).
 - Detector error models used to decode hardware data carried the same bug.
 
-Status: fix in progress on `main` (audit phase 3).
+Status: **fixed on `main`** (audit phase 3, regression tests in `CalibratedNoiseScalingTests`). Corrected re-runs: `baselines/post_hackathon/surface_d3_sim_idlefix_20261004` (d3: error per round ≈0.028 memory-Z / ≈0.034 memory-X, constant in r) and `baselines/post_hackathon/surface_d5_sim_idlefix_20261004` (routed d5: ≈0.047–0.050 per round).
 
 ## E2. The "calibrated" simulator was hand-tuned towards low LER
 
@@ -29,7 +29,9 @@ The best simulator configs used `qnd_scale: 0.0` and `idle_scale: 0.5`. These we
 
 Other approximations: randomized-benchmarking infidelity was used directly as the depolarizing probability (under-counts by 1.5× for one-qubit and 1.25× for two-qubit gates); readout error is the maximum of several fields; reset error is not available in the calibration dump and is always 0; the round time is assumed to be 1 µs.
 
-The simulator should be described as *calibration-informed and hand-tuned*, not *calibrated*. Status: planned (audit phase 5).
+The simulator should be described as *calibration-informed*, not *calibrated*.
+
+Status: **fixed on `main`** (audit phase 5). The model now converts RB infidelity to Pauli probabilities, uses the mean readout assignment error, models idle noise as Pauli-twirled T1/T2, applies QND only to qubits reused without reset, and its scales are fitted to r=1 hardware data rather than chosen for low LER (`two_qubit_scale: 2.0`; see `baselines/post_hackathon/noise_fit_targets_r1` and `docs/CALIBRATED_SIMULATION.md`). The fit is still poor in absolute terms, so the model remains approximate.
 
 ## E3. Decoder candidate selection was in-sample
 
@@ -42,7 +44,7 @@ The simulator should be described as *calibration-informed and hand-tuned*, not 
 
 This affects the submission's surface-code tables (best of ~11 candidates), the repetition-code tables (best of 7), and the post-hackathon `decoder_improvements` / `best_combined` baselines. Holdout and k-fold also broke ties using the evaluation LER (a small test-set leak, ~0.0003).
 
-Status: planned (audit phase 4).
+Status: **fixed on `main`** (audit phase 4): `pymatching_auto` defaults to k-fold selection, in-sample selection is flagged `selection_is_in_sample`, ties are broken by candidate order, and the baseline configs use plain calibrated MWPM. On the corrected simulator, k-fold selection still gives a genuine gain for memory_x (0.035 → 0.030 per round; `baselines/post_hackathon/decoder_validation_idlefix_20261004`).
 
 ## E4. Repetition-code per-round LER on IQM Garnet is not supported by the data
 
@@ -61,7 +63,7 @@ From the raw IQM Emerald data of the two post-hackathon sweeps (the hackathon sw
 
 r=1 circuits contain no mid-circuit operations; r ≥ 2 circuits contain mid-circuit measurements and `reset`s. Once those appear, the data qubits themselves are scrambled in both bases. No decoder, prior tuning, or postselection can recover this, so decoder-side "improvements" on these hardware runs are not meaningful. The submission's reading ("repeated reset/readout behaviour, timing, leakage, crosstalk") points in the right direction but understated how abrupt the failure is.
 
-Status: offline diagnostics and a characterization experiment are planned (audit phase 7).
+Status: offline diagnostics done (audit phase 7). `scripts/diagnose_hardware_rounds.py` reproduces these numbers (`baselines/post_hackathon/midcircuit_diagnosis_20261004`). A characterization experiment is ready but **not yet run** on hardware (needs IQM credits): the `midcircuit_probe` code family (`configs/probe_midcircuit_{measure_reset,measure,none}_{sim,iqm}.yaml`) and `configs/sweep_d3_no_reset_iqm.yaml`. Simulator reference: `baselines/post_hackathon/midcircuit_probe_sim_reference_20261004`.
 
 ## E6. Statistics and reporting
 
@@ -70,4 +72,4 @@ Status: offline diagnostics and a characterization experiment are planned (audit
 - The per-round fit was an unweighted least-squares fit of log(1 − 2·LER) without an uncertainty.
 - The IQM `dynamical_decoupling` option failed silently: the post-hackathon "combined" hardware run requested it, but it was never applied.
 
-Status: planned (audit phases 4 and 6).
+Status: postselection labelling, Wilson intervals, and the per-round fit (binomial maximum likelihood with uncertainty; postselected rows excluded) are **fixed on `main`** (audit phase 4). Dynamical decoupling: **fixed on `main`** (audit phase 6): requesting it on IQM now raises an error before any job is submitted. The hardware path also records per-shot memory (shot order), the IQM calibration-set ID, the calibration-file age, and the physical qubits actually sent to the QPU, and refuses to submit if a native patch would run on other qubits. Sweeps pin one qubit layout for all round values.

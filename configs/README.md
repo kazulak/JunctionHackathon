@@ -9,27 +9,35 @@ python main.py configs/demo_stim_no_noise.yaml
 Dry-run without executing:
 
 ```bash
-python main.py --dry-run --print-config configs/sweep_d3_best_sim.yaml
+python main.py --dry-run --print-config configs/sweep_d3_baseline_sim.yaml
 ```
+
+> Simulator configs use the calibration-informed noise model described in `docs/CALIBRATED_SIMULATION.md`
+> (`two_qubit_scale: 2.0` fitted to r=1 hardware). The old hand-tuned `qnd_scale: 0` / `idle_scale: 0.5` are gone.
+>
+> `pymatching_auto` now selects decoder candidates by k-fold cross-validation unless a config sets
+> `candidate_selection_mode: current_batch` explicitly (in-sample, optimistic; see ERRATA E3).
 
 ## Active Files
 
 | Config | Purpose |
 | --- | --- |
 | `demo_stim_no_noise.yaml` | No-noise simulator smoke test. |
-| `sweep_d3_best_sim.yaml` | Main d3 calibrated simulator sweep config. |
+| `sweep_d3_baseline_sim.yaml` | Main d3 calibration-informed simulator sweep (noise fitted to r=1 hardware), plain calibrated MWPM decoder (renamed from `sweep_d3_best_sim.yaml`, which used in-sample best-of-N decoder selection). |
 | `sweep_d3_postselected_sim.yaml` | D3 simulator with low-syndrome postselection. |
 | `sweep_d3_best_combined_sim.yaml` | Best reported-LER simulator recipe: postselection plus full PyMatching candidate set. |
 | `sweep_d3_best_combined_iqm.yaml` | Best reported-LER IQM recipe: Emerald patch, omitted initial resets, DD attempt, postselection, full decoder candidates. |
 | `sweep_d3_low_syndrome_sim.yaml` | D3 simulator with aggressive 25% low-syndrome postselection. |
 | `sweep_d3_gated_decoder_sim.yaml` | D3 simulator with full-dataset gated MWPM/no-correction decoder. |
-| `sweep_d3_decoder_improvements_sim.yaml` | D3 simulator with full-dataset correlated MWPM, MWPM ensembles, and gated candidates. |
+| `sweep_d3_decoder_improvements_sim.yaml` | D3 simulator with correlated MWPM, MWPM ensembles, and gated candidates, selected **in-sample** on purpose (optimistic; diagnostic only). |
 | `sweep_d3_decoder_holdout_sim.yaml` | Same decoder candidates as above, but selected on one shot split and reported on held-out shots. |
 | `sweep_d3_decoder_kfold_sim.yaml` | Same decoder candidates as above, evaluated with k-fold out-of-fold candidate selection. |
+| `probe_midcircuit_{measure_reset,measure,none}_{sim,iqm}.yaml` | Mid-circuit probe (ERRATA E5): surface-code qubits without entangling gates; ancillas repeat H + measure/reset, measure, or nothing while data qubits idle. IQM versions need credits. |
+| `sweep_d3_no_reset_iqm.yaml` | d3 IQM sweep without mid-circuit resets (records virtualized in software). |
 | `sim_iqm_emerald_surface_d3_calibrated.yaml` | Single d3 calibrated simulator run. |
 | `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator variant. |
 | `sim_iqm_emerald_surface_d5_calibrated.yaml` | D5 calibrated simulator with routed layout. |
-| `sweep_d3_best_iqm.yaml` | Hardware template matching the main d3 simulator route. Use only after simulator results justify it. |
+| `sweep_d3_baseline_iqm.yaml` | Hardware template matching `sweep_d3_baseline_sim.yaml` (renamed from `sweep_d3_best_iqm.yaml`). Use only after simulator results justify it. |
 | `2026-06-06T06_08_52.470451Z.json` | Emerald-like IQM calibration dump. |
 | `2026-06-06T16_44_10.718568Z.json` | Garnet-like IQM calibration dump. |
 
@@ -39,7 +47,7 @@ python main.py --dry-run --print-config configs/sweep_d3_best_sim.yaml
 
 ```yaml
 experiment:
-  name: sweep_d3_best_sim
+  name: sweep_d3_baseline_sim
   description: "D3 calibrated simulator sweep."
   seed: 1
 ```
@@ -96,7 +104,7 @@ Notes:
 - `shots`: number of samples.
 - `batch_submit: true`: sweeps submit all IQM jobs first, then wait.
 - `omit_initial_resets: true`: skips the initial hardware reset when converting to Qiskit; this was the best hardware-side reset choice in hackathon runs.
-- `dynamical_decoupling: true`: attempts Qiskit's XX DD pass after transpilation and records whether it applied.
+- `dynamical_decoupling`: not implemented for IQM. Requesting it raises an error (the old pass failed silently, ERRATA E6).
 - IQM token is read from `.env` or `IQM_TOKEN`.
 
 ### `noise`

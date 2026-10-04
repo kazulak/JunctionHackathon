@@ -1,0 +1,207 @@
+{
+  "method": "grid search, binomial deviance over r=1 detectors + raw observable (pseudo-likelihood)",
+  "provenance": {
+    "recorded_utc": "2026-10-04T11:22:23+00:00",
+    "git_commit": "051ef67e7732623a7744058b7786be04d37f0f0a",
+    "git_branch": "audit/5-noise-model",
+    "git_dirty": true,
+    "python": "3.11.0",
+    "packages": {
+      "stim": "1.16.0",
+      "PyMatching": "2.4.0",
+      "numpy": "2.4.6",
+      "qiskit": "2.1.2",
+      "iqm-client": "34.0.3"
+    }
+  },
+  "config": "configs\\sweep_d3_baseline_sim.yaml",
+  "simulated_shots": 50000,
+  "grid": {
+    "two_qubit_scale": [
+      1.5,
+      1.75,
+      2.0,
+      2.25,
+      2.5
+    ],
+    "measurement_scale": [
+      0.75,
+      1.0,
+      1.25,
+      1.5
+    ],
+    "idle_scale": [
+      1.0
+    ]
+  },
+  "best": {
+    "scales": {
+      "two_qubit_scale": 2.0,
+      "measurement_scale": 0.75,
+      "idle_scale": 1.0
+    },
+    "deviance": 732.2464700194716
+  },
+  "ranking": [
+    {
+      "scales": {
+        "two_qubit_scale": 2.0,
+        "measurement_scale": 0.75,
+        "idle_scale": 1.0
+      },
+      "deviance": 732.2464700194716
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.75,
+        "measurement_scale": 1.0,
+        "idle_scale": 1.0
+      },
+      "deviance": 735.248180614099
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.75,
+        "measurement_scale": 1.25,
+        "idle_scale": 1.0
+      },
+      "deviance": 741.5626495601754
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.0,
+        "measurement_scale": 1.0,
+        "idle_scale": 1.0
+      },
+      "deviance": 743.092884156197
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.5,
+        "measurement_scale": 1.5,
+        "idle_scale": 1.0
+      },
+      "deviance": 765.051270343935
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.5,
+        "measurement_scale": 1.25,
+        "idle_scale": 1.0
+      },
+      "deviance": 773.5503960759049
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.25,
+        "measurement_scale": 0.75,
+        "idle_scale": 1.0
+      },
+      "deviance": 780.1340330773038
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.75,
+        "measurement_scale": 0.75,
+        "idle_scale": 1.0
+      },
+      "deviance": 788.981477146049
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.75,
+        "measurement_scale": 1.5,
+        "idle_scale": 1.0
+      },
+      "deviance": 803.2309617202924
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.0,
+        "measurement_scale": 1.25,
+        "idle_scale": 1.0
+      },
+      "deviance": 809.6283566090327
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.5,
+        "measurement_scale": 1.0,
+        "idle_scale": 1.0
+      },
+      "deviance": 826.2478315055589
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.25,
+        "measurement_scale": 1.0,
+        "idle_scale": 1.0
+      },
+      "deviance": 849.6077818524604
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.5,
+        "measurement_scale": 0.75,
+        "idle_scale": 1.0
+      },
+      "deviance": 911.6313953448778
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.0,
+        "measurement_scale": 1.5,
+        "idle_scale": 1.0
+      },
+      "deviance": 919.91957248626
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 1.5,
+        "measurement_scale": 0.75,
+        "idle_scale": 1.0
+      },
+      "deviance": 963.702341781563
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.25,
+        "measurement_scale": 1.25,
+        "idle_scale": 1.0
+      },
+      "deviance": 963.8435942529715
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.5,
+        "measurement_scale": 1.0,
+        "idle_scale": 1.0
+      },
+      "deviance": 1047.198208371583
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.25,
+        "measurement_scale": 1.5,
+        "idle_scale": 1.0
+      },
+      "deviance": 1136.1184265800457
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.5,
+        "measurement_scale": 1.25,
+        "idle_scale": 1.0
+      },
+      "deviance": 1191.6173190601496
+    },
+    {
+      "scales": {
+        "two_qubit_scale": 2.5,
+        "measurement_scale": 1.5,
+        "idle_scale": 1.0
+      },
+      "deviance": 1385.5228711154637
+    }
+  ]
+}

@@ -1,11 +1,11 @@
 # Sweep-compatible IQM hardware config.
-# Pair with: configs/sweep_d3_best_sim.yaml
+# Pair with: configs/sweep_d3_baseline_sim.yaml
 #
 # Run:
-#   python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
+#   python scripts/sweep_rounds.py configs/sweep_d3_baseline_iqm.yaml --rounds 1 7 4
 
 experiment:
-  name: sweep_d3_best_iqm
+  name: sweep_d3_baseline_iqm
   description: "IQM hardware side of the best d3 Emerald sweep pair."
   seed: 1
 
@@ -35,23 +35,16 @@ noise:
   options:
     apply_idle: true
     route_error_multiplier: 1.0
-    qnd_scale: 0.0
-    idle_scale: 0.5
+    # Fitted to IQM Emerald r=1 hardware data (scripts/fit_noise_to_hardware.py,
+    # baselines/post_hackathon/noise_fit_targets_r1). Readout and idle stay at their
+    # calibration values; the r=1 data cannot separate them from two-qubit error.
+    two_qubit_scale: 2.0
 
 decoder:
-  name: pymatching_auto
-  options:
-    include_no_correction: true
-    uniform_probabilities:
-      - 0.001
-      - 0.003
-      - 0.005
-      - 0.01
-      - 0.02
-      - 0.05
-      - 0.1
-      - 0.2
-      - 0.3
+  # Plain MWPM on the calibrated detector error model. The baseline must not be
+  # a best-of-N choice; compare decoder variants with sweep_d3_decoder_kfold_sim.yaml.
+  name: pymatching_calibrated
+  options: {}
 
 mapping:
   strategy: calibration_best_patch

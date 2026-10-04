@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from qec_pipeline.analysis.metrics import wilson_interval
 from qec_pipeline.provenance import uuid7_time
 
 PROVENANCE_LABELS = {
@@ -156,12 +157,14 @@ def _build_hardware_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         basis_dir = run_dir / str(row["basis"])
         raw_metadata = _read_json_if_exists(basis_dir / "raw_metadata.json")
         metrics = _read_json_if_exists(basis_dir / "metrics.json")
-        if not raw_metadata:
+        if not raw_metadata.get("job_id"):
+            # Simulator runs also write raw_metadata.json; only hardware jobs belong here.
             continue
 
         transpilation = raw_metadata.get("transpilation_metrics", {}) or {}
         mapping = raw_metadata.get("mapping", {}) or {}
         dd = raw_metadata.get("dynamical_decoupling", {}) or {}
+        loci = raw_metadata.get("physical_loci", {}) or {}
         decoder_info = metrics.get("decoder_info", {}) if metrics else {}
 
         hardware_rows.append(
@@ -202,6 +205,9 @@ def _build_hardware_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "dynamical_decoupling_enabled": dd.get("enabled"),
                 "dynamical_decoupling_applied": dd.get("applied"),
                 "dynamical_decoupling_error": dd.get("error"),
+                "calibration_set_id": raw_metadata.get("calibration_set_id"),
+                "shot_order_preserved": raw_metadata.get("shot_order_preserved"),
+                "physical_qubits": " ".join(loci.get("physical_qubits", [])) or None,
                 "selected_candidate": decoder_info.get("selected_candidate"),
             }
         )
@@ -249,7 +255,7 @@ def _write_readme(
 
 def _result_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Rounds | Basis | LER | Uncertainty | Kept/Original | Detector rate | Candidate |",
+        "| Rounds | Basis | LER | 68% Wilson interval | Kept/Original | Detector rate | Candidate |",
         "| ---: | --- | ---: | ---: | ---: | ---: | --- |",
     ]
     for row in sorted(rows, key=lambda item: (item["rounds"], item["basis"])):
@@ -258,10 +264,17 @@ def _result_table(rows: list[dict[str, Any]]) -> str:
         kept = row.get("kept_shots") or row["shots"]
         lines.append(
             f"| {row['rounds']} | {row['basis']} | {_fmt(row['ler'])} | "
-            f"{_fmt(row['uncertainty'])} | {kept}/{original} | "
+            f"{_interval(row)} | {kept}/{original} | "
             f"{_fmt(row.get('mean_detector_firing_rate'))} | {candidate} |"
         )
     return "\n".join(lines)
+
+
+def _interval(row: dict[str, Any]) -> str:
+    if not row["shots"]:
+        return ""
+    low, high = wilson_interval(row["logical_failures"], row["shots"])
+    return f"{low:.4g}–{high:.4g}"
 
 
 def _selected_candidate(row: dict[str, Any]) -> str:

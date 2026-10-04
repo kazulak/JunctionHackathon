@@ -30,12 +30,17 @@ noise:
   options:
     apply_idle: true
     route_error_multiplier: 1.0
-    qnd_scale: 0.0
-    idle_scale: 0.5
+    # Fitted to IQM Emerald r=1 hardware data (scripts/fit_noise_to_hardware.py,
+    # baselines/post_hackathon/noise_fit_targets_r1). Readout and idle stay at their
+    # calibration values; the r=1 data cannot separate them from two-qubit error.
+    two_qubit_scale: 2.0
 
 decoder:
   name: pymatching_auto
   options:
+    # In-sample selection on purpose: this config shows how optimistic same-batch
+    # tuning looks. Use sweep_d3_decoder_kfold_sim.yaml for the honest estimate.
+    candidate_selection_mode: current_batch
     include_no_correction: true
     include_correlated_matching: true
     include_matching_ensembles: true

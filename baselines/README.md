@@ -11,9 +11,9 @@ Results are split by provenance:
 
 See [PROVENANCE.md](../PROVENANCE.md) for the full timeline and [ERRATA.md](../ERRATA.md) for known issues.
 
-> **Known issue:** every simulator result here was produced with the idle-noise scaling bug described in
-> [ERRATA.md](../ERRATA.md) (idle noise grows ~r² with the number of rounds). The simulator LER for r ≥ 3 is therefore too high.
-> Corrected runs will be added under `post_hackathon/` and marked as such.
+> **Known issue:** simulator results dated before 2026-10-04 were produced with the idle-noise scaling bug described in
+> [ERRATA.md](../ERRATA.md) (idle noise grows ~r² with the number of rounds), so their LER for r ≥ 3 is too high.
+> Folders ending in `_idlefix_20261004` are the corrected re-runs.
 
 ## Hackathon runs (2026-06-07)
 
@@ -34,6 +34,15 @@ See [PROVENANCE.md](../PROVENANCE.md) for the full timeline and [ERRATA.md](../E
 | `best_combined_reported_20260608/` | 2026-06-08 20:32 | Combined postselection + in-sample decoder selection (diagnostic, not a full-shot result). |
 | `iqm_baseline_replication_20260608/` | IQM job `019ea8f5…`, submitted 2026-06-08 20:39 | Re-run of the hack-era d3 IQM sweep. Reproduces the saturation at r ≥ 3. |
 | `iqm_best_combined_reported_20260608/` | IQM job `019ea8f7…`, submitted 2026-06-08 20:40 | IQM run with the combined postselection recipe. Dynamical decoupling was requested but **not applied** (see `hardware_metadata.csv`). |
+| `surface_d3_sim_idlefix_20261004/` | 2026-10-04 10:57 | **Corrected** re-run of the hackathon d3 simulator sweep after the idle-noise fix (decoder selection still in-sample). |
+| `surface_d5_sim_idlefix_20261004/` | 2026-10-04 10:57 | **Corrected** re-run of the hackathon d5 routed simulator sweep after the idle-noise fix. |
+| `noise_fit_targets_r1/` | hardware r=1 data from 2026-06-08; fit 2026-10-04 | Hardware detector counts and the noise-scale fit that replaced the hand-tuned simulator scales. |
+| `surface_d3_sim_fitted_noise_20261004/` | 2026-10-04 11:25 | d3 baseline with the hardware-fitted noise model and plain MWPM (current reference simulator). |
+| `surface_d5_sim_fitted_noise_20261004/` | 2026-10-04 11:25 | Routed d5 with the fitted model: above threshold on this layout. |
+| `midcircuit_diagnosis_20261004/` | hardware data from 2026-06-08; analysis 2026-10-04 | Round-by-round diagnosis of the hardware failure: data qubits are scrambled once mid-circuit measure/reset begins. Includes the hypothesis table and the probe experiment. |
+| `midcircuit_probe_sim_reference_20261004/` | 2026-10-04 11:39–11:40 | Simulator reference for the mid-circuit probe (all three modes agree; expected hardware signature described). |
+| `decoder_and_postselection_fitted_noise_20261004/` | 2026-10-04 11:42 | **Current** decoder and postselection comparison on the final pipeline: k-fold selection lowers error per round by ~5% (Z) / ~9% (X); postselection is a diagnostic. |
+| `decoder_validation_idlefix_20261004/` | 2026-10-04 11:05–11:07 | Decoder comparison on the corrected simulator: plain MWPM baseline vs in-sample vs k-fold selection. k-fold gives a real gain for memory_x only. |
 
 ## Archiving a new sweep
 
