@@ -42,7 +42,7 @@ The simulator should be described as *calibration-informed and hand-tuned*, not 
 
 This affects the submission's surface-code tables (best of ~11 candidates), the repetition-code tables (best of 7), and the post-hackathon `decoder_improvements` / `best_combined` baselines. Holdout and k-fold also broke ties using the evaluation LER (a small test-set leak, ~0.0003).
 
-Status: planned (audit phase 4).
+Status: **fixed on `main`** (audit phase 4): `pymatching_auto` defaults to k-fold selection, in-sample selection is flagged `selection_is_in_sample`, ties are broken by candidate order, and the baseline configs use plain calibrated MWPM. On the corrected simulator, k-fold selection still gives a genuine gain for memory_x (0.035 → 0.030 per round; `baselines/post_hackathon/decoder_validation_idlefix_20261004`).
 
 ## E4. Repetition-code per-round LER on IQM Garnet is not supported by the data
 
@@ -70,4 +70,4 @@ Status: offline diagnostics and a characterization experiment are planned (audit
 - The per-round fit was an unweighted least-squares fit of log(1 − 2·LER) without an uncertainty.
 - The IQM `dynamical_decoupling` option failed silently: the post-hackathon "combined" hardware run requested it, but it was never applied.
 
-Status: planned (audit phases 4 and 6).
+Status: postselection labelling, Wilson intervals, and the per-round fit (binomial maximum likelihood with uncertainty; postselected rows excluded) are **fixed on `main`** (audit phase 4). Dynamical decoupling: planned (audit phase 6).

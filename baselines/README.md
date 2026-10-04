@@ -36,6 +36,7 @@ See [PROVENANCE.md](../PROVENANCE.md) for the full timeline and [ERRATA.md](../E
 | `iqm_best_combined_reported_20260608/` | IQM job `019ea8f7…`, submitted 2026-06-08 20:40 | IQM run with the combined postselection recipe. Dynamical decoupling was requested but **not applied** (see `hardware_metadata.csv`). |
 | `surface_d3_sim_idlefix_20261004/` | 2026-10-04 10:57 | **Corrected** re-run of the hackathon d3 simulator sweep after the idle-noise fix (decoder selection still in-sample). |
 | `surface_d5_sim_idlefix_20261004/` | 2026-10-04 10:57 | **Corrected** re-run of the hackathon d5 routed simulator sweep after the idle-noise fix. |
+| `decoder_validation_idlefix_20261004/` | 2026-10-04 11:05–11:07 | Decoder comparison on the corrected simulator: plain MWPM baseline vs in-sample vs k-fold selection. k-fold gives a real gain for memory_x only. |
 
 ## Archiving a new sweep
 
