@@ -9,7 +9,7 @@ from unittest.mock import patch
 import numpy as np
 import stim
 
-from qec_pipeline.analysis.metrics import binomial_standard_error
+from qec_pipeline.analysis.metrics import binomial_standard_error, fit_per_round_error, wilson_interval
 from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
 from qec_pipeline.analysis.reports import write_run_artifacts
 from qec_pipeline.artifacts import utc_timestamp
@@ -28,7 +28,7 @@ from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
 from qec_pipeline.decoders.ising_decoder import decode_with_ising
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
-from qec_pipeline.decoders.pymatching_auto_decoder import decode_with_pymatching_auto
+from qec_pipeline.decoders.pymatching_auto_decoder import _select_candidate, decode_with_pymatching_auto
 from qec_pipeline.decoders.pymatching_decoder import (
     detector_model_with_uniform_noise,
     decode_with_pymatching,
@@ -43,7 +43,7 @@ from qec_pipeline.mapping.patch_selection import (
     rank_calibration_best_patches,
     surface_code_patch_coordinates,
 )
-from qec_pipeline.pipeline import describe_pipeline, run_pipeline
+from qec_pipeline.pipeline import build_basis_metrics, describe_pipeline, run_pipeline
 from qec_pipeline.syndrome_extraction import extract_syndromes
 from qec_pipeline.syndromes import extract_detection_events
 from qec_pipeline.sweeps import round_values, run_rounds_sweep
@@ -869,7 +869,7 @@ class CalibratedNoiseScalingTests(unittest.TestCase):
 
     def test_calibrated_simulator_error_per_round_is_stationary(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
-        base = load_experiment_config(repo_root / "configs" / "sweep_d3_best_sim.yaml")
+        base = load_experiment_config(repo_root / "configs" / "sweep_d3_baseline_sim.yaml")
         calibration_file = str(repo_root / base["noise"]["calibration_file"])
         error_per_round = {}
         for rounds in [3, 7]:
@@ -888,6 +888,136 @@ class CalibratedNoiseScalingTests(unittest.TestCase):
 
         # Before the fix this difference was ~0.095 (0.069 -> 0.163); after it, ~0.002.
         self.assertLess(abs(error_per_round[7] - error_per_round[3]), 0.006)
+
+
+class DecoderSelectionAndStatisticsTests(unittest.TestCase):
+    """Regression tests for ERRATA E3/E6: selection leaks, defaults, and statistics."""
+
+    @staticmethod
+    def _candidate(name: str, failures: np.ndarray) -> dict:
+        failures = np.asarray(failures, dtype=bool)
+        return {
+            "name": name,
+            "predicted_observables": np.zeros((len(failures), 1), dtype=bool),
+            "logical_failures": failures,
+            "ler": float(failures.mean()),
+            "uncertainty": 0.0,
+        }
+
+    def test_holdout_tie_break_does_not_use_evaluation_split(self) -> None:
+        shots = 10
+        rng = np.random.default_rng(1)
+        indices = np.arange(shots)
+        rng.shuffle(indices)
+        evaluation_shot = indices[-1]  # selection uses the first half of the shuffled shots
+        first = np.zeros(shots, dtype=bool)
+        first[evaluation_shot] = True
+        candidates = [self._candidate("first", first), self._candidate("second", np.zeros(shots))]
+
+        reported, info = _select_candidate(
+            candidates,
+            {"candidate_selection_mode": "holdout", "selection_fraction": 0.5, "selection_seed": 1},
+        )
+
+        # Both tie on the selection split; the earlier candidate must win even though
+        # the second one looks better on the evaluation split.
+        self.assertEqual(reported["name"], "first")
+        self.assertFalse(info["selection_is_in_sample"])
+
+    def test_kfold_tie_break_does_not_use_evaluation_fold(self) -> None:
+        shots = 10
+        first = np.zeros(shots, dtype=bool)
+        first[3] = True
+        candidates = [self._candidate("first", first), self._candidate("second", np.zeros(shots))]
+
+        reported, info = _select_candidate(
+            candidates,
+            {"candidate_selection_mode": "kfold", "candidate_selection_folds": 5, "selection_seed": 1},
+        )
+
+        # In the fold containing shot 3 both candidates tie on the other folds, so the
+        # first candidate is chosen and its evaluation failure is reported honestly.
+        self.assertEqual(int(reported["logical_failures"].sum()), 1)
+        self.assertFalse(info["selection_is_in_sample"])
+
+    def test_pymatching_auto_defaults_to_kfold_selection(self) -> None:
+        stim_circuit = stim.Circuit(
+            """
+            X_ERROR(0.1) 0
+            M 0
+            DETECTOR rec[-1]
+            OBSERVABLE_INCLUDE(0) rec[-1]
+            """
+        )
+        circuit = (stim_circuit, stim_circuit.detector_error_model(), (0,), {"num_observables": 1})
+        events = np.array([[False], [True]] * 5, dtype=bool)
+        syndromes = (events, events[:, 0].copy(), {})
+
+        _predicted, _failures, _ler, _sigma, info = decode_with_pymatching_auto(
+            {"name": "pymatching_auto", "options": {"uniform_probabilities": [0.01]}},
+            circuit,
+            syndromes,
+        )
+        self.assertEqual(info["candidate_selection"], "kfold")
+        self.assertFalse(info["selection_is_in_sample"])
+
+        _predicted, _failures, _ler, _sigma, info = decode_with_pymatching_auto(
+            {"name": "pymatching_auto", "options": {"candidate_selection_mode": "current_batch"}},
+            circuit,
+            syndromes,
+        )
+        self.assertTrue(info["selection_is_in_sample"])
+
+    def test_wilson_interval_has_positive_upper_bound_at_zero_failures(self) -> None:
+        low, high = wilson_interval(0, 1000)
+        self.assertEqual(low, 0.0)
+        self.assertGreater(high, 0.0)
+        low, high = wilson_interval(50, 1000)
+        self.assertLess(low, 0.05)
+        self.assertGreater(high, 0.05)
+
+    def test_per_round_fit_recovers_known_error(self) -> None:
+        rng = np.random.default_rng(3)
+        true_error, amplitude, shots = 0.03, 0.95, 20000
+        rows = []
+        for rounds in [1, 3, 5, 7, 9]:
+            probability = 0.5 * (1 - amplitude * (1 - 2 * true_error) ** rounds)
+            rows.append(
+                {"rounds": rounds, "shots": shots, "logical_failures": int(rng.binomial(shots, probability))}
+            )
+
+        fit = fit_per_round_error(rows)
+
+        self.assertEqual(fit["fit_points"], 5)
+        sigma = fit["fitted_logical_error_per_round_uncertainty"]
+        self.assertIsNotNone(sigma)
+        self.assertLess(abs(fit["fitted_logical_error_per_round"] - true_error), 2 * sigma)
+
+    def test_postselected_rows_have_no_per_round_ler_and_are_not_fitted(self) -> None:
+        decoder_info = {
+            "logical_failures": 10,
+            "shots": 500,
+            "original_shots": 1000,
+            "kept_shots": 500,
+            "postselection_fraction": 0.5,
+        }
+        syndrome_info = {
+            "mean_detector_firing_rate": 0.1,
+            "max_detector_firing_rate": 0.2,
+            "mean_syndrome_weight": 1.0,
+        }
+        metrics = build_basis_metrics("memory_z", 5, (None, None, 0.02, 0.006, decoder_info), syndrome_info)
+        self.assertIsNone(metrics["logical_error_per_round"])
+        self.assertGreater(metrics["ler_ci_high"], metrics["ler"])
+
+        fit = fit_per_round_error(
+            [
+                {"rounds": 1, "shots": 500, "logical_failures": 5, "postselection_fraction": 0.5},
+                {"rounds": 3, "shots": 400, "logical_failures": 9, "postselection_fraction": 0.4},
+            ]
+        )
+        self.assertEqual(fit["fit_points"], 0)
+        self.assertEqual(len(fit["excluded_points"]), 2)
 
 
 class ProvenanceTests(unittest.TestCase):

@@ -9,27 +9,30 @@ python main.py configs/demo_stim_no_noise.yaml
 Dry-run without executing:
 
 ```bash
-python main.py --dry-run --print-config configs/sweep_d3_best_sim.yaml
+python main.py --dry-run --print-config configs/sweep_d3_baseline_sim.yaml
 ```
+
+> `pymatching_auto` now selects decoder candidates by k-fold cross-validation unless a config sets
+> `candidate_selection_mode: current_batch` explicitly (in-sample, optimistic; see ERRATA E3).
 
 ## Active Files
 
 | Config | Purpose |
 | --- | --- |
 | `demo_stim_no_noise.yaml` | No-noise simulator smoke test. |
-| `sweep_d3_best_sim.yaml` | Main d3 calibrated simulator sweep config. |
+| `sweep_d3_baseline_sim.yaml` | Main d3 calibrated simulator sweep, plain calibrated MWPM decoder (renamed from `sweep_d3_best_sim.yaml`, which used in-sample best-of-N decoder selection). |
 | `sweep_d3_postselected_sim.yaml` | D3 simulator with low-syndrome postselection. |
 | `sweep_d3_best_combined_sim.yaml` | Best reported-LER simulator recipe: postselection plus full PyMatching candidate set. |
 | `sweep_d3_best_combined_iqm.yaml` | Best reported-LER IQM recipe: Emerald patch, omitted initial resets, DD attempt, postselection, full decoder candidates. |
 | `sweep_d3_low_syndrome_sim.yaml` | D3 simulator with aggressive 25% low-syndrome postselection. |
 | `sweep_d3_gated_decoder_sim.yaml` | D3 simulator with full-dataset gated MWPM/no-correction decoder. |
-| `sweep_d3_decoder_improvements_sim.yaml` | D3 simulator with full-dataset correlated MWPM, MWPM ensembles, and gated candidates. |
+| `sweep_d3_decoder_improvements_sim.yaml` | D3 simulator with correlated MWPM, MWPM ensembles, and gated candidates, selected **in-sample** on purpose (optimistic; diagnostic only). |
 | `sweep_d3_decoder_holdout_sim.yaml` | Same decoder candidates as above, but selected on one shot split and reported on held-out shots. |
 | `sweep_d3_decoder_kfold_sim.yaml` | Same decoder candidates as above, evaluated with k-fold out-of-fold candidate selection. |
 | `sim_iqm_emerald_surface_d3_calibrated.yaml` | Single d3 calibrated simulator run. |
 | `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator variant. |
 | `sim_iqm_emerald_surface_d5_calibrated.yaml` | D5 calibrated simulator with routed layout. |
-| `sweep_d3_best_iqm.yaml` | Hardware template matching the main d3 simulator route. Use only after simulator results justify it. |
+| `sweep_d3_baseline_iqm.yaml` | Hardware template matching `sweep_d3_baseline_sim.yaml` (renamed from `sweep_d3_best_iqm.yaml`). Use only after simulator results justify it. |
 | `2026-06-06T06_08_52.470451Z.json` | Emerald-like IQM calibration dump. |
 | `2026-06-06T16_44_10.718568Z.json` | Garnet-like IQM calibration dump. |
 
@@ -39,7 +42,7 @@ python main.py --dry-run --print-config configs/sweep_d3_best_sim.yaml
 
 ```yaml
 experiment:
-  name: sweep_d3_best_sim
+  name: sweep_d3_baseline_sim
   description: "D3 calibrated simulator sweep."
   seed: 1
 ```

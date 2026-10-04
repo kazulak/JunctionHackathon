@@ -72,7 +72,7 @@ Do not spend QPU credits on adaptive decoder candidate selection until it improv
 Run:
 
 ```bash
-python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_baseline_sim.yaml --rounds 1 7 4
 python scripts/sweep_rounds.py configs/sweep_d3_postselected_sim.yaml --rounds 1 7 4
 python scripts/sweep_rounds.py configs/sweep_d3_gated_decoder_sim.yaml --rounds 1 7 4
 python scripts/sweep_rounds.py configs/sweep_d3_decoder_improvements_sim.yaml --rounds 1 7 4

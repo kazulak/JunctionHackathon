@@ -4,10 +4,14 @@ from typing import Any
 
 import numpy as np
 
+from qec_pipeline.analysis.metrics import binomial_standard_error
 from qec_pipeline.decoders.pymatching_decoder import (
     decode_detection_events,
     detector_model_with_uniform_noise,
 )
+
+
+DEFAULT_SELECTION_MODE = "kfold"
 
 
 def decode_with_pymatching_auto(
@@ -15,7 +19,14 @@ def decode_with_pymatching_auto(
     circuit: tuple,
     syndromes: tuple,
 ) -> tuple:
-    """Try several simple MWPM models and report the best one on this run."""
+    """Try several MWPM variants and report the selected one.
+
+    Selection modes (`options.candidate_selection_mode`):
+        kfold (default): choose on k-1 folds, report on the held-out fold.
+        holdout: choose on one split, report on the other.
+        current_batch: choose and report on the same shots. Optimistic
+            (winner's curse); `decoder_info["selection_is_in_sample"]` is True.
+    """
     stim_circuit, detector_model, _measurement_order, circuit_info = circuit
     detection_events, observable_flips, syndrome_info = syndromes
     options = decoder.get("options", {}) or {}
@@ -218,10 +229,10 @@ def _select_candidate(
     candidates: list[dict[str, Any]],
     options: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    mode = str(options.get("candidate_selection_mode", "current_batch")).lower()
+    mode = str(options.get("candidate_selection_mode", DEFAULT_SELECTION_MODE)).lower()
     if mode in {"current_batch", "best_on_current_batch"}:
-        best = min(candidates, key=lambda item: item["ler"])
-        return best, {"candidate_selection": "best_on_current_batch"}
+        best = _min_by_position(candidates, lambda item: item["ler"])
+        return best, {"candidate_selection": "best_on_current_batch", "selection_is_in_sample": True}
 
     if mode == "kfold":
         return _select_candidate_kfold(candidates, options)
@@ -233,9 +244,10 @@ def _select_candidate(
 
     shots = int(len(candidates[0]["logical_failures"])) if candidates else 0
     if shots < 2:
-        best = min(candidates, key=lambda item: item["ler"])
+        best = _min_by_position(candidates, lambda item: item["ler"])
         return best, {
             "candidate_selection": "holdout_fallback_current_batch",
+            "selection_is_in_sample": True,
             "selection_shots": shots,
             "evaluation_shots": 0,
         }
@@ -265,10 +277,8 @@ def _select_candidate(
         candidate["evaluation_logical_failures"] = int(evaluation_failures.sum())
         candidate["evaluation_shots"] = int(evaluation_failures.size)
 
-    selected = min(
-        candidates,
-        key=lambda item: (item["selection_ler"], item["evaluation_ler"]),
-    )
+    # Ties are broken by candidate order, never by evaluation LER (that would leak the test split).
+    selected = _min_by_position(candidates, lambda item: item["selection_ler"])
     reported = {
         "name": selected["name"],
         "predicted_observables": selected["predicted_observables"][evaluation_mask],
@@ -281,6 +291,7 @@ def _select_candidate(
     }
     info = {
         "candidate_selection": "holdout",
+        "selection_is_in_sample": False,
         "selection_fraction": float(selection_fraction),
         "selection_shots": int(selection_shots),
         "evaluation_shots": int(evaluation_mask.sum()),
@@ -300,9 +311,10 @@ def _select_candidate_kfold(
     if folds < 2:
         raise ValueError("candidate_selection_folds must be at least 2")
     if shots < folds:
-        best = min(candidates, key=lambda item: item["ler"])
+        best = _min_by_position(candidates, lambda item: item["ler"])
         return best, {
             "candidate_selection": "kfold_fallback_current_batch",
+            "selection_is_in_sample": True,
             "candidate_selection_folds": folds,
         }
 
@@ -337,10 +349,7 @@ def _select_candidate_kfold(
                 }
             )
 
-        selected = min(
-            fold_scores,
-            key=lambda item: (item["selection_ler"], item["evaluation_ler"]),
-        )
+        selected = _min_by_position(fold_scores, lambda item: item["selection_ler"])
         candidate = selected["candidate"]
         predicted[evaluation_mask] = candidate["predicted_observables"][evaluation_mask]
         logical_failures[evaluation_mask] = candidate["logical_failures"][evaluation_mask]
@@ -368,12 +377,18 @@ def _select_candidate_kfold(
     }
     info = {
         "candidate_selection": "kfold",
+        "selection_is_in_sample": False,
         "candidate_selection_folds": folds,
         "selection_seed": int(options.get("selection_seed", 1)),
         "fold_selected_candidates": fold_rows,
         "unique_selected_candidates": sorted(set(selected_names)),
     }
     return reported, info
+
+
+def _min_by_position(items: list[dict[str, Any]], score) -> dict[str, Any]:
+    """Return the lowest-scoring item; ties go to the earliest item (label-free)."""
+    return min(enumerate(items), key=lambda pair: (score(pair[1]), pair[0]))[1]
 
 
 def _candidate_split_info(candidate: dict[str, Any]) -> dict[str, Any]:
@@ -477,6 +492,4 @@ def _as_2d_bool(array: object) -> np.ndarray:
 
 
 def _binomial_standard_error(ler: float, shots: int) -> float:
-    if shots <= 0:
-        return 0.0
-    return float((ler * (1.0 - ler) / shots) ** 0.5)
+    return binomial_standard_error(ler, shots) if shots > 0 else 0.0

@@ -63,7 +63,7 @@ python main.py configs/demo_stim_no_noise.yaml
 Current calibrated d3 simulator sweep:
 
 ```bash
-python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_baseline_sim.yaml --rounds 1 7 4
 ```
 
 Postselection simulator experiment:
@@ -122,7 +122,7 @@ The tests cover config loading, Stim-to-Qiskit translation, measurement conversi
 
 ```text
 configs/demo_stim_no_noise.yaml
-configs/sweep_d3_best_sim.yaml
+configs/sweep_d3_baseline_sim.yaml
 configs/sweep_d3_postselected_sim.yaml
 configs/sweep_d3_best_combined_sim.yaml
 configs/sweep_d3_best_combined_iqm.yaml
@@ -131,7 +131,7 @@ configs/sweep_d3_decoder_kfold_sim.yaml
 configs/sim_iqm_emerald_surface_d3_calibrated.yaml
 configs/sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml
 configs/sim_iqm_emerald_surface_d5_calibrated.yaml
-configs/sweep_d3_best_iqm.yaml
+configs/sweep_d3_baseline_iqm.yaml
 ```
 
 Details: [configs/README.md](configs/README.md).

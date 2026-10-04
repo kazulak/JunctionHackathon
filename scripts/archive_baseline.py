@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from qec_pipeline.analysis.metrics import wilson_interval
 from qec_pipeline.provenance import uuid7_time
 
 PROVENANCE_LABELS = {
@@ -250,7 +251,7 @@ def _write_readme(
 
 def _result_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Rounds | Basis | LER | Uncertainty | Kept/Original | Detector rate | Candidate |",
+        "| Rounds | Basis | LER | 68% Wilson interval | Kept/Original | Detector rate | Candidate |",
         "| ---: | --- | ---: | ---: | ---: | ---: | --- |",
     ]
     for row in sorted(rows, key=lambda item: (item["rounds"], item["basis"])):
@@ -259,10 +260,17 @@ def _result_table(rows: list[dict[str, Any]]) -> str:
         kept = row.get("kept_shots") or row["shots"]
         lines.append(
             f"| {row['rounds']} | {row['basis']} | {_fmt(row['ler'])} | "
-            f"{_fmt(row['uncertainty'])} | {kept}/{original} | "
+            f"{_interval(row)} | {kept}/{original} | "
             f"{_fmt(row.get('mean_detector_firing_rate'))} | {candidate} |"
         )
     return "\n".join(lines)
+
+
+def _interval(row: dict[str, Any]) -> str:
+    if not row["shots"]:
+        return ""
+    low, high = wilson_interval(row["logical_failures"], row["shots"])
+    return f"{low:.4g}–{high:.4g}"
 
 
 def _selected_candidate(row: dict[str, Any]) -> str:

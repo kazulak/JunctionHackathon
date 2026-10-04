@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from qec_pipeline.analysis.metrics import is_postselected, per_round_ler, wilson_interval
 from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory
 from qec_pipeline.backends import get_backend_runner
@@ -14,7 +15,7 @@ from qec_pipeline.syndromes import extract_detection_events
 
 def describe_pipeline(config: dict[str, Any]) -> list[str]:
     """Return a simple input -> function -> output description."""
-    bases = ", ".join(_basis_list(config["code"]["basis"]))
+    bases = ", ".join(basis_list(config["code"]["basis"]))
     stages = [
         "config YAML -> load normal Python dict",
         f"basis list -> {bases}",
@@ -61,7 +62,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
     basis_results: list[tuple] = []
     prepared_basis = []
 
-    for basis in _basis_list(config["code"]["basis"]):
+    for basis in basis_list(config["code"]["basis"]):
         circuit = _build_circuit(config["code"], config["noise"], basis)
         circuit = prepare_circuit_for_execution(config, circuit)
         prepared_basis.append((basis, circuit))
@@ -85,30 +86,13 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
         _detection_events, _observable_flips, syndrome_info = syndromes
         decoded = _run_decoder(config["decoder"], circuit, syndromes)
 
-        _predicted, _failures, ler, uncertainty, decoder_info = decoded
-        metrics = {
-            "basis": basis,
-            "ler": ler,
-            "uncertainty": uncertainty,
-            "logical_failures": decoder_info["logical_failures"],
-            "shots": decoder_info["shots"],
-            "mean_detector_firing_rate": syndrome_info["mean_detector_firing_rate"],
-            "max_detector_firing_rate": syndrome_info["max_detector_firing_rate"],
-            "mean_syndrome_weight": syndrome_info["mean_syndrome_weight"],
-            "decoder_info": decoder_info,
-        }
-        if "original_shots" in decoder_info:
-            metrics["original_shots"] = decoder_info["original_shots"]
-            metrics["kept_shots"] = decoder_info.get("kept_shots", decoder_info["shots"])
-            metrics["postselection_fraction"] = decoder_info.get("postselection_fraction", 1.0)
-        rounds = int(config["code"].get("rounds", 1))
-        if rounds > 1:
-            per_round_ler, per_round_uncertainty = _per_round_ler(ler, uncertainty, rounds)
-            metrics["rounds"] = rounds
-            metrics["logical_error_per_round"] = per_round_ler
-            metrics["logical_error_per_round_uncertainty"] = per_round_uncertainty
-        if "noise_sweep" in decoder_info:
-            metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]
+        _predicted, _failures, ler, uncertainty, _decoder_info = decoded
+        metrics = build_basis_metrics(
+            basis,
+            int(config["code"].get("rounds", 1)),
+            decoded,
+            syndrome_info,
+        )
 
         basis_run_dir = run_dir / basis
         basis_run_dir.mkdir(parents=True, exist_ok=False)
@@ -121,7 +105,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
     return run_dir, basis_results, notes
 
 
-def _basis_list(config_basis: str) -> list[str]:
+def basis_list(config_basis: str) -> list[str]:
     if config_basis == "both":
         return ["memory_z", "memory_x"]
     if config_basis in {"memory_z", "memory_x"}:
@@ -149,12 +133,49 @@ def _use_iqm_batch_submit(backend: dict[str, Any], num_circuits: int) -> bool:
     return bool(backend.get("options", {}).get("batch_submit", True))
 
 
-def _per_round_ler(total_ler: float, total_uncertainty: float, rounds: int) -> tuple[float, float]:
-    """Convert total memory-failure probability to per-round probability."""
-    if rounds <= 1:
-        return total_ler, total_uncertainty
-    clamped = min(max(float(total_ler), 0.0), 0.499999999)
-    survival = 1.0 - 2.0 * clamped
-    per_round = (1.0 - survival ** (1.0 / rounds)) / 2.0
-    derivative = (1.0 / rounds) * survival ** ((1.0 / rounds) - 1.0)
-    return float(per_round), float(abs(derivative) * total_uncertainty)
+
+def build_basis_metrics(
+    basis: str,
+    rounds: int,
+    decoded: tuple,
+    syndrome_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Build the metrics dictionary for one decoded basis run.
+
+    Shared by single runs and IQM batch sweeps so both report identical fields.
+    """
+    _predicted, _failures, ler, uncertainty, decoder_info = decoded
+    failures = int(decoder_info["logical_failures"])
+    shots = int(decoder_info["shots"])
+    ci_low, ci_high = wilson_interval(failures, shots) if shots else (None, None)
+    metrics = {
+        "basis": basis,
+        "rounds": int(rounds),
+        "ler": ler,
+        "uncertainty": uncertainty,
+        "ler_ci_low": ci_low,
+        "ler_ci_high": ci_high,
+        "logical_failures": failures,
+        "shots": shots,
+        "mean_detector_firing_rate": syndrome_info["mean_detector_firing_rate"],
+        "max_detector_firing_rate": syndrome_info["max_detector_firing_rate"],
+        "mean_syndrome_weight": syndrome_info["mean_syndrome_weight"],
+        "selection_is_in_sample": bool(decoder_info.get("selection_is_in_sample", False)),
+        "decoder_info": decoder_info,
+    }
+    if "original_shots" in decoder_info:
+        metrics["original_shots"] = decoder_info["original_shots"]
+        metrics["kept_shots"] = decoder_info.get("kept_shots", decoder_info["shots"])
+        metrics["postselection_fraction"] = decoder_info.get("postselection_fraction", 1.0)
+
+    if is_postselected(metrics):
+        # The kept fraction changes with r, so a per-round conversion is not meaningful.
+        metrics["logical_error_per_round"] = None
+        metrics["logical_error_per_round_uncertainty"] = None
+    else:
+        per_round, per_round_uncertainty = per_round_ler(ler, uncertainty, int(rounds))
+        metrics["logical_error_per_round"] = per_round
+        metrics["logical_error_per_round_uncertainty"] = per_round_uncertainty
+    if "noise_sweep" in decoder_info:
+        metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]
+    return metrics

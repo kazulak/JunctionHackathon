@@ -14,7 +14,7 @@ IQM calibration dump
 Main command:
 
 ```bash
-python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
+python scripts/sweep_rounds.py configs/sweep_d3_baseline_sim.yaml --rounds 1 7 4
 ```
 
 Postselection experiment:

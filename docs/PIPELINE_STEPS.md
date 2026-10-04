@@ -4,8 +4,8 @@
 
 ```bash
 python main.py configs/demo_stim_no_noise.yaml
-python scripts/sweep_rounds.py configs/sweep_d3_best_sim.yaml --rounds 1 7 4
-python main.py --dry-run --print-config configs/sweep_d3_best_iqm.yaml
+python scripts/sweep_rounds.py configs/sweep_d3_baseline_sim.yaml --rounds 1 7 4
+python main.py --dry-run --print-config configs/sweep_d3_baseline_iqm.yaml
 ```
 
 ## Data Flow

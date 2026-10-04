@@ -36,6 +36,9 @@ noise:
 decoder:
   name: pymatching_auto
   options:
+    # In-sample selection on purpose: this config shows how optimistic same-batch
+    # tuning looks. Use sweep_d3_decoder_kfold_sim.yaml for the honest estimate.
+    candidate_selection_mode: current_batch
     include_no_correction: true
     include_correlated_matching: true
     include_matching_ensembles: true

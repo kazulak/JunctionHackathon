@@ -11,13 +11,14 @@ import matplotlib
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 
+from qec_pipeline.analysis.metrics import fit_per_round_error
 from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory, utc_timestamp
 from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_batch_backend
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.decoders import get_decoder
-from qec_pipeline.pipeline import run_pipeline
+from qec_pipeline.pipeline import basis_list, build_basis_metrics, run_pipeline
 from qec_pipeline.provenance import provenance_line, run_provenance
 from qec_pipeline.syndromes import extract_detection_events
 
@@ -70,28 +71,7 @@ def run_rounds_sweep(
 
         run_dir, basis_results, notes = run_pipeline(config)
         for basis, _circuit, _raw, _syndromes, _decoded, metrics in basis_results:
-            rows.append(
-                {
-                    "rounds": int(rounds_value),
-                    "basis": basis,
-                    "ler": float(metrics["ler"]),
-                    "uncertainty": float(metrics["uncertainty"]),
-                    "logical_error_per_round": metrics.get("logical_error_per_round"),
-                    "logical_error_per_round_uncertainty": metrics.get(
-                        "logical_error_per_round_uncertainty"
-                    ),
-                    "logical_failures": int(metrics["logical_failures"]),
-                    "shots": int(metrics["shots"]),
-                    "mean_detector_firing_rate": metrics.get("mean_detector_firing_rate"),
-                    "max_detector_firing_rate": metrics.get("max_detector_firing_rate"),
-                    "mean_syndrome_weight": metrics.get("mean_syndrome_weight"),
-                    "original_shots": metrics.get("original_shots", metrics["shots"]),
-                    "kept_shots": metrics.get("kept_shots", metrics["shots"]),
-                    "postselection_fraction": metrics.get("postselection_fraction", 1.0),
-                    "run_dir": str(run_dir),
-                    "notes": "; ".join(notes),
-                }
-            )
+            rows.append(_sweep_row(int(rounds_value), metrics, run_dir, notes))
 
     _write_sweep_outputs(sweep_dir, base_config, rounds, rows)
     return sweep_dir
@@ -127,7 +107,7 @@ def _run_iqm_rounds_sweep_batch(
         }
         groups.append(group)
 
-        for basis in _basis_list(config["code"]["basis"]):
+        for basis in basis_list(config["code"]["basis"]):
             circuit = get_code_builder(config["code"].get("family", "surface_code"))(
                 config["code"],
                 config["noise"],
@@ -160,33 +140,8 @@ def _run_iqm_rounds_sweep_batch(
         syndromes = extract_detection_events(circuit, raw)
         _detection_events, _observable_flips, syndrome_info = syndromes
         decoded = get_decoder(job["decoder"]["name"])(job["decoder"], circuit, syndromes)
-        _predicted, _failures, ler, uncertainty, decoder_info = decoded
-        metrics = {
-            "basis": basis,
-            "ler": ler,
-            "uncertainty": uncertainty,
-            "logical_failures": decoder_info["logical_failures"],
-            "shots": decoder_info["shots"],
-            "mean_detector_firing_rate": syndrome_info["mean_detector_firing_rate"],
-            "max_detector_firing_rate": syndrome_info["max_detector_firing_rate"],
-            "mean_syndrome_weight": syndrome_info["mean_syndrome_weight"],
-            "decoder_info": decoder_info,
-        }
-        if "original_shots" in decoder_info:
-            metrics["original_shots"] = decoder_info["original_shots"]
-            metrics["kept_shots"] = decoder_info.get("kept_shots", decoder_info["shots"])
-            metrics["postselection_fraction"] = decoder_info.get("postselection_fraction", 1.0)
-        if group["rounds"] > 1:
-            per_round_ler, per_round_uncertainty = _per_round_ler(
-                ler,
-                uncertainty,
-                group["rounds"],
-            )
-            metrics["rounds"] = group["rounds"]
-            metrics["logical_error_per_round"] = per_round_ler
-            metrics["logical_error_per_round_uncertainty"] = per_round_uncertainty
-        if "noise_sweep" in decoder_info:
-            metrics["decoder_noise_sweep"] = decoder_info["noise_sweep"]
+        _predicted, _failures, ler, uncertainty, _decoder_info = decoded
+        metrics = build_basis_metrics(basis, group["rounds"], decoded, syndrome_info)
 
         basis_run_dir = group["run_dir"] / basis
         basis_run_dir.mkdir(parents=True, exist_ok=False)
@@ -202,28 +157,7 @@ def _run_iqm_rounds_sweep_batch(
         group["basis_results"].append((basis, circuit, raw, syndromes, decoded, metrics))
         note = f"{basis}: LER {ler} +/- {uncertainty}"
         group["notes"].append(note)
-        rows.append(
-            {
-                "rounds": group["rounds"],
-                "basis": basis,
-                "ler": float(metrics["ler"]),
-                "uncertainty": float(metrics["uncertainty"]),
-                "logical_error_per_round": metrics.get("logical_error_per_round"),
-                "logical_error_per_round_uncertainty": metrics.get(
-                    "logical_error_per_round_uncertainty"
-                ),
-                "logical_failures": int(metrics["logical_failures"]),
-                "shots": int(metrics["shots"]),
-                "mean_detector_firing_rate": metrics.get("mean_detector_firing_rate"),
-                "max_detector_firing_rate": metrics.get("max_detector_firing_rate"),
-                "mean_syndrome_weight": metrics.get("mean_syndrome_weight"),
-                "original_shots": metrics.get("original_shots", metrics["shots"]),
-                "kept_shots": metrics.get("kept_shots", metrics["shots"]),
-                "postselection_fraction": metrics.get("postselection_fraction", 1.0),
-                "run_dir": str(group["run_dir"]),
-                "notes": "; ".join(group["notes"]),
-            }
-        )
+        rows.append(_sweep_row(group["rounds"], metrics, group["run_dir"], group["notes"]))
 
     for group in groups:
         write_run_summary(
@@ -237,6 +171,35 @@ def _run_iqm_rounds_sweep_batch(
     return sweep_dir
 
 
+def _sweep_row(
+    rounds: int,
+    metrics: dict[str, Any],
+    run_dir: Path,
+    notes: list[str],
+) -> dict[str, Any]:
+    return {
+        "rounds": int(rounds),
+        "basis": metrics["basis"],
+        "ler": float(metrics["ler"]),
+        "uncertainty": float(metrics["uncertainty"]),
+        "ler_ci_low": metrics.get("ler_ci_low"),
+        "ler_ci_high": metrics.get("ler_ci_high"),
+        "logical_error_per_round": metrics.get("logical_error_per_round"),
+        "logical_error_per_round_uncertainty": metrics.get("logical_error_per_round_uncertainty"),
+        "logical_failures": int(metrics["logical_failures"]),
+        "shots": int(metrics["shots"]),
+        "mean_detector_firing_rate": metrics.get("mean_detector_firing_rate"),
+        "max_detector_firing_rate": metrics.get("max_detector_firing_rate"),
+        "mean_syndrome_weight": metrics.get("mean_syndrome_weight"),
+        "original_shots": metrics.get("original_shots", metrics["shots"]),
+        "kept_shots": metrics.get("kept_shots", metrics["shots"]),
+        "postselection_fraction": metrics.get("postselection_fraction", 1.0),
+        "selection_is_in_sample": bool(metrics.get("selection_is_in_sample", False)),
+        "run_dir": str(run_dir),
+        "notes": "; ".join(notes),
+    }
+
+
 def _write_sweep_outputs(
     sweep_dir: Path,
     base_config: dict[str, Any],
@@ -244,12 +207,15 @@ def _write_sweep_outputs(
     rows: list[dict[str, Any]],
 ) -> None:
     provenance = run_provenance()
+    fits = _fit_by_basis(rows)
     csv_path = sweep_dir / "sweep_results.csv"
     fieldnames = [
         "rounds",
         "basis",
         "ler",
         "uncertainty",
+        "ler_ci_low",
+        "ler_ci_high",
         "logical_error_per_round",
         "logical_error_per_round_uncertainty",
         "logical_failures",
@@ -260,6 +226,7 @@ def _write_sweep_outputs(
         "original_shots",
         "kept_shots",
         "postselection_fraction",
+        "selection_is_in_sample",
         "run_dir",
         "notes",
     ]
@@ -277,6 +244,7 @@ def _write_sweep_outputs(
                 "provenance": provenance,
                 "rounds": rounds,
                 "rows": rows,
+                "per_round_fits": fits,
             },
             indent=2,
         )
@@ -302,18 +270,51 @@ def _write_sweep_outputs(
         "",
         "## Results",
         "",
-        "| Rounds | Basis | LER | Uncertainty | Per-round LER | Mean detector rate | Kept fraction | Failures | Shots |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "LER interval: Wilson score interval (~68%). Per-round LER is blank for postselected rows.",
+        "",
+        "| Rounds | Basis | LER | 68% interval | Per-round LER | Mean detector rate | Kept/original | Failures | Shots | Selection |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for row in rows:
         summary_lines.append(
-            f"| {row['rounds']} | {row['basis']} | {row['ler']} | "
-            f"{row['uncertainty']} | {row.get('logical_error_per_round', '')} | "
-            f"{row.get('mean_detector_firing_rate', '')} | "
-            f"{row.get('postselection_fraction', '')} | "
-            f"{row['logical_failures']} | {row['shots']} |"
+            f"| {row['rounds']} | {row['basis']} | {_fmt(row['ler'])} | "
+            f"{_fmt(row.get('ler_ci_low'))}–{_fmt(row.get('ler_ci_high'))} | "
+            f"{_fmt(row.get('logical_error_per_round'))} | "
+            f"{_fmt(row.get('mean_detector_firing_rate'))} | "
+            f"{row['kept_shots']}/{row['original_shots']} | "
+            f"{row['logical_failures']} | {row['shots']} | "
+            f"{'in-sample (optimistic)' if row.get('selection_is_in_sample') else 'fixed / out-of-sample'} |"
+        )
+    summary_lines.extend(
+        [
+            "",
+            "## Per-round fit",
+            "",
+            "Binomial maximum-likelihood fit of P(r) = (1 - A(1-2e)^r)/2; postselected rows excluded.",
+            "",
+            "| Basis | Fit points | Error per round | 1-sigma | Amplitude A |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for basis, fit in fits.items():
+        summary_lines.append(
+            f"| {basis} | {fit['fit_points']} | {_fmt(fit['fitted_logical_error_per_round'])} | "
+            f"{_fmt(fit['fitted_logical_error_per_round_uncertainty'])} | {_fmt(fit['fit_amplitude'])} |"
         )
     (sweep_dir / "summary.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
+
+
+def _fit_by_basis(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {
+        basis: fit_per_round_error([row for row in rows if row["basis"] == basis])
+        for basis in sorted({row["basis"] for row in rows})
+    }
+
+
+def _fmt(value: Any) -> str:
+    if value in {None, ""}:
+        return ""
+    return f"{float(value):.4g}"
 
 
 def plot_ler_vs_rounds(rows: list[dict[str, Any]], output_path: Path) -> None:
@@ -382,20 +383,3 @@ def _use_iqm_batch_sweep(config: dict[str, Any]) -> bool:
         return False
     return bool(config["backend"].get("options", {}).get("batch_submit", True))
 
-
-def _basis_list(config_basis: str) -> list[str]:
-    if config_basis == "both":
-        return ["memory_z", "memory_x"]
-    if config_basis in {"memory_z", "memory_x"}:
-        return [config_basis]
-    raise ValueError("code.basis must be memory_z, memory_x, or both")
-
-
-def _per_round_ler(total_ler: float, total_uncertainty: float, rounds: int) -> tuple[float, float]:
-    if rounds <= 1:
-        return total_ler, total_uncertainty
-    clamped = min(max(float(total_ler), 0.0), 0.499999999)
-    survival = 1.0 - 2.0 * clamped
-    per_round = (1.0 - survival ** (1.0 / rounds)) / 2.0
-    derivative = (1.0 / rounds) * survival ** ((1.0 / rounds) - 1.0)
-    return float(per_round), float(abs(derivative) * total_uncertainty)

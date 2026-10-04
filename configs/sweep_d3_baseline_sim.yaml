@@ -1,12 +1,12 @@
-# Sweep-compatible IQM hardware config.
-# Pair with: configs/sweep_d3_best_sim.yaml
+# Sweep-compatible simulator config.
+# Pair with: configs/sweep_d3_baseline_iqm.yaml
 #
 # Run:
-#   python scripts/sweep_rounds.py configs/sweep_d3_best_iqm.yaml --rounds 1 7 4
+#   python scripts/sweep_rounds.py configs/sweep_d3_baseline_sim.yaml --rounds 1 7 4
 
 experiment:
-  name: sweep_d3_best_iqm
-  description: "IQM hardware side of the best d3 Emerald sweep pair."
+  name: sweep_d3_baseline_sim
+  description: "Simulator side of the best d3 Emerald sweep pair."
   seed: 1
 
 code:
@@ -17,17 +17,10 @@ code:
   reset_mode: reset
 
 backend:
-  name: iqm_hardware
+  name: simulator
   shots: 2000
   options:
-    server_url: https://resonance.meetiqm.com
-    quantum_computer: emerald
-    optimization_level: 3
-    seed_transpiler: 11
-    routing_method: sabre
-    batch_submit: true
-    omit_initial_resets: true
-    omit_repeated_resets: false
+    seed: 1
 
 noise:
   model: iqm_calibration
@@ -39,19 +32,10 @@ noise:
     idle_scale: 0.5
 
 decoder:
-  name: pymatching_auto
-  options:
-    include_no_correction: true
-    uniform_probabilities:
-      - 0.001
-      - 0.003
-      - 0.005
-      - 0.01
-      - 0.02
-      - 0.05
-      - 0.1
-      - 0.2
-      - 0.3
+  # Plain MWPM on the calibrated detector error model. The baseline must not be
+  # a best-of-N choice; compare decoder variants with sweep_d3_decoder_kfold_sim.yaml.
+  name: pymatching_calibrated
+  options: {}
 
 mapping:
   strategy: calibration_best_patch
@@ -96,3 +80,4 @@ artifacts:
   save_raw_measurements: true
   save_syndromes: true
   save_report: true
+
