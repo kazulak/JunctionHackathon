@@ -2,7 +2,9 @@
 # Design (see docs/HARDWARE_RUNBOOK.md):
 # - code.mid_circuit_reset: none -> one multiplexed readout per round, no reset pulse;
 #   detectors compare ancilla outcomes two rounds apart (Gehér et al., arXiv:2408.00758).
-# - grouped readout, active reset between shots, IQM native dynamical decoupling.
+# - grouped readout, IQM native dynamical decoupling, passive reset between shots.
+#   (IQM active reset between shots left ~10-20% initialization error on 2026-10-04,
+#   see baselines/post_hackathon/hw_controls_reset_dd_20261004.)
 # - calibration fetched 2026-10-04 (scripts/fetch_calibration.py); patch is still the best native d3 patch.
 # - noise: two_qubit_scale 1.5 fitted to r=1 hardware; round 1.29 us measured with Pulla.
 #
@@ -12,7 +14,7 @@
 
 experiment:
   name: hw_d3_noreset_dd_iqm
-  description: d3 memory, no mid-circuit reset, DD, active reset between shots, Oct
+  description: d3 memory, no mid-circuit reset, DD, passive reset between shots, Oct
     2026 calibration.
   seed: 1
 code:
@@ -34,7 +36,6 @@ backend:
     batch_submit: true
     omit_initial_resets: true
     group_measurements: true
-    active_reset_cycles: 2
     dynamical_decoupling: true
 noise:
   model: iqm_calibration

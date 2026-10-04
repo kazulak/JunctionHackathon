@@ -1,0 +1,6 @@
+label,basis,fit_points,fitted_logical_error_per_round,fitted_logical_error_per_round_uncertainty,fit_amplitude,fit_method,note,excluded_points
+A_active_noDD,memory_z,1,,,,binomial_mle,need at least two distinct round values,0
+B_passive_DD,memory_z,1,,,,binomial_mle,need at least two distinct round values,0
+C_passive_noDD,memory_z,1,,,,binomial_mle,need at least two distinct round values,0
+pilot_active_dd,memory_x,2,0.11151859188790564,0.021185843588750673,0.4903704455085185,binomial_mle,,0
+pilot_active_dd,memory_z,2,0.11968058645237797,0.01930096823101195,0.552166785918585,binomial_mle,,0

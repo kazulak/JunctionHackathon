@@ -42,6 +42,11 @@ See [PROVENANCE.md](../PROVENANCE.md) for the full timeline and [ERRATA.md](../E
 | `midcircuit_diagnosis_20261004/` | hardware data from 2026-06-08; analysis 2026-10-04 | Round-by-round diagnosis of the hardware failure: data qubits are scrambled once mid-circuit measure/reset begins. Includes the hypothesis table and the probe experiment. |
 | `midcircuit_probe_sim_reference_20261004/` | 2026-10-04 11:39–11:40 | Simulator reference for the mid-circuit probe (all three modes agree; expected hardware signature described). |
 | `decoder_and_postselection_fitted_noise_20261004/` | 2026-10-04 11:42 | **Current** decoder and postselection comparison on the final pipeline: k-fold selection lowers error per round by ~5% (Z) / ~9% (X); postselection is a diagnostic. |
+| `hw_d3_noreset_dd_prediction_20261004/` | 2026-10-04 12:36 | Pre-registered simulator prediction for the corrected hardware design. |
+| `hw_pilot_noreset_dd_activereset_20261004/` | IQM job `01a106f9…`, 2026-10-04 12:52 | Pilot: IQM active reset between shots leaves qubits excited (r = 1 LER 0.29). |
+| `hw_controls_reset_dd_20261004/` | 2026-10-04 13:00 | Controls: passive reset fixes initialization (r = 1 LER 0.027); DD neutral at r = 1. |
+| `hw_d3_noreset_dd_20261004/` | IQM job `01a10703…`, 2026-10-04 13:03 | **Corrected design on hardware**: ε = 0.033 (Z) / 0.040 (X) per round, no saturation. |
+| `noise_fit_targets_r1_20261004/` | 2026-10-04 | Refit on the new r = 1 data; not adopted (does not predict higher r). |
 | `decoder_validation_idlefix_20261004/` | 2026-10-04 11:05–11:07 | Decoder comparison on the corrected simulator: plain MWPM baseline vs in-sample vs k-fold selection. k-fold gives a real gain for memory_x only. |
 
 ## Archiving a new sweep
