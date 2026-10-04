@@ -1,5 +1,6 @@
 # IQM Best Combined Reported LER 2026-06-08
 
+- Provenance: **Post-hackathon development (not part of the submission)**. IQM job 019ea8f7-5112-7b60-a001-7003aba9fb4d submitted 2026-06-08 20:40:40 UTC.
 - Archived: 2026-06-08 20:47:10Z
 - Source sweep: `results\sweep_d3_best_combined_iqm_rounds_sweep\20260608T204021Z`
 - Notes: Real hardware Emerald run using combined postselection and decoder-candidate recipe.

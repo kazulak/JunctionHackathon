@@ -18,6 +18,7 @@ from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.decoders import get_decoder
 from qec_pipeline.pipeline import run_pipeline
+from qec_pipeline.provenance import provenance_line, run_provenance
 from qec_pipeline.syndromes import extract_detection_events
 
 
@@ -242,6 +243,7 @@ def _write_sweep_outputs(
     rounds: list[int],
     rows: list[dict[str, Any]],
 ) -> None:
+    provenance = run_provenance()
     csv_path = sweep_dir / "sweep_results.csv"
     fieldnames = [
         "rounds",
@@ -271,6 +273,8 @@ def _write_sweep_outputs(
         json.dumps(
             {
                 "base_experiment": base_config["experiment"]["name"],
+                "config_path": base_config.get("_config_path"),
+                "provenance": provenance,
                 "rounds": rounds,
                 "rows": rows,
             },
@@ -288,6 +292,8 @@ def _write_sweep_outputs(
     summary_lines = [
         f"# Rounds Sweep: {base_config['experiment']['name']}",
         "",
+        provenance_line(provenance),
+        f"- Config: `{base_config.get('_config_path', 'unknown')}`",
         f"- Rounds: {rounds}",
         f"- Results CSV: `{csv_path.name}`",
         f"- Results JSON: `{json_path.name}`",

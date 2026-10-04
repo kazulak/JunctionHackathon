@@ -1,13 +1,18 @@
 # QEC Pipeline
 
-Simulator-first quantum error-correction pipeline for surface-code experiments.
+Simulator-first quantum error-correction pipeline for surface-code memory experiments on IQM hardware.
 
-The hackathon submission is preserved at:
+> **Hackathon vs. later work.** This project started as team *gate_crushers*' entry to the IQM QEC challenge at
+> **Junction Quantum Hack 2026** (5–7 June 2026). The submission is frozen and is **not** what `main` contains today.
+>
+> | | Where |
+> | --- | --- |
+> | Hackathon submission (frozen) | tag `hackathon-submission-2026-06-07` (code), tag `junction-quantum-hackathon-final-2026` + [release](https://github.com/kazulak/JunctionHackathon/releases/tag/junction-quantum-hackathon-final-2026) (code + submitted zip and slides) |
+> | Post-hackathon development | `main` (from 2026-06-08 onward) |
+> | Timeline, verification, credits | [PROVENANCE.md](PROVENANCE.md) |
+> | Known issues in submitted and archived numbers | [ERRATA.md](ERRATA.md) |
 
-```text
-branch: checkpoint/junction-quantum-hackathon-final
-tag:    junction-quantum-hackathon-final-2026
-```
+Built on the challenge baseline provided by the organizers (see [NOTICE](NOTICE)).
 
 Current development goal: get meaningful LER improvements in simulation first, then spend IQM credits only on configs that already look promising locally.
 
@@ -32,7 +37,7 @@ qec_pipeline/              pipeline implementation
 scripts/                   sweeps and visual checks
 tests/                     regression tests
 docs/                      short notes for configs/modules/simulation
-baselines/                 tracked compact baseline summaries
+baselines/                 tracked result summaries, split hackathon / post-hackathon
 results/                   ignored generated outputs
 ```
 
@@ -154,59 +159,29 @@ python scripts/plot_stim_circuit.py results/<experiment>/<timestamp>
 python scripts/plot_qiskit_translation.py results/<experiment>/<timestamp>
 ```
 
-## Current Baseline
+## Results
 
-The surface-code pipeline works, but real hardware repeated rounds saturated during the hackathon.
+Result summaries live in [baselines/](baselines/), split by provenance. Raw `results/` runs are ignored and disposable.
 
-Compact preserved files live in [baselines/](baselines/). Raw `results/` runs are ignored and disposable.
+> **All simulator numbers archived so far are affected by the idle-noise scaling bug** ([ERRATA.md](ERRATA.md#e1-calibrated-simulator-idle-noise-grows-with-the-square-of-the-round-count-critical)).
+> They overstate the simulator LER for r ≥ 3. Corrected numbers will replace this section once the fix lands.
 
-Recorded d3 calibrated simulator, 2000 shots:
+### Hackathon (2026-06-07, d=3 rotated surface code, IQM Emerald, 2000 shots)
 
-```text
-rounds 1: memory_z 0.0210, memory_x 0.0265
-rounds 3: memory_z 0.1675, memory_x 0.2025
-rounds 5: memory_z 0.3670, memory_x 0.3580
-rounds 7: memory_z 0.4680, memory_x 0.4715
-```
+From [`baselines/hackathon_2026-06-07/`](baselines/hackathon_2026-06-07/):
 
-Same-batch decoder candidate tuning looked better, 2000 shots:
+| Rounds | Hardware memory_z | Hardware memory_x | Simulator memory_z (pre-fix) | Simulator memory_x (pre-fix) |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 0.0490 | 0.0545 | 0.0210 | 0.0265 |
+| 3 | 0.4870 | 0.4925 | 0.1675 | 0.2025 |
+| 5 | 0.4840 | 0.4965 | 0.3670 | 0.3580 |
+| 7 | 0.4720 | 0.4825 | 0.4680 | 0.4715 |
 
-```text
-rounds 1: memory_z 0.0210, memory_x 0.0265
-rounds 3: memory_z 0.1645, memory_x 0.1995
-rounds 5: memory_z 0.3585, memory_x 0.3470
-rounds 7: memory_z 0.4585, memory_x 0.4605
-```
+### Post-hackathon (2026-06-08)
 
-But held-out and k-fold validation did not confirm the improvement. Treat same-batch decoder tuning as diagnostic only, not a deployable result.
+From [`baselines/post_hackathon/`](baselines/post_hackathon/):
 
-Recorded k-fold decoder validation, 2000 shots:
-
-```text
-rounds 1: memory_z 0.0210, memory_x 0.0265
-rounds 3: memory_z 0.1645, memory_x 0.2005
-rounds 5: memory_z 0.3640, memory_x 0.3550
-rounds 7: memory_z 0.4890, memory_x 0.4795
-```
-
-Best combined reported-LER simulator route, 2000 original shots:
-
-```text
-rounds 1: memory_z 0.0000, memory_x 0.0000
-rounds 3: memory_z 0.0650, memory_x 0.0697
-rounds 5: memory_z 0.2562, memory_x 0.2644
-rounds 7: memory_z 0.4239, memory_x 0.4463
-```
-
-This uses postselection and keeps about 25-56% of shots depending on round count.
-
-Recorded matching IQM hardware, 2000 shots:
-
-```text
-rounds 1: memory_z 0.0490, memory_x 0.0545
-rounds 3: memory_z 0.4870, memory_x 0.4925
-rounds 5: memory_z 0.4840, memory_x 0.4965
-rounds 7: memory_z 0.4720, memory_x 0.4825
-```
-
-Treat this as the starting point, not the result. For hardware, prefer the combined config if the goal is lowest reported LER; prefer the baseline config if the goal is full-shot comparison.
+- **Hardware replication** (`iqm_baseline_replication_20260608`): the d=3 Emerald sweep reproduces the saturation (LER 0.48–0.50 for r ≥ 3).
+- **Why it saturates:** in the raw data, the uncorrected logical observable flips with probability ≈0.5 for r ≥ 3 in both bases (≈0.13 at r=1). The data qubits are scrambled once mid-circuit measurement/reset begins ([ERRATA.md E5](ERRATA.md#e5-surface-code-hardware-runs-data-qubits-are-randomized-by-mid-circuit-measurereset)). Decoder changes cannot fix this.
+- **Decoder experiments:** same-batch candidate tuning looked better, but holdout and k-fold validation did not confirm the gains (`decoder_validation_20260608`).
+- **Postselection** (`low_syndrome_postselection_20260608`, `best_combined_reported_20260608`, `iqm_best_combined_reported_20260608`) keeps only 25–60% of shots. It is a diagnostic, not a logical-memory result.

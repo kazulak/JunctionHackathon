@@ -12,6 +12,8 @@ import stim
 from qec_pipeline.analysis.metrics import binomial_standard_error
 from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
 from qec_pipeline.analysis.reports import write_run_artifacts
+from qec_pipeline.artifacts import utc_timestamp
+from qec_pipeline.provenance import uuid7_time
 from qec_pipeline.analysis.diagnostics import build_run_diagnostics
 from qec_pipeline.backends import get_backend_runner
 from qec_pipeline.backends.simulator import run_simulator_backend
@@ -567,6 +569,10 @@ class ReportingAndPipelineTests(unittest.TestCase):
             self.assertTrue((run_dir / "summary.md").exists())
             self.assertTrue((run_dir / "memory_z" / "metrics.json").exists())
             self.assertTrue((run_dir / "memory_z" / "diagnostics.json").exists())
+            provenance = json.loads((run_dir / "provenance.json").read_text(encoding="utf-8"))
+            self.assertIn("git_commit", provenance)
+            self.assertIn("stim", provenance["packages"])
+            self.assertIn("## Provenance", (run_dir / "summary.md").read_text(encoding="utf-8"))
 
     def test_describe_pipeline_mentions_selected_basis(self) -> None:
         config = {
@@ -801,6 +807,17 @@ class DiagnosticAndSweepTests(unittest.TestCase):
             self.assertTrue((sweep_dir / "sweep_results.json").exists())
             self.assertTrue((sweep_dir / "ler_vs_rounds.png").exists())
             self.assertTrue((sweep_dir / "summary.md").exists())
+            sweep_json = json.loads((sweep_dir / "sweep_results.json").read_text(encoding="utf-8"))
+            self.assertIn("provenance", sweep_json)
+
+
+class ProvenanceTests(unittest.TestCase):
+    def test_uuid7_time_decodes_iqm_job_submit_time(self) -> None:
+        submitted = uuid7_time("019e9fa6-c559-77a0-821e-462fcebccfba")
+        self.assertEqual(submitted.isoformat(timespec="seconds"), "2026-06-07T01:16:07+00:00")
+
+    def test_utc_timestamp_includes_microseconds(self) -> None:
+        self.assertRegex(utc_timestamp(), r"^\d{8}T\d{6}_\d{6}Z$")
 
 
 class PatchSelectionTests(unittest.TestCase):

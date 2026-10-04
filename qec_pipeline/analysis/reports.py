@@ -8,6 +8,7 @@ import numpy as np
 
 from qec_pipeline.analysis.diagnostics import build_run_diagnostics
 from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
+from qec_pipeline.provenance import provenance_line, run_provenance
 
 
 def write_run_summary(
@@ -16,9 +17,16 @@ def write_run_summary(
     basis_results: list[tuple],
     notes: list[str],
 ) -> None:
-    """Write `summary.md` for the whole experiment."""
+    """Write `summary.md` and `provenance.json` for the whole experiment."""
+    provenance = run_provenance()
+    _write_json(run_dir / "provenance.json", provenance)
     lines = [
         f"# Run Summary: {config['experiment']['name']}",
+        "",
+        "## Provenance",
+        "",
+        provenance_line(provenance),
+        f"- Config: `{config.get('_config_path', 'unknown')}`",
         "",
         "## Config",
         "",
