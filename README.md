@@ -14,7 +14,7 @@ Simulator-first quantum error-correction pipeline for surface-code memory experi
 
 Built on the challenge baseline provided by the organizers (see [NOTICE](NOTICE)).
 
-Current development goal: understand why mid-circuit measure/reset destroys the data on IQM hardware (see [ERRATA.md](ERRATA.md) E5), then improve LER in simulation and spend IQM credits only on configs that look promising locally.
+Current development goal: confirm on IQM hardware that the corrected mid-circuit design (no reset, grouped readout, dynamical decoupling, active reset) recovers logical memory; see [docs/HARDWARE_RUNBOOK.md](docs/HARDWARE_RUNBOOK.md).
 
 ## Flow
 
@@ -96,7 +96,14 @@ D5 simulator (routed layout):
 python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d5_calibrated.yaml --rounds 1 5 3
 ```
 
-Only after a simulator result is worth checking, dry-run the best combined hardware config:
+Hardware (read [docs/HARDWARE_RUNBOOK.md](docs/HARDWARE_RUNBOOK.md) first; the preflight is free):
+
+```bash
+python scripts/sweep_rounds.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 2 --preflight
+python scripts/sweep_rounds.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 2
+```
+
+Older hardware recipe (June-style, kept for comparison), dry-run:
 
 ```bash
 python scripts/sweep_rounds.py configs/sweep_d3_best_combined_iqm.yaml --rounds 1 7 4 --dry-run

@@ -32,24 +32,13 @@ def run_iqm_hardware_batch_backend(
     requests: list[dict[str, Any]],
 ) -> list[tuple]:
     """Submit several IQM circuits in one batch job and return raw tuples."""
-    _validate_backend_options(backend.get("options", {}) or {})
-    _load_dotenv()
-
-    from iqm.qiskit_iqm import IQMProvider
-
-    options = backend.get("options", {})
-    provider = IQMProvider(
-        options.get("server_url", os.environ.get("IQM_SERVER_URL", "https://resonance.meetiqm.com")),
-        **_provider_args(options),
-    )
-    iqm_backend = provider.get_backend()
-
-    prepared = [
-        _prepare_iqm_request(backend, request["circuit"], request.get("mapping"), iqm_backend)
-        for request in requests
-    ]
+    iqm_backend, prepared, compile_options = prepare_iqm_batch(backend, requests)
     transpiled_circuits = [item["transpiled_circuit"] for item in prepared]
-    job = iqm_backend.run(transpiled_circuits, shots=int(backend["shots"]))
+    job = iqm_backend.run(
+        transpiled_circuits,
+        shots=int(backend["shots"]),
+        circuit_compilation_options=compile_options,
+    )
     result = job.result()
     batch_size = len(prepared)
 
@@ -73,13 +62,71 @@ def run_iqm_hardware_batch_backend(
     return raws
 
 
-def _validate_backend_options(options: dict[str, Any]) -> None:
-    """Reject options that would be silently ignored, before any IQM connection."""
+def prepare_iqm_batch(
+    backend: dict[str, Any],
+    requests: list[dict[str, Any]],
+) -> tuple[Any, list[dict[str, Any]], Any]:
+    """Connect, convert, transpile, and validate a batch WITHOUT submitting it.
+
+    Also builds the IQM run request, so anything the server-side client would reject
+    fails here. Used both by the real submission and by preflight checks.
+    """
+    options = backend.get("options", {}) or {}
+    _validate_backend_options(options)
+    _load_dotenv()
+
+    from iqm.qiskit_iqm import IQMProvider
+
+    provider = IQMProvider(
+        options.get("server_url", os.environ.get("IQM_SERVER_URL", "https://resonance.meetiqm.com")),
+        **_provider_args(options),
+    )
+    iqm_backend = provider.get_backend()
+    prepared = [
+        _prepare_iqm_request(backend, request["circuit"], request.get("mapping"), iqm_backend)
+        for request in requests
+    ]
+    compile_options = circuit_compilation_options(options)
+    iqm_backend.create_run_request(
+        [item["transpiled_circuit"] for item in prepared],
+        shots=int(backend["shots"]),
+        circuit_compilation_options=compile_options,
+    )
+    return iqm_backend, prepared, compile_options
+
+
+def circuit_compilation_options(options: dict[str, Any]) -> Any:
+    """IQM server-side compilation options from `backend.options`.
+
+    - `active_reset_cycles`: actively reset qubits between shots instead of waiting
+      ~400 us for relaxation; reduces QPU time (and credits) per shot by >20x.
+    - `dynamical_decoupling`: IQM's native DD on idling qubits (e.g. data qubits
+      during ancilla readout), as recommended by Google's surface-code experiments.
+    - `max_circuit_duration_over_t2`: server-side circuit-duration guard.
+    """
+    from iqm.iqm_client import CircuitCompilationOptions, DDMode
+
+    kwargs: dict[str, Any] = {}
+    if options.get("active_reset_cycles") is not None:
+        kwargs["active_reset_cycles"] = int(options["active_reset_cycles"])
     if bool(options.get("dynamical_decoupling", False)):
-        raise ValueError(
-            "backend.options.dynamical_decoupling is not implemented for IQM backends. "
-            "The previous implementation failed silently (ERRATA E6); remove the option."
-        )
+        kwargs["dd_mode"] = DDMode.ENABLED
+    if options.get("max_circuit_duration_over_t2") is not None:
+        kwargs["max_circuit_duration_over_t2"] = float(options["max_circuit_duration_over_t2"])
+    return CircuitCompilationOptions(**kwargs)
+
+
+def _validate_backend_options(options: dict[str, Any]) -> None:
+    """Reject options that would be silently ignored or that moved, before any IQM connection."""
+    for moved in ("omit_repeated_resets", "mid_circuit_reset"):
+        if moved in options:
+            raise ValueError(
+                f"backend.options.{moved} is no longer supported: the reset strategy changes the "
+                "circuit and its detector error model, so set `code.mid_circuit_reset` "
+                "(reset | feedforward | none) instead."
+            )
+    if "dd_sequence" in options:
+        raise ValueError("backend.options.dd_sequence is not supported; IQM's standard DD strategy is used.")
 
 
 def _memory_or_none(result: Any, index: int) -> list[str] | None:
@@ -104,11 +151,10 @@ def _prepare_iqm_request(
     stim_circuit, _detector_model, _measurement_order, circuit_info = circuit
     options = backend.get("options", {})
     omit_initial_resets = bool(options.get("omit_initial_resets", False))
-    omit_repeated_resets = bool(options.get("omit_repeated_resets", False))
     qiskit_circuit, stim_to_dense, meas_order = stim_to_qiskit_minimal(
         stim_circuit,
         omit_initial_resets=omit_initial_resets,
-        omit_repeated_resets=omit_repeated_resets,
+        group_measurements=bool(options.get("group_measurements", True)),
     )
     mapping_info = circuit_info.get("mapping")
     if mapping_info is None:
@@ -138,7 +184,7 @@ def _prepare_iqm_request(
         "meas_order": meas_order,
         "mapping_info": mapping_info,
         "omit_initial_resets": omit_initial_resets,
-        "omit_repeated_resets": omit_repeated_resets,
+        "mid_circuit_reset": circuit_info.get("mid_circuit_reset", "reset"),
     }
 
 
@@ -152,27 +198,19 @@ def _raw_tuple_from_counts(
     memory: list[str] | None = None,
     calibration_set_id: Any = None,
 ) -> tuple:
-    from qec_pipeline.measurements import (
-        counts_to_measurement_array,
-        memory_to_measurement_array,
-        virtualize_omitted_repeated_resets,
-    )
+    from qec_pipeline.measurements import counts_to_measurement_array, memory_to_measurement_array
 
     stim_circuit = item["stim_circuit"]
     circuit_info = item["circuit_info"]
+    # Records are decoded against the same Stim circuit that encodes the reset
+    # strategy, so raw records are used directly (no software virtualization).
     if memory is not None:
-        physical_measurements = memory_to_measurement_array(memory, stim_circuit.num_measurements)
+        measurements = memory_to_measurement_array(memory, stim_circuit.num_measurements)
     else:
-        physical_measurements = counts_to_measurement_array(
+        measurements = counts_to_measurement_array(
             counts,
             num_measurements=stim_circuit.num_measurements,
             total_shots=int(backend["shots"]),
-        )
-    measurements = physical_measurements
-    if item["omit_repeated_resets"]:
-        measurements = virtualize_omitted_repeated_resets(
-            physical_measurements,
-            item["meas_order"],
         )
 
     raw_info = {
@@ -198,17 +236,8 @@ def _raw_tuple_from_counts(
         "calibration_file_age": item.get("calibration_file_age"),
         "physical_loci": item.get("physical_loci"),
         "omit_initial_resets": item["omit_initial_resets"],
-        "omit_repeated_resets": item["omit_repeated_resets"],
-        "measurement_record": (
-            "virtual_reset_from_no_reset_hardware"
-            if item["omit_repeated_resets"]
-            else "physical_qiskit_clbit_order"
-        ),
-        "physical_measurement_one_rate": (
-            physical_measurements.mean(axis=0).tolist()
-            if item["omit_repeated_resets"]
-            else None
-        ),
+        "mid_circuit_reset": item["mid_circuit_reset"],
+        "compilation_options": _compilation_options_record(backend.get("options", {}) or {}),
         "stim_to_dense": item["stim_to_dense"],
         "meas_order": item["meas_order"],
         "mapping": item["mapping_info"],
@@ -221,6 +250,14 @@ def _raw_tuple_from_counts(
     }
 
     return measurements, counts, raw_info
+
+
+def _compilation_options_record(options: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "active_reset_cycles": options.get("active_reset_cycles"),
+        "dynamical_decoupling": bool(options.get("dynamical_decoupling", False)),
+        "max_circuit_duration_over_t2": options.get("max_circuit_duration_over_t2"),
+    }
 
 
 def _transpilation_metrics(

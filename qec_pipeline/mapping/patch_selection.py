@@ -301,9 +301,12 @@ def two_qubit_interaction_counts(stim_circuit: stim.Circuit) -> Counter[tuple[in
     for instruction in stim_circuit.flattened():
         if instruction.name not in {"CX", "CZ"}:
             continue
-        targets = [target.value for target in instruction.targets_copy() if target.is_qubit_target]
+        targets = instruction.targets_copy()
         for index in range(0, len(targets), 2):
-            pair = tuple(sorted((targets[index], targets[index + 1])))
+            left, right = targets[index], targets[index + 1]
+            if not (left.is_qubit_target and right.is_qubit_target):
+                continue  # classically controlled gate (e.g. feed-forward reset), not an interaction
+            pair = tuple(sorted((left.value, right.value)))
             counts[pair] += 1
     return counts
 
@@ -312,15 +315,26 @@ def surface_code_qubit_roles(
     stim_circuit: stim.Circuit,
     stim_to_dense: dict[int, int],
 ) -> dict[int, str]:
-    """Return `ancilla` for repeated syndrome-measurement qubits, else `data`."""
-    ancillas = set()
-    for instruction in stim_circuit.flattened():
-        if instruction.name in {"MR", "MRX", "MRZ"}:
-            ancillas.update(
-                target.value
-                for target in instruction.targets_copy()
-                if target.is_qubit_target
-            )
+    """Return `data` for qubits in the final measurement layer, `ancilla` for other measured qubits.
+
+    Works for every mid-circuit reset strategy (MR, M + feed-forward, M only): data
+    qubits are read out once at the end, ancillas are measured in earlier layers.
+    """
+    measurement_names = {"M", "MX", "MY", "MR", "MRX", "MRY", "MZ", "MRZ"}
+    instructions = list(stim_circuit.flattened())
+    measured: set[int] = set()
+    for instruction in instructions:
+        if instruction.name in measurement_names:
+            measured.update(target.value for target in instruction.targets_copy() if target.is_qubit_target)
+    final_layer: set[int] = set()
+    final_name = None
+    for instruction in reversed(instructions):
+        if instruction.name in measurement_names and final_name in {None, instruction.name}:
+            final_name = instruction.name
+            final_layer.update(target.value for target in instruction.targets_copy() if target.is_qubit_target)
+        elif final_name is not None:
+            break  # anything else (detectors, gates, another basis) ends the final layer
+    ancillas = measured - final_layer
 
     return {
         stim_qubit: "ancilla" if stim_qubit in ancillas else "data"
@@ -798,8 +812,12 @@ def _coordinate_transforms(points: dict[int, np.ndarray]) -> list[dict[int, np.n
 def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
     qubit_labels = set()
     one_qubit_errors: dict[str, list[float]] = {}
+    # Mid-circuit readout ("measure") and the high-fidelity terminal readout
+    # ("measure_fidelity", e.g. shelved) are calibrated separately on IQM QPUs.
     assignment_errors: dict[str, list[float]] = {}
     readout_infidelities: dict[str, list[float]] = {}
+    terminal_assignment_errors: dict[str, list[float]] = {}
+    terminal_readout_infidelities: dict[str, list[float]] = {}
     qnd_values: dict[str, list[float]] = {}
     t1_times: dict[str, float] = {}
     t2_times: dict[str, float] = {}
@@ -814,10 +832,13 @@ def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
 
         if len(labels) == 1:
             label = labels[0]
+            terminal = ".ssro.measure_fidelity." in field
             if "ssro.measure" in field and field.endswith(("error_0_to_1", "error_1_to_0")):
-                assignment_errors.setdefault(label, []).append(value)
+                target = terminal_assignment_errors if terminal else assignment_errors
+                target.setdefault(label, []).append(value)
             elif "ssro.measure" in field and field.endswith(".fidelity"):
-                readout_infidelities.setdefault(label, []).append(1.0 - value)
+                target = terminal_readout_infidelities if terminal else readout_infidelities
+                target.setdefault(label, []).append(1.0 - value)
             elif ".rb.prx." in field and ".fidelity" in field:
                 one_qubit_errors.setdefault(label, []).append(1.0 - value)
             elif ".rb.clifford." in field and ".fidelity" in field:
@@ -849,6 +870,10 @@ def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
                 "measurement": _readout_error(
                     assignment_errors.get(label, []),
                     readout_infidelities.get(label, []),
+                ),
+                "measurement_terminal": _readout_error(
+                    terminal_assignment_errors.get(label, []) or assignment_errors.get(label, []),
+                    terminal_readout_infidelities.get(label, []) or readout_infidelities.get(label, []),
                 ),
                 "reset": 0.0,
                 "idle": idle_error,

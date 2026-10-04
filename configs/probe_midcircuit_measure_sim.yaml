@@ -23,17 +23,19 @@ backend:
     seed: 1
 noise:
   model: iqm_calibration
-  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  calibration_file: configs/calibration/emerald_2026-10-04T05_09_03Z.json
   options:
     apply_idle: true
     route_error_multiplier: 1.0
-    two_qubit_scale: 2.0
+    two_qubit_scale: 1.5
+    round_duration_s: 1.29e-06
+    idle_t2: echo
 decoder:
   name: observable_rate
   options: {}
 mapping:
   strategy: calibration_best_patch
-  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  calibration_file: configs/calibration/emerald_2026-10-04T05_09_03Z.json
   weights:
     one_qubit: 1.0
     two_qubit: 1.0

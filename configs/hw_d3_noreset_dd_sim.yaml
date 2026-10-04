@@ -1,35 +1,31 @@
-# Mid-circuit probe (measure, IQM hardware). See baselines/post_hackathon/midcircuit_diagnosis_20261004.
-# Same qubits and pinned Emerald patch as sweep_d3_baseline_iqm.yaml, no entangling gates.
-# Ancillas repeat H + measure only; data qubits idle. LER = P(any data qubit flipped).
+# Hardware-ready d3 surface-code memory on IQM Emerald (simulator twin).
+# Design (see docs/HARDWARE_RUNBOOK.md):
+# - code.mid_circuit_reset: none -> one multiplexed readout per round, no reset pulse;
+#   detectors compare ancilla outcomes two rounds apart (Gehér et al., arXiv:2408.00758).
+# - grouped readout, active reset between shots, IQM native dynamical decoupling.
+# - calibration fetched 2026-10-04 (scripts/fetch_calibration.py); patch is still the best native d3 patch.
+# - noise: two_qubit_scale 1.5 fitted to r=1 hardware; round 1.29 us measured with Pulla.
 #
 # Run:
-#   python scripts/sweep_rounds.py configs/probe_midcircuit_measure_iqm.yaml --rounds 1 7 4  --dry-run   # needs IQM credits without --dry-run
+#   python scripts/sweep_rounds.py configs/hw_d3_noreset_dd_sim.yaml --rounds 1 9 5
 
 experiment:
-  name: probe_midcircuit_measure_iqm
-  description: 'Mid-circuit probe, ancillas: H + measure only (IQM hardware).'
+  name: hw_d3_noreset_dd_sim
+  description: d3 memory, no mid-circuit reset, DD, active reset between shots, Oct
+    2026 calibration.
   seed: 1
 code:
-  family: midcircuit_probe
-  probe_mode: measure
+  family: surface_code_iqm
   distance: 3
   rounds: 1
   basis: both
   reset_mode: reset
+  mid_circuit_reset: none
 backend:
-  name: iqm_hardware
+  name: simulator
   shots: 2000
   options:
-    server_url: https://resonance.meetiqm.com
-    quantum_computer: emerald
-    optimization_level: 3
-    seed_transpiler: 11
-    routing_method: sabre
-    batch_submit: true
-    omit_initial_resets: true
-    group_measurements: true
-    active_reset_cycles: 2
-    dynamical_decoupling: true
+    seed: 1
 noise:
   model: iqm_calibration
   calibration_file: configs/calibration/emerald_2026-10-04T05_09_03Z.json
@@ -40,7 +36,7 @@ noise:
     round_duration_s: 1.29e-06
     idle_t2: echo
 decoder:
-  name: observable_rate
+  name: pymatching_calibrated
   options: {}
 mapping:
   strategy: calibration_best_patch

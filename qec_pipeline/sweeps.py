@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
@@ -126,6 +127,88 @@ def _check_single_layout(layouts: list[tuple | None]) -> None:
     distinct = {layout for layout in layouts if layout is not None}
     if len(distinct) > 1:
         raise RuntimeError(f"Sweep used {len(distinct)} different qubit layouts; expected one.")
+
+
+def redecode_sweep(sweep_dir: Path, decoder: dict[str, Any], output_dir: Path) -> Path:
+    """Decode the saved raw measurements of a finished sweep with another decoder.
+
+    Needs runs saved with `artifacts.save_raw_measurements: true`. The detector error
+    model is rebuilt from each run's saved (noisy) `circuit.stim`, so hardware data can
+    be re-analysed offline without spending credits.
+    """
+    import stim
+
+    from qec_pipeline.measurements import measurement_order_from_stim_circuit
+
+    rows = []
+    for basis_dir in sorted(Path(sweep_dir).glob("runs/*/*/memory_*")):
+        stim_circuit = stim.Circuit.from_file(basis_dir / "circuit.stim")
+        circuit_info = json.loads((basis_dir / "circuit_metadata.json").read_text(encoding="utf-8"))
+        detector_model = stim_circuit.detector_error_model(decompose_errors=True, approximate_disjoint_errors=True)
+        circuit = (stim_circuit, detector_model, measurement_order_from_stim_circuit(stim_circuit), circuit_info)
+        measurements = np.load(basis_dir / "raw_measurements.npz")["measurements"].astype(bool)
+        syndromes = extract_detection_events(circuit, (measurements, None, {}))
+        decoded = get_decoder(decoder["name"])(decoder, circuit, syndromes)
+        metrics = build_basis_metrics(
+            basis_dir.name,
+            int(circuit_info["rounds"]),
+            decoded,
+            syndromes[2],
+            memory_experiment=is_memory_experiment(circuit),
+        )
+        rows.append(_sweep_row(int(circuit_info["rounds"]), metrics, basis_dir.parent, [f"redecoded from {basis_dir}"]))
+
+    if not rows:
+        raise ValueError(f"No runs with raw measurements found under {sweep_dir}")
+    output_dir.mkdir(parents=True, exist_ok=False)
+    rounds = sorted({row["rounds"] for row in rows})
+    base_config = {"experiment": {"name": f"redecode_{decoder['name']}"}, "_config_path": str(sweep_dir)}
+    _write_sweep_outputs(output_dir, base_config, rounds, rows)
+    return output_dir
+
+
+def preflight_rounds_sweep(base_config: dict[str, Any], rounds: list[int]) -> list[dict[str, Any]]:
+    """Build, transpile, and validate every circuit of an IQM sweep WITHOUT submitting it.
+
+    Connects to IQM read-only (backend description + run-request construction); no job is
+    created and no credits are used. Returns one summary row per circuit.
+    """
+    from qec_pipeline.backends.iqm_hardware import prepare_iqm_batch
+
+    base_config = pin_sweep_mapping(base_config)
+    requests = []
+    labels = []
+    for rounds_value in rounds:
+        config = copy.deepcopy(base_config)
+        config["code"]["rounds"] = int(rounds_value)
+        for basis in basis_list(config["code"]["basis"]):
+            circuit = get_code_builder(config["code"].get("family", "surface_code"))(
+                config["code"],
+                config["noise"],
+                basis,
+            )
+            circuit = prepare_circuit_for_execution(config, circuit)
+            requests.append({"circuit": circuit, "mapping": config["mapping"]})
+            labels.append((int(rounds_value), basis))
+    _check_single_layout([_layout_of(request["circuit"]) for request in requests])
+
+    _backend, prepared, compile_options = prepare_iqm_batch(base_config["backend"], requests)
+    rows = []
+    for (rounds_value, basis), item in zip(labels, prepared, strict=True):
+        ops = dict(item["transpiled_circuit"].count_ops())
+        rows.append(
+            {
+                "rounds": rounds_value,
+                "basis": basis,
+                "mid_circuit_reset": item["mid_circuit_reset"],
+                "physical_qubits": item["physical_loci"]["physical_qubits"],
+                "transpiled_ops": ops,
+                "two_qubit_gates": int(ops.get("cz", 0)),
+                "active_reset_cycles": compile_options.active_reset_cycles,
+                "dd_mode": str(compile_options.dd_mode),
+            }
+        )
+    return rows
 
 
 def _run_iqm_rounds_sweep_batch(

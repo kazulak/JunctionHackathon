@@ -201,7 +201,7 @@ def _build_hardware_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "routed_code_edges": transpilation.get("routed_code_edges"),
                 "unique_code_edges": transpilation.get("unique_code_edges"),
                 "omit_initial_resets": raw_metadata.get("omit_initial_resets"),
-                "omit_repeated_resets": raw_metadata.get("omit_repeated_resets"),
+                "mid_circuit_reset": raw_metadata.get("mid_circuit_reset"),
                 "dynamical_decoupling_enabled": dd.get("enabled"),
                 "dynamical_decoupling_applied": dd.get("applied"),
                 "dynamical_decoupling_error": dd.get("error"),

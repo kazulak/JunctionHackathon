@@ -4,6 +4,7 @@ from typing import Any
 
 import stim
 
+from qec_pipeline.codes.reset_strategies import apply_mid_circuit_reset
 from qec_pipeline.codes.surface_code import (
     _count_detector_model_errors,
     _stim_noise_parameters,
@@ -39,6 +40,8 @@ def build_unrotated_surface_code_circuit(
         rounds=rounds,
         **noise_kwargs,
     )
+    mid_circuit_reset = str(code.get("mid_circuit_reset", "reset"))
+    stim_circuit = apply_mid_circuit_reset(stim_circuit, mid_circuit_reset)
     detector_model = stim_circuit.detector_error_model(decompose_errors=True)
     measurement_order = tuple(measurement_order_from_stim_circuit(stim_circuit))
     circuit_info = {
@@ -50,6 +53,7 @@ def build_unrotated_surface_code_circuit(
         "rounds": rounds,
         "requested_reset_mode": str(code.get("reset_mode", "reset")).lower(),
         "implemented_reset_mode": "active_reset",
+        "mid_circuit_reset": mid_circuit_reset,
         "forced_active_reset": False,
         "num_qubits": stim_circuit.num_qubits,
         "num_measurements": stim_circuit.num_measurements,

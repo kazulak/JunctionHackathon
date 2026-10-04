@@ -80,6 +80,7 @@ def build_midcircuit_probe_circuit(
         "basis": basis,
         "code_family": "midcircuit_probe",
         "probe_mode": mode,
+        "mid_circuit_reset": "reset" if mode == "measure_reset" else "none",
         "distance": distance,
         "rounds": rounds,
         "data_qubits": data,
