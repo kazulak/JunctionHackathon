@@ -21,7 +21,7 @@ Consequences:
 - The real gap between hardware (≈0.49 at r=3) and the model is therefore much larger than reported, so the hardware failure is not "missing physics in the noise model" (see E5).
 - Detector error models used to decode hardware data carried the same bug.
 
-Status: fix in progress on `main` (audit phase 3).
+Status: **fixed on `main`** (audit phase 3, regression tests in `CalibratedNoiseScalingTests`). Corrected re-runs: `baselines/post_hackathon/surface_d3_sim_idlefix_20261004` (d3: error per round ≈0.028 memory-Z / ≈0.034 memory-X, constant in r) and `baselines/post_hackathon/surface_d5_sim_idlefix_20261004` (routed d5: ≈0.047–0.050 per round).
 
 ## E2. The "calibrated" simulator was hand-tuned towards low LER
 

@@ -163,8 +163,8 @@ python scripts/plot_qiskit_translation.py results/<experiment>/<timestamp>
 
 Result summaries live in [baselines/](baselines/), split by provenance. Raw `results/` runs are ignored and disposable.
 
-> **All simulator numbers archived so far are affected by the idle-noise scaling bug** ([ERRATA.md](ERRATA.md#e1-calibrated-simulator-idle-noise-grows-with-the-square-of-the-round-count-critical)).
-> They overstate the simulator LER for r ≥ 3. Corrected numbers will replace this section once the fix lands.
+> Simulator numbers produced before 2026-10-04 include the idle-noise scaling bug ([ERRATA.md E1](ERRATA.md#e1-calibrated-simulator-idle-noise-grows-with-the-square-of-the-round-count-critical)),
+> which overstates the simulator LER for r ≥ 3. Corrected values are shown below.
 
 ### Hackathon (2026-06-07, d=3 rotated surface code, IQM Emerald, 2000 shots)
 
@@ -177,9 +177,24 @@ From [`baselines/hackathon_2026-06-07/`](baselines/hackathon_2026-06-07/):
 | 5 | 0.4840 | 0.4965 | 0.3670 | 0.3580 |
 | 7 | 0.4720 | 0.4825 | 0.4680 | 0.4715 |
 
-### Post-hackathon (2026-06-08)
+### Post-hackathon
 
 From [`baselines/post_hackathon/`](baselines/post_hackathon/):
+
+**Corrected simulator (2026-10-04, after the idle-noise fix, same configs as the hackathon runs):**
+
+| Rounds | d3 memory_z | d3 memory_x | d5 memory_z (routed layout) |
+| ---: | ---: | ---: | ---: |
+| 1 | 0.0210 | 0.0265 | 0.047 |
+| 3 | 0.0805 | 0.0940 | 0.128 |
+| 5 | 0.1270 | 0.1530 | 0.206 |
+| 7 | 0.1685 | 0.1975 | — |
+| Error per round | ≈0.028 (constant) | ≈0.034 (constant) | ≈0.047–0.050 |
+
+d3: 2000 shots, decoder candidates still selected in-sample (ERRATA E3). d5: 1000 shots, plain calibrated MWPM.
+The simulator model itself is hand-tuned (ERRATA E2); hardware at r=1 is 0.049–0.059.
+
+**Earlier post-hackathon work (2026-06-08):**
 
 - **Hardware replication** (`iqm_baseline_replication_20260608`): the d=3 Emerald sweep reproduces the saturation (LER 0.48–0.50 for r ≥ 3).
 - **Why it saturates:** in the raw data, the uncorrected logical observable flips with probability ≈0.5 for r ≥ 3 in both bases (≈0.13 at r=1). The data qubits are scrambled once mid-circuit measurement/reset begins ([ERRATA.md E5](ERRATA.md#e5-surface-code-hardware-runs-data-qubits-are-randomized-by-mid-circuit-measurereset)). Decoder changes cannot fix this.

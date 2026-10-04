@@ -11,9 +11,9 @@ Results are split by provenance:
 
 See [PROVENANCE.md](../PROVENANCE.md) for the full timeline and [ERRATA.md](../ERRATA.md) for known issues.
 
-> **Known issue:** every simulator result here was produced with the idle-noise scaling bug described in
-> [ERRATA.md](../ERRATA.md) (idle noise grows ~r² with the number of rounds). The simulator LER for r ≥ 3 is therefore too high.
-> Corrected runs will be added under `post_hackathon/` and marked as such.
+> **Known issue:** simulator results dated before 2026-10-04 were produced with the idle-noise scaling bug described in
+> [ERRATA.md](../ERRATA.md) (idle noise grows ~r² with the number of rounds), so their LER for r ≥ 3 is too high.
+> Folders ending in `_idlefix_20261004` are the corrected re-runs.
 
 ## Hackathon runs (2026-06-07)
 
@@ -34,6 +34,8 @@ See [PROVENANCE.md](../PROVENANCE.md) for the full timeline and [ERRATA.md](../E
 | `best_combined_reported_20260608/` | 2026-06-08 20:32 | Combined postselection + in-sample decoder selection (diagnostic, not a full-shot result). |
 | `iqm_baseline_replication_20260608/` | IQM job `019ea8f5…`, submitted 2026-06-08 20:39 | Re-run of the hack-era d3 IQM sweep. Reproduces the saturation at r ≥ 3. |
 | `iqm_best_combined_reported_20260608/` | IQM job `019ea8f7…`, submitted 2026-06-08 20:40 | IQM run with the combined postselection recipe. Dynamical decoupling was requested but **not applied** (see `hardware_metadata.csv`). |
+| `surface_d3_sim_idlefix_20261004/` | 2026-10-04 10:57 | **Corrected** re-run of the hackathon d3 simulator sweep after the idle-noise fix (decoder selection still in-sample). |
+| `surface_d5_sim_idlefix_20261004/` | 2026-10-04 10:57 | **Corrected** re-run of the hackathon d5 routed simulator sweep after the idle-noise fix. |
 
 ## Archiving a new sweep
 

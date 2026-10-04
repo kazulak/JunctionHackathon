@@ -156,7 +156,8 @@ def _build_hardware_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         basis_dir = run_dir / str(row["basis"])
         raw_metadata = _read_json_if_exists(basis_dir / "raw_metadata.json")
         metrics = _read_json_if_exists(basis_dir / "metrics.json")
-        if not raw_metadata:
+        if not raw_metadata.get("job_id"):
+            # Simulator runs also write raw_metadata.json; only hardware jobs belong here.
             continue
 
         transpilation = raw_metadata.get("transpilation_metrics", {}) or {}
