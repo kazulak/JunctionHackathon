@@ -12,6 +12,9 @@ Dry-run without executing:
 python main.py --dry-run --print-config configs/sweep_d3_baseline_sim.yaml
 ```
 
+> Simulator configs use the calibration-informed noise model described in `docs/CALIBRATED_SIMULATION.md`
+> (`two_qubit_scale: 2.0` fitted to r=1 hardware). The old hand-tuned `qnd_scale: 0` / `idle_scale: 0.5` are gone.
+>
 > `pymatching_auto` now selects decoder candidates by k-fold cross-validation unless a config sets
 > `candidate_selection_mode: current_batch` explicitly (in-sample, optimistic; see ERRATA E3).
 
@@ -20,7 +23,7 @@ python main.py --dry-run --print-config configs/sweep_d3_baseline_sim.yaml
 | Config | Purpose |
 | --- | --- |
 | `demo_stim_no_noise.yaml` | No-noise simulator smoke test. |
-| `sweep_d3_baseline_sim.yaml` | Main d3 calibrated simulator sweep, plain calibrated MWPM decoder (renamed from `sweep_d3_best_sim.yaml`, which used in-sample best-of-N decoder selection). |
+| `sweep_d3_baseline_sim.yaml` | Main d3 calibration-informed simulator sweep (noise fitted to r=1 hardware), plain calibrated MWPM decoder (renamed from `sweep_d3_best_sim.yaml`, which used in-sample best-of-N decoder selection). |
 | `sweep_d3_postselected_sim.yaml` | D3 simulator with low-syndrome postselection. |
 | `sweep_d3_best_combined_sim.yaml` | Best reported-LER simulator recipe: postselection plus full PyMatching candidate set. |
 | `sweep_d3_best_combined_iqm.yaml` | Best reported-LER IQM recipe: Emerald patch, omitted initial resets, DD attempt, postselection, full decoder candidates. |

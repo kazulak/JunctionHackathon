@@ -60,7 +60,7 @@ Smoke test:
 python main.py configs/demo_stim_no_noise.yaml
 ```
 
-Current calibrated d3 simulator sweep:
+Current d3 simulator sweep (calibration-informed noise fitted to r=1 hardware):
 
 ```bash
 python scripts/sweep_rounds.py configs/sweep_d3_baseline_sim.yaml --rounds 1 7 4
@@ -90,7 +90,7 @@ Out-of-fold decoder validation:
 python scripts/sweep_rounds.py configs/sweep_d3_decoder_kfold_sim.yaml --rounds 1 7 4
 ```
 
-D5 calibrated simulator:
+D5 simulator (routed layout):
 
 ```bash
 python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d5_calibrated.yaml --rounds 1 5 3
@@ -144,7 +144,7 @@ qec_pipeline/pipeline.py              orchestration
 qec_pipeline/codes/                   Stim circuit builders
 qec_pipeline/backends/                simulator and IQM runners
 qec_pipeline/decoders/                observable_rate, PyMatching, auto route
-qec_pipeline/noise/iqm_calibration.py calibrated Stim noise
+qec_pipeline/noise/iqm_calibration.py calibration-informed Stim noise
 qec_pipeline/mapping/                 calibration-driven patch/layout selection
 qec_pipeline/analysis/                artifacts and reports
 qec_pipeline/sweeps.py                LER-vs-rounds sweeps
@@ -181,7 +181,19 @@ From [`baselines/hackathon_2026-06-07/`](baselines/hackathon_2026-06-07/):
 
 From [`baselines/post_hackathon/`](baselines/post_hackathon/):
 
-**Corrected simulator (2026-10-04, after the idle-noise fix, same configs as the hackathon runs):**
+**Current reference simulator (2026-10-04):** idle-noise fix, physically converted calibration noise with `two_qubit_scale` fitted to r=1 hardware ([noise_fit_targets_r1](baselines/post_hackathon/noise_fit_targets_r1/)), plain calibrated MWPM:
+
+| Rounds | d3 memory_z | d3 memory_x | d5 memory_z (routed) |
+| ---: | ---: | ---: | ---: |
+| 1 | 0.047 | 0.083 | 0.099 |
+| 3 | 0.180 | 0.219 | 0.325 |
+| 5 | 0.263 | 0.321 | 0.452 |
+| 7 | 0.339 | 0.400 | — |
+| Fitted error per round | 0.068 ± 0.002 | 0.092 ± 0.003 | 0.141 ± 0.006 |
+
+Hardware at r=1: memory_z 0.049–0.059, memory_x 0.055–0.061. For r ≥ 2 this is what the model predicts *if* mid-circuit operations worked on hardware; they currently do not (E5). The routed d5 layout is above threshold.
+
+**Idle-fix only (2026-10-04, before the noise re-fit, old hand-tuned scales, same configs as the hackathon runs):**
 
 | Rounds | d3 memory_z | d3 memory_x | d5 memory_z (routed layout) |
 | ---: | ---: | ---: | ---: |

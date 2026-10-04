@@ -1,0 +1,98 @@
+{
+  "base_experiment": "sim_iqm_emerald_surface_d5_calibrated",
+  "config_path": "configs\\sim_iqm_emerald_surface_d5_calibrated.yaml",
+  "provenance": {
+    "recorded_utc": "2026-10-04T11:25:49+00:00",
+    "git_commit": "ea047b03ec6314f751ff99846e0c4f6fd9e20399",
+    "git_branch": "audit/5-noise-model",
+    "git_dirty": false,
+    "python": "3.11.0",
+    "packages": {
+      "stim": "1.16.0",
+      "PyMatching": "2.4.0",
+      "numpy": "2.4.6",
+      "qiskit": "2.1.2",
+      "iqm-client": "34.0.3"
+    }
+  },
+  "rounds": [
+    1,
+    3,
+    5
+  ],
+  "rows": [
+    {
+      "rounds": 1,
+      "basis": "memory_z",
+      "ler": 0.099,
+      "uncertainty": 0.009444522221901964,
+      "ler_ci_low": 0.08995229955408467,
+      "ler_ci_high": 0.10884889924711418,
+      "logical_error_per_round": 0.099,
+      "logical_error_per_round_uncertainty": 0.009444522221901964,
+      "logical_failures": 99,
+      "shots": 1000,
+      "mean_detector_firing_rate": 0.20695833333333336,
+      "max_detector_firing_rate": 0.323,
+      "mean_syndrome_weight": 4.967,
+      "original_shots": 1000,
+      "kept_shots": 1000,
+      "postselection_fraction": 1.0,
+      "selection_is_in_sample": false,
+      "run_dir": "results\\sim_iqm_emerald_surface_d5_calibrated_rounds_sweep\\20261004T112535_577975Z\\runs\\sim_iqm_emerald_surface_d5_calibrated_rounds_1\\20261004T112535_577975Z",
+      "notes": "memory_z: LER 0.099 +/- 0.009444522221901964"
+    },
+    {
+      "rounds": 3,
+      "basis": "memory_z",
+      "ler": 0.325,
+      "uncertainty": 0.014811313243598625,
+      "ler_ci_low": 0.3103698797849362,
+      "ler_ci_high": 0.33997977056471423,
+      "logical_error_per_round": 0.14763506339675542,
+      "logical_error_per_round_uncertainty": 0.009940928480174147,
+      "logical_failures": 325,
+      "shots": 1000,
+      "mean_detector_firing_rate": 0.2700694444444445,
+      "max_detector_firing_rate": 0.438,
+      "mean_syndrome_weight": 19.445,
+      "original_shots": 1000,
+      "kept_shots": 1000,
+      "postselection_fraction": 1.0,
+      "selection_is_in_sample": false,
+      "run_dir": "results\\sim_iqm_emerald_surface_d5_calibrated_rounds_sweep\\20261004T112535_577975Z\\runs\\sim_iqm_emerald_surface_d5_calibrated_rounds_3\\20261004T112540_037642Z",
+      "notes": "memory_z: LER 0.325 +/- 0.014811313243598625"
+    },
+    {
+      "rounds": 5,
+      "basis": "memory_z",
+      "ler": 0.452,
+      "uncertainty": 0.015738360778683402,
+      "ler_ci_low": 0.43631738146556526,
+      "ler_ci_high": 0.467778522630339,
+      "logical_error_per_round": 0.1870865355468102,
+      "logical_error_per_round_uncertainty": 0.020519770816966782,
+      "logical_failures": 452,
+      "shots": 1000,
+      "mean_detector_firing_rate": 0.28176666666666667,
+      "max_detector_firing_rate": 0.438,
+      "mean_syndrome_weight": 33.812,
+      "original_shots": 1000,
+      "kept_shots": 1000,
+      "postselection_fraction": 1.0,
+      "selection_is_in_sample": false,
+      "run_dir": "results\\sim_iqm_emerald_surface_d5_calibrated_rounds_sweep\\20261004T112535_577975Z\\runs\\sim_iqm_emerald_surface_d5_calibrated_rounds_5\\20261004T112544_500157Z",
+      "notes": "memory_z: LER 0.452 +/- 0.015738360778683402"
+    }
+  ],
+  "per_round_fits": {
+    "memory_z": {
+      "fit_points": 3,
+      "fitted_logical_error_per_round": 0.14054314660617157,
+      "fitted_logical_error_per_round_uncertainty": 0.005904495484446861,
+      "fit_amplitude": 1.0,
+      "fit_method": "binomial_mle",
+      "excluded_points": []
+    }
+  }
+}

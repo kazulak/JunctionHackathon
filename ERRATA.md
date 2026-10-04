@@ -29,7 +29,9 @@ The best simulator configs used `qnd_scale: 0.0` and `idle_scale: 0.5`. These we
 
 Other approximations: randomized-benchmarking infidelity was used directly as the depolarizing probability (under-counts by 1.5× for one-qubit and 1.25× for two-qubit gates); readout error is the maximum of several fields; reset error is not available in the calibration dump and is always 0; the round time is assumed to be 1 µs.
 
-The simulator should be described as *calibration-informed and hand-tuned*, not *calibrated*. Status: planned (audit phase 5).
+The simulator should be described as *calibration-informed*, not *calibrated*.
+
+Status: **fixed on `main`** (audit phase 5). The model now converts RB infidelity to Pauli probabilities, uses the mean readout assignment error, models idle noise as Pauli-twirled T1/T2, applies QND only to qubits reused without reset, and its scales are fitted to r=1 hardware data rather than chosen for low LER (`two_qubit_scale: 2.0`; see `baselines/post_hackathon/noise_fit_targets_r1` and `docs/CALIBRATED_SIMULATION.md`). The fit is still poor in absolute terms, so the model remains approximate.
 
 ## E3. Decoder candidate selection was in-sample
 
