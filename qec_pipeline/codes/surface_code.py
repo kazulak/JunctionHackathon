@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
 import warnings
+from typing import Any
 
 import stim
 
@@ -58,6 +58,7 @@ def build_surface_code_circuit(
             "does not implement no-reset surface-code circuits. Falling back "
             "to standard active-reset Stim rotated memory circuit.",
             RuntimeWarning,
+            stacklevel=2,
         )
 
     task = _stim_task_for_basis(basis)

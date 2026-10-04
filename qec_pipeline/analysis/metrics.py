@@ -89,6 +89,7 @@ def fit_per_round_error(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "fitted_logical_error_per_round_uncertainty": None,
         "fit_amplitude": None,
         "fit_method": "binomial_mle",
+        "note": None,
         "excluded_points": excluded,
     }
     distinct_rounds = {int(row["rounds"]) for row in used}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
 from qec_pipeline.decoders.ising_decoder import decode_with_ising
@@ -8,7 +9,6 @@ from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_auto_decoder import decode_with_pymatching_auto
 from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
 from qec_pipeline.decoders.pymatching_decoder import decode_with_pymatching
-
 
 Decoder = Callable[[dict[str, Any], tuple, tuple], tuple]
 

@@ -29,5 +29,5 @@ jobs:
       - name: Unit tests
         run: python -m unittest discover -s tests -v
 
-      - name: Lint (report only)
-        run: ruff check . --exit-zero
+      - name: Lint
+        run: ruff check .

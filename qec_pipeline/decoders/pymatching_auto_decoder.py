@@ -10,7 +10,6 @@ from qec_pipeline.decoders.pymatching_decoder import (
     detector_model_with_uniform_noise,
 )
 
-
 DEFAULT_SELECTION_MODE = "kfold"
 
 

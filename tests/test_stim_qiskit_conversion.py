@@ -15,7 +15,6 @@ from qec_pipeline.conversion_checks import (
 from qec_pipeline.measurements import virtualize_omitted_repeated_resets
 from qec_pipeline.syndrome_extraction import extract_syndromes
 
-
 NO_NOISE = {"model": "no_noise", "parameters": {}}
 SURFACE_D3_R1 = {
     "family": "surface_code",

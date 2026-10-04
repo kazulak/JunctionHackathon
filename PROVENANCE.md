@@ -5,7 +5,7 @@ This repository holds two things that should not be confused:
 1. **The Junction Quantum Hack 2026 submission** by team *gate_crushers* (IQM Quantum Error Correction challenge, 5–7 June 2026). It is frozen.
 2. **Post-hackathon development** on `main` (from 8 June 2026 onward). It was not part of the submission.
 
-Everything below can be re-checked with:
+Everything below can be re-checked with (last run 2026-10-04: all checks OK, 99/99 files identical):
 
 ```bash
 git fetch --tags
@@ -61,7 +61,7 @@ Submission archive `gate_crushers_submission_20260607_085338.zip` was created 20
 | `feeee3e` | 2026-06-08 16:23 | 2026-06-08 14:23:34 | Cleanup; archives hack-era runs into `baselines/` |
 | `745cc76` | 2026-06-08 16:50 | 2026-06-08 14:50:17 | Research roadmap, postselection experiments |
 | `5c58858` | 2026-06-08 22:50 | 2026-06-08 20:53:39 | Decoder experiments, second IQM runs |
-| PR #1 onward | 2026-10 | — | Audit follow-up (CI, provenance, fixes) |
+| PRs #1–#8 | 2026-10-04 | — | Audit follow-up: CI, provenance, simulator/decoder/statistics fixes, hardware-path hardening, mid-circuit diagnosis |
 
 ## IQM hardware jobs
 

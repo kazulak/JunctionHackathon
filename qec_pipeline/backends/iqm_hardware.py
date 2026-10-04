@@ -36,7 +36,6 @@ def run_iqm_hardware_batch_backend(
     _load_dotenv()
 
     from iqm.qiskit_iqm import IQMProvider
-    from qiskit import transpile
 
     options = backend.get("options", {})
     provider = IQMProvider(
@@ -97,9 +96,10 @@ def _prepare_iqm_request(
     mapping: dict[str, Any] | None,
     iqm_backend: Any,
 ) -> dict[str, Any]:
+    from qiskit import transpile
+
     from qec_pipeline.conversion import stim_to_qiskit_minimal
     from qec_pipeline.mapping import select_mapping_from_config
-    from qiskit import transpile
 
     stim_circuit, _detector_model, _measurement_order, circuit_info = circuit
     options = backend.get("options", {})

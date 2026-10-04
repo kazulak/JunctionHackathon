@@ -81,7 +81,7 @@ def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
             for _basis, circuit in prepared_basis
         ]
 
-    for (basis, circuit), raw in zip(prepared_basis, raws):
+    for (basis, circuit), raw in zip(prepared_basis, raws, strict=True):
         syndromes = extract_detection_events(circuit, raw)
         _detection_events, _observable_flips, syndrome_info = syndromes
         decoded = _run_decoder(config["decoder"], circuit, syndromes)

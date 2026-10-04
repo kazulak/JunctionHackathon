@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_backend
 from qec_pipeline.backends.simulator import run_simulator_backend
-
 
 BackendRunner = Callable[[dict[str, Any], tuple, dict[str, Any]], tuple]
 

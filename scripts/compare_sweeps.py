@@ -17,7 +17,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from qec_pipeline.analysis.metrics import fit_per_round_error, is_postselected, per_round_ler
+from qec_pipeline.analysis.metrics import (
+    fit_per_round_error,
+    is_postselected,
+    per_round_ler,
+    wilson_interval,
+)
 
 
 def main() -> int:
@@ -234,20 +239,28 @@ def _write_summary(
             "",
             "## Sweep Rows",
             "",
-            "| Label | Basis | Rounds | LER | Uncertainty | Per-round LER | Mean detector rate | Kept fraction | Failures | Shots |",
+            "| Label | Basis | Rounds | LER | 68% Wilson interval | Per-round LER | Mean detector rate "
+            "| Kept fraction | Failures | Shots |",
             "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
     for row in sorted(rows, key=lambda item: (item["label"], item["basis"], item["rounds"])):
         lines.append(
             f"| {row['label']} | {row['basis']} | {row['rounds']} | "
-            f"{row['ler']:.6g} | {row['uncertainty']:.3g} | "
+            f"{row['ler']:.6g} | {_interval(row)} | "
             f"{_format_optional(row['logical_error_per_round'])} | "
             f"{_format_optional(row.get('mean_detector_firing_rate'))} | "
             f"{_format_optional(row.get('postselection_fraction'))} | "
             f"{row['logical_failures']} | {row['shots']} |"
         )
     (output_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _interval(row: dict[str, Any]) -> str:
+    if not row["shots"]:
+        return ""
+    low, high = wilson_interval(row["logical_failures"], row["shots"])
+    return f"{low:.4g}–{high:.4g}"
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:

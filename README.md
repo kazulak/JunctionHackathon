@@ -14,7 +14,7 @@ Simulator-first quantum error-correction pipeline for surface-code memory experi
 
 Built on the challenge baseline provided by the organizers (see [NOTICE](NOTICE)).
 
-Current development goal: get meaningful LER improvements in simulation first, then spend IQM credits only on configs that already look promising locally.
+Current development goal: understand why mid-circuit measure/reset destroys the data on IQM hardware (see [ERRATA.md](ERRATA.md) E5), then improve LER in simulation and spend IQM credits only on configs that look promising locally.
 
 ## Flow
 
@@ -163,8 +163,9 @@ python scripts/plot_qiskit_translation.py results/<experiment>/<timestamp>
 
 Result summaries live in [baselines/](baselines/), split by provenance. Raw `results/` runs are ignored and disposable.
 
-> Simulator numbers produced before 2026-10-04 include the idle-noise scaling bug ([ERRATA.md E1](ERRATA.md#e1-calibrated-simulator-idle-noise-grows-with-the-square-of-the-round-count-critical)),
-> which overstates the simulator LER for r ≥ 3. Corrected values are shown below.
+> Simulator numbers produced before 2026-10-04 (including the hackathon table below) include the idle-noise scaling bug
+> ([ERRATA.md E1](ERRATA.md#e1-calibrated-simulator-idle-noise-grows-with-the-square-of-the-round-count-critical)),
+> which overstates the simulator LER for r ≥ 3.
 
 ### Hackathon (2026-06-07, d=3 rotated surface code, IQM Emerald, 2000 shots)
 
@@ -179,9 +180,16 @@ From [`baselines/hackathon_2026-06-07/`](baselines/hackathon_2026-06-07/):
 
 ### Post-hackathon
 
-From [`baselines/post_hackathon/`](baselines/post_hackathon/):
+From [`baselines/post_hackathon/`](baselines/post_hackathon/). Each folder README states when and how it was produced.
 
-**Current reference simulator (2026-10-04):** idle-noise fix, physically converted calibration noise with `two_qubit_scale` fitted to r=1 hardware ([noise_fit_targets_r1](baselines/post_hackathon/noise_fit_targets_r1/)), plain calibrated MWPM:
+**1. Hardware: mid-circuit operations destroy the data.**
+A post-hackathon replication on IQM Emerald (`iqm_baseline_replication_20260608`) reproduces the saturation (LER 0.48–0.50 for r ≥ 3).
+In the raw data the *uncorrected* logical observable already flips with probability ≈0.5 for r ≥ 3 in both bases (≈0.13 at r = 1):
+the data qubits are scrambled once mid-circuit measure/reset begins ([ERRATA E5](ERRATA.md#e5-surface-code-hardware-runs-data-qubits-are-randomized-by-mid-circuit-measurereset), [`midcircuit_diagnosis_20261004`](baselines/post_hackathon/midcircuit_diagnosis_20261004/)).
+No decoder can fix this. A probe experiment to find the cause is ready and needs IQM credits ([roadmap](docs/RESEARCH_ROADMAP.md)).
+
+**2. Reference simulator (2026-10-04).**
+This run includes the idle-noise fix and calibration noise fitted to r = 1 hardware ([`noise_fit_targets_r1`](baselines/post_hackathon/noise_fit_targets_r1/)), decoded with plain calibrated MWPM:
 
 | Rounds | d3 memory_z | d3 memory_x | d5 memory_z (routed) |
 | ---: | ---: | ---: | ---: |
@@ -191,24 +199,18 @@ From [`baselines/post_hackathon/`](baselines/post_hackathon/):
 | 7 | 0.339 | 0.400 | — |
 | Fitted error per round | 0.068 ± 0.002 | 0.092 ± 0.003 | 0.141 ± 0.006 |
 
-Hardware at r=1: memory_z 0.049–0.059, memory_x 0.055–0.061. For r ≥ 2 this is what the model predicts *if* mid-circuit operations worked on hardware; they currently do not (E5). The routed d5 layout is above threshold.
+Hardware at r = 1 is 0.049–0.059 (memory_z) and 0.055–0.061 (memory_x). For r ≥ 2 the table shows what the model predicts *if* mid-circuit operations worked. The routed d5 layout is above threshold.
 
-**Idle-fix only (2026-10-04, before the noise re-fit, old hand-tuned scales, same configs as the hackathon runs):**
+**3. Decoders** ([`decoder_and_postselection_fitted_noise_20261004`](baselines/post_hackathon/decoder_and_postselection_fitted_noise_20261004/)).
+Choosing correlated matching by k-fold cross-validation lowers the error per round:
 
-| Rounds | d3 memory_z | d3 memory_x | d5 memory_z (routed layout) |
-| ---: | ---: | ---: | ---: |
-| 1 | 0.0210 | 0.0265 | 0.047 |
-| 3 | 0.0805 | 0.0940 | 0.128 |
-| 5 | 0.1270 | 0.1530 | 0.206 |
-| 7 | 0.1685 | 0.1975 | — |
-| Error per round | ≈0.028 (constant) | ≈0.034 (constant) | ≈0.047–0.050 |
+| Error per round | memory_z | memory_x |
+| --- | ---: | ---: |
+| Plain MWPM | 0.068 | 0.092 |
+| k-fold selection (correlated matching) | 0.064 | 0.083 |
 
-d3: 2000 shots, decoder candidates still selected in-sample (ERRATA E3). d5: 1000 shots, plain calibrated MWPM.
-The simulator model itself is hand-tuned (ERRATA E2); hardware at r=1 is 0.049–0.059.
+Selecting candidates in-sample looks slightly better still; that extra is selection bias. These are simulator results only.
 
-**Earlier post-hackathon work (2026-06-08):**
+**4. Postselection** keeps only 25–60% of shots. It is a diagnostic, not a logical-memory result.
 
-- **Hardware replication** (`iqm_baseline_replication_20260608`): the d=3 Emerald sweep reproduces the saturation (LER 0.48–0.50 for r ≥ 3).
-- **Why it saturates:** in the raw data, the uncorrected logical observable flips with probability ≈0.5 for r ≥ 3 in both bases (≈0.13 at r=1). The data qubits are scrambled once mid-circuit measurement/reset begins ([ERRATA.md E5](ERRATA.md#e5-surface-code-hardware-runs-data-qubits-are-randomized-by-mid-circuit-measurereset)). Decoder changes cannot fix this.
-- **Decoder experiments:** on the buggy June simulator, same-batch tuning looked better but holdout/k-fold did not confirm it (`decoder_validation_20260608`). On the corrected simulator (`decoder_validation_idlefix_20261004`), out-of-fold selection of correlated matching lowers the memory_x error per round from 0.035 to 0.030; memory_z is unchanged. These are simulator results only: on hardware the data is lost before decoding (E5).
-- **Postselection** (`low_syndrome_postselection_20260608`, `best_combined_reported_20260608`, `iqm_best_combined_reported_20260608`) keeps only 25–60% of shots. It is a diagnostic, not a logical-memory result.
+Superseded post-hackathon results (June 2026, and the intermediate idle-fix-only re-runs) stay in `baselines/post_hackathon/` for transparency. Their READMEs point to what replaced them.

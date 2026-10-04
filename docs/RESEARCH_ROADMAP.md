@@ -69,11 +69,12 @@ Gated decoding keeps all shots. It tries no correction on low-syndrome shots and
 
 Correlation-aware MWPM and ensemble decoding also keep all shots. These test whether the detector error model contains useful correlated-error information or whether several MWPM priors make different useful mistakes.
 
-Current conclusion (corrected simulator, 2026-10-04, `baselines/post_hackathon/decoder_validation_idlefix_20261004`):
+Current conclusion (final simulator, 2026-10-04, `baselines/post_hackathon/decoder_and_postselection_fitted_noise_20261004`):
 
 ```text
 same-batch candidate tuning: optimistic by construction, diagnostic only
-k-fold selection: memory_x 0.035 -> 0.030 per round (correlated matching); memory_z unchanged
+k-fold selection (correlated matching): memory_z 0.068 -> 0.064, memory_x 0.092 -> 0.083 per round
+postselection: diagnostic only (keeps 25-43% of shots)
 ```
 
 The June conclusion ("k-fold does not beat baseline") was drawn on the buggy noise model (ERRATA E1).

@@ -1,0 +1,9 @@
+label,basis,fit_points,fitted_logical_error_per_round,fitted_logical_error_per_round_uncertainty,fit_amplitude,fit_method,note,excluded_points
+baseline,memory_x,4,0.09160581885720372,0.002544222430324354,1.0,binomial_mle,,0
+baseline,memory_z,4,0.06797148260781413,0.0019535173508078325,1.0,binomial_mle,,0
+in_sample_improved,memory_x,4,0.0808432838728611,0.00227309609131386,1.0,binomial_mle,,0
+in_sample_improved,memory_z,4,0.06291150275930855,0.0018341576195201883,1.0,binomial_mle,,0
+kfold,memory_x,4,0.08337208986405548,0.0023341811372031406,1.0,binomial_mle,,0
+kfold,memory_z,4,0.06425340133434483,0.0018656957020729715,1.0,binomial_mle,,0
+postselect_q25,memory_x,0,,,,binomial_mle,need at least two distinct round values,4
+postselect_q25,memory_z,0,,,,binomial_mle,need at least two distinct round values,4
