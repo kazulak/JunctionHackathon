@@ -4,9 +4,21 @@ import argparse
 import csv
 import json
 import shutil
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from qec_pipeline.provenance import uuid7_time
+
+PROVENANCE_LABELS = {
+    "hackathon": "Hackathon (Junction Quantum Hack 2026, run before the 2026-06-07 submission)",
+    "post_hackathon": "Post-hackathon development (not part of the submission)",
+}
 
 
 COMPACT_FILES = [
@@ -36,6 +48,12 @@ def main() -> int:
         "--title",
         default=None,
         help="Human-readable title for the generated README.",
+    )
+    parser.add_argument(
+        "--provenance",
+        required=True,
+        choices=sorted(PROVENANCE_LABELS),
+        help="Whether this run belongs to the hackathon submission or later work.",
     )
     parser.add_argument(
         "--notes",
@@ -80,6 +98,7 @@ def main() -> int:
         hardware_rows=hardware_rows,
         copied=copied,
         notes=args.notes,
+        provenance=args.provenance,
     )
 
     print(f"Archived baseline: {output_dir}")
@@ -158,6 +177,7 @@ def _build_hardware_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "postselection_fraction": row.get("postselection_fraction"),
                 "mean_detector_firing_rate": row.get("mean_detector_firing_rate"),
                 "job_id": raw_metadata.get("job_id"),
+                "job_submitted_utc": _job_time(raw_metadata.get("job_id")),
                 "batch_index": raw_metadata.get("batch_index"),
                 "batch_size": raw_metadata.get("batch_size"),
                 "quantum_computer": raw_metadata.get("quantum_computer"),
@@ -196,13 +216,20 @@ def _write_readme(
     hardware_rows: list[dict[str, Any]],
     copied: list[str],
     notes: str,
+    provenance: str,
 ) -> None:
     lines = [
         f"# {title}",
         "",
+        f"- Provenance: **{PROVENANCE_LABELS[provenance]}**",
         f"- Archived: {_timestamp()}",
         f"- Source sweep: `{source_sweep}`",
     ]
+    source_provenance = _read_json_if_exists(source_sweep / "sweep_results.json").get("provenance")
+    if source_provenance:
+        commit = (source_provenance.get("git_commit") or "unknown")[:7]
+        dirty = " (uncommitted changes)" if source_provenance.get("git_dirty") else ""
+        lines.append(f"- Code that produced the sweep: `{commit}`{dirty}")
     if notes:
         lines.append(f"- Notes: {notes}")
     lines.extend(["", "## Results", "", _result_table(rows)])
@@ -245,7 +272,9 @@ def _selected_candidate(row: dict[str, Any]) -> str:
 
 
 def _hardware_summary(rows: list[dict[str, Any]]) -> str:
-    job_ids = sorted({str(row["job_id"]) for row in rows if row.get("job_id")})
+    job_ids = sorted(
+        {f"{row['job_id']} (submitted {row.get('job_submitted_utc')} UTC)" for row in rows if row.get("job_id")}
+    )
     qpus = sorted({str(row["qpu"]) for row in rows if row.get("qpu")})
     max_depth = max(_int_or_none(row.get("transpiled_depth")) or 0 for row in rows)
     max_two_qubit = max(
@@ -311,6 +340,15 @@ def _fmt(value: Any) -> str:
 
 def _md(value: str) -> str:
     return value.replace("|", "\\|")
+
+
+def _job_time(job_id: Any) -> str | None:
+    if not job_id:
+        return None
+    try:
+        return uuid7_time(str(job_id)).isoformat(timespec="seconds")
+    except ValueError:
+        return None
 
 
 def _timestamp() -> str:

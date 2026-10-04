@@ -1,0 +1,27 @@
+QEC Pipeline (JunctionHackathon)
+
+The MIT License in LICENSE covers the code and documentation written for this
+project by Tomasz Kazulak (commits from c922bb0 onward).
+
+It does NOT cover the following third-party material, which keeps its original
+terms:
+
+1. Junction Quantum Hack 2026 challenge baseline
+   Provided by the challenge organizers (Niklas Steinmann, Fraunhofer FOKUS),
+   commits 5eae04f..6eeafb4 in this repository's history. The baseline was
+   published without a license and is used here for the challenge. Parts of the
+   pipeline (for example syndrome extraction and the Stim surface-code flow) were
+   adapted from it.
+
+2. IQM calibration data
+   configs/2026-06-06T*.json are calibration observation sets from IQM quantum
+   computers (54-qubit Emerald and 20-qubit Garnet), dated 2026-06-06 and
+   added during the hackathon.
+
+3. Hackathon teammate contribution
+   The repetition-code route in the hackathon submission (tags
+   hackathon-submission-2026-06-07 / junction-quantum-hackathon-final-2026) was
+   distilled from code by a member of team gate_crushers. It is not part of the
+   current main branch.
+
+See PROVENANCE.md for the full timeline.

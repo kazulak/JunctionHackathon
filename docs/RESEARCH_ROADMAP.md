@@ -4,6 +4,9 @@ Keep the workflow simulator-first. Spend QPU credits only after local sweeps sho
 
 ## Ideas From Google's Surface-Code Paper
 
+Reference: Google Quantum AI, "Quantum error correction below the surface code threshold",
+[arXiv:2408.13687](https://arxiv.org/abs/2408.13687) (Nature 638, 920–926, 2025).
+
 1. Track detector firing probability, not only LER.
    - Use mean detector firing rate as a proxy for physical error.
    - If detector rates saturate, improve circuit/noise assumptions before blaming the decoder.
