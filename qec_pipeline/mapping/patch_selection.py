@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from collections import Counter
-from pathlib import Path
 import random
 import re
+from collections import Counter
+from pathlib import Path
 from typing import Any
 
 import networkx as nx
 import numpy as np
-from scipy.optimize import linear_sum_assignment
 import stim
 import yaml
-
+from scipy.optimize import linear_sum_assignment
 
 IQM_QUBIT_RE = re.compile(r"QB\d+")
 DEFAULT_ROUND_SECONDS = 1e-6
@@ -593,7 +592,7 @@ def _initial_routed_assignments(
         rows, cols = linear_sum_assignment(cost)
         assignment = {
             code_nodes[row]: hardware_labels[col]
-            for row, col in zip(rows, cols)
+            for row, col in zip(rows, cols, strict=True)
         }
         assignments.append(assignment)
 
@@ -602,8 +601,8 @@ def _initial_routed_assignments(
         hardware_labels,
         key=lambda label: (_node_error(hardware, label, "ancilla", weights), _label_sort_key(label)),
     )[: len(code_nodes)]
-    assignments.append(dict(zip(code_nodes, label_sorted[: len(code_nodes)])))
-    assignments.append(dict(zip(code_nodes, sorted(best_49, key=_label_sort_key))))
+    assignments.append(dict(zip(code_nodes, label_sorted[: len(code_nodes)], strict=True)))
+    assignments.append(dict(zip(code_nodes, sorted(best_49, key=_label_sort_key), strict=True)))
 
     unique = []
     seen = set()

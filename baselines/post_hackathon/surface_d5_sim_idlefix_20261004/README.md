@@ -1,5 +1,7 @@
 # d5 calibrated simulator (routed layout) after idle-noise fix (2026-10-04)
 
+> Superseded by `surface_d5_sim_fitted_noise_20261004` (noise model fitted to hardware). Kept to show the effect of the idle-noise fix alone.
+
 - Provenance: **Post-hackathon development (not part of the submission)**
 - Archived: 2026-10-04 10:58:09Z
 - Source sweep: `results\sim_iqm_emerald_surface_d5_calibrated_rounds_sweep\20261004T105727_693356Z`

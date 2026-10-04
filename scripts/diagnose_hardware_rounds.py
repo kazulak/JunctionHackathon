@@ -118,7 +118,8 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         for row in rows:
-            writer.writerow({key: json.dumps(value) if isinstance(value, list) else value for key, value in row.items()})
+            flat = {key: json.dumps(value) if isinstance(value, list) else value for key, value in row.items()}
+            writer.writerow(flat)
 
 
 def _summary(rows: list[dict[str, Any]]) -> str:
@@ -128,7 +129,8 @@ def _summary(rows: list[dict[str, Any]]) -> str:
         "Raw observable = logical observable from the final data measurement with no correction.",
         "If it is ~0.5, the data qubits were scrambled before decoding.",
         "",
-        "| Sweep | Basis | Rounds | Shots | Raw observable flip | Decoded LER | X-ancilla P(1) by round | Z-ancilla P(1) by round | Detector rate by layer |",
+        "| Sweep | Basis | Rounds | Shots | Raw observable flip | Decoded LER "
+        "| X-ancilla P(1) by round | Z-ancilla P(1) by round | Detector rate by layer |",
         "| --- | --- | ---: | ---: | ---: | ---: | --- | --- | --- |",
     ]
     for row in sorted(rows, key=lambda item: (item["sweep"], item["basis"], item["rounds"])):

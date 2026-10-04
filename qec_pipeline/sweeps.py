@@ -77,7 +77,7 @@ def run_rounds_sweep(
         config["artifacts"]["root"] = str(runs_root)
 
         run_dir, basis_results, notes = run_pipeline(config)
-        for basis, circuit, _raw, _syndromes, _decoded, metrics in basis_results:
+        for _basis, circuit, _raw, _syndromes, _decoded, metrics in basis_results:
             layouts.append(_layout_of(circuit))
             rows.append(_sweep_row(int(rounds_value), metrics, run_dir, notes))
 
@@ -185,7 +185,7 @@ def _run_iqm_rounds_sweep_batch(
     )
 
     rows = []
-    for job, raw in zip(jobs, raws):
+    for job, raw in zip(jobs, raws, strict=True):
         group = job["group"]
         basis = job["basis"]
         circuit = job["circuit"]
@@ -332,7 +332,8 @@ def _write_sweep_outputs(
         "",
         "LER interval: Wilson score interval (~68%). Per-round LER is blank for postselected rows.",
         "",
-        "| Rounds | Basis | LER | 68% interval | Per-round LER | Mean detector rate | Kept/original | Failures | Shots | Selection |",
+        "| Rounds | Basis | LER | 68% interval | Per-round LER | Mean detector rate | Kept/original "
+        "| Failures | Shots | Selection |",
         "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for row in rows:

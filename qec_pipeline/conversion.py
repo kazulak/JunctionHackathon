@@ -102,7 +102,7 @@ def stim_to_qiskit_minimal(
             )
 
         elif name == "MR":
-            for stim_qubit, dense_qubit in zip(targets, dense_targets):
+            for stim_qubit, dense_qubit in zip(targets, dense_targets, strict=True):
                 qiskit_circuit.measure(dense_qubit, measurement_index)
                 measurement_order.append(stim_qubit)
                 measurement_index += 1
@@ -110,7 +110,7 @@ def stim_to_qiskit_minimal(
                     qiskit_circuit.reset(dense_qubit)
 
         elif name == "MRX":
-            for stim_qubit, dense_qubit in zip(targets, dense_targets):
+            for stim_qubit, dense_qubit in zip(targets, dense_targets, strict=True):
                 qiskit_circuit.h(dense_qubit)
                 qiskit_circuit.measure(dense_qubit, measurement_index)
                 measurement_order.append(stim_qubit)
@@ -190,7 +190,7 @@ def _measure_x(
     measurement_order: list[int],
     future_qubits: set[int],
 ) -> int:
-    for index, (stim_qubit, dense_qubit) in enumerate(zip(stim_targets, dense_targets)):
+    for index, (stim_qubit, dense_qubit) in enumerate(zip(stim_targets, dense_targets, strict=True)):
         qiskit_circuit.h(dense_qubit)
         qiskit_circuit.measure(dense_qubit, measurement_index)
         measurement_order.append(stim_qubit)
@@ -212,7 +212,7 @@ def _measure_z(
     measurement_index: int,
     measurement_order: list[int],
 ) -> int:
-    for stim_qubit, dense_qubit in zip(stim_targets, dense_targets):
+    for stim_qubit, dense_qubit in zip(stim_targets, dense_targets, strict=True):
         qiskit_circuit.measure(dense_qubit, measurement_index)
         measurement_order.append(stim_qubit)
         measurement_index += 1

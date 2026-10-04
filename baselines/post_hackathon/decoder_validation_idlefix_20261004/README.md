@@ -1,5 +1,7 @@
 # Decoder validation after the idle-noise fix (2026-10-04)
 
+> Superseded by `decoder_and_postselection_fitted_noise_20261004`, which uses the noise model fitted to hardware.
+
 - Provenance: **Post-hackathon development (not part of the submission)**
 - Code: `audit/4-decoder-stats` (after the ERRATA E1 fix; k-fold default and tie-break fix from ERRATA E3)
 - Simulator: d=3 rotated surface code, calibration-informed Emerald noise (hand-tuned scales, ERRATA E2), 2000 shots per point, seed 1

@@ -1,5 +1,7 @@
 # d3 calibrated simulator after idle-noise fix (2026-10-04)
 
+> Superseded by `surface_d3_sim_fitted_noise_20261004` (noise model fitted to hardware, plain MWPM). Kept to show the effect of the idle-noise fix alone.
+
 - Provenance: **Post-hackathon development (not part of the submission)**
 - Archived: 2026-10-04 10:58:09Z
 - Source sweep: `results\sweep_d3_best_sim_rounds_sweep\20261004T105706_341713Z`

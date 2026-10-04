@@ -10,57 +10,56 @@ from unittest.mock import patch
 import numpy as np
 import stim
 
-from qec_pipeline.analysis.metrics import binomial_standard_error, fit_per_round_error, wilson_interval
+from qec_pipeline.analysis.diagnostics import build_run_diagnostics
 from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
+from qec_pipeline.analysis.metrics import binomial_standard_error, fit_per_round_error, wilson_interval
 from qec_pipeline.analysis.reports import write_run_artifacts
 from qec_pipeline.artifacts import utc_timestamp
-from qec_pipeline.provenance import uuid7_time
-from qec_pipeline.analysis.diagnostics import build_run_diagnostics
 from qec_pipeline.backends import get_backend_runner
-from qec_pipeline.backends.simulator import run_simulator_backend
-from qec_pipeline.codes import get_code_builder
-from qec_pipeline.codes.color_code import build_color_code_circuit
-from qec_pipeline.codes.surface_code_iqm import build_iqm_surface_code_circuit
-from qec_pipeline.codes.surface_code import build_surface_code_circuit
-from qec_pipeline.codes.surface_code_unrotated import build_unrotated_surface_code_circuit
-from qec_pipeline.conversion_checks import convert_and_sample
-from qec_pipeline.config import config_summary, load_experiment_config
-from qec_pipeline.decoders import get_decoder
-from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
-from qec_pipeline.decoders.ising_decoder import decode_with_ising
-from qec_pipeline.decoders.observable_decoder import decode_observable_rate
-from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
-from qec_pipeline.decoders.pymatching_auto_decoder import _select_candidate, decode_with_pymatching_auto
-from qec_pipeline.decoders.pymatching_decoder import (
-    detector_model_with_uniform_noise,
-    decode_with_pymatching,
-    pymatching_noise_sweep,
-)
-from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
-from qec_pipeline.mapping import parse_hardware_calibration
-from qec_pipeline.noise.iqm_calibration import _IqmNoiseBuilder
 from qec_pipeline.backends.iqm_hardware import (
     _check_layout_matches_mapping,
     physical_loci,
     run_iqm_hardware_batch_backend,
+)
+from qec_pipeline.backends.simulator import run_simulator_backend
+from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
+from qec_pipeline.codes import get_code_builder
+from qec_pipeline.codes.color_code import build_color_code_circuit
+from qec_pipeline.codes.surface_code import build_surface_code_circuit
+from qec_pipeline.codes.surface_code_iqm import build_iqm_surface_code_circuit
+from qec_pipeline.codes.surface_code_unrotated import build_unrotated_surface_code_circuit
+from qec_pipeline.config import config_summary, load_experiment_config
+from qec_pipeline.conversion_checks import convert_and_sample
+from qec_pipeline.decoders import get_decoder
+from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
+from qec_pipeline.decoders.ising_decoder import decode_with_ising
+from qec_pipeline.decoders.observable_decoder import decode_observable_rate
+from qec_pipeline.decoders.pymatching_auto_decoder import _select_candidate, decode_with_pymatching_auto
+from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
+from qec_pipeline.decoders.pymatching_decoder import (
+    decode_with_pymatching,
+    detector_model_with_uniform_noise,
+    pymatching_noise_sweep,
+)
+from qec_pipeline.mapping import parse_hardware_calibration
+from qec_pipeline.mapping.patch_selection import (
+    rank_calibration_best_patches,
+    select_calibration_best_patch,
+    select_calibration_routed_layout,
+    select_mapping_from_config,
+    surface_code_patch_coordinates,
 )
 from qec_pipeline.measurements import (
     counts_to_measurement_array,
     memory_to_measurement_array,
     virtualize_omitted_repeated_resets,
 )
-from qec_pipeline.mapping.patch_selection import (
-    select_calibration_best_patch,
-    select_calibration_routed_layout,
-    select_mapping_from_config,
-    rank_calibration_best_patches,
-    surface_code_patch_coordinates,
-)
+from qec_pipeline.noise.iqm_calibration import _IqmNoiseBuilder
 from qec_pipeline.pipeline import build_basis_metrics, describe_pipeline, run_pipeline
+from qec_pipeline.provenance import uuid7_time
+from qec_pipeline.sweeps import pin_sweep_mapping, round_values, run_rounds_sweep
 from qec_pipeline.syndrome_extraction import extract_syndromes
 from qec_pipeline.syndromes import extract_detection_events
-from qec_pipeline.sweeps import pin_sweep_mapping, round_values, run_rounds_sweep
-
 
 NO_NOISE = {"model": "no_noise", "parameters": {}}
 SURFACE_D3_R1 = {
@@ -1031,6 +1030,11 @@ class DecoderSelectionAndStatisticsTests(unittest.TestCase):
         )
         self.assertEqual(fit["fit_points"], 0)
         self.assertEqual(len(fit["excluded_points"]), 2)
+        # Failed and successful fits must share keys (they are written to one CSV).
+        ok_fit = fit_per_round_error(
+            [{"rounds": 1, "shots": 500, "logical_failures": 5}, {"rounds": 3, "shots": 500, "logical_failures": 15}]
+        )
+        self.assertEqual(set(fit), set(ok_fit))
 
 
 class NoiseModelTests(unittest.TestCase):
