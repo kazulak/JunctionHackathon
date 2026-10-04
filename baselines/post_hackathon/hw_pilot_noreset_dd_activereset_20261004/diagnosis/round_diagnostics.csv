@@ -1,0 +1,5 @@
+sweep,job_id,basis,rounds,shots,raw_observable_flip_rate,decoded_ler,x_ancilla_one_rate_by_round,z_ancilla_one_rate_by_round,detector_rate_by_layer
+results/hw_d3_noreset_dd_iqm_rounds_sweep/20261004T125240_909340Z,01a106f9-5c87-70c2-acf7-c9ebbdbd83e1,memory_x,1,2000,0.355,0.3095,[0.35200000000000004],[0.519125],"[0.352, 0.351125]"
+results/hw_d3_noreset_dd_iqm_rounds_sweep/20261004T125240_909340Z,01a106f9-5c87-70c2-acf7-c9ebbdbd83e1,memory_z,1,2000,0.3385,0.29,[0.5197499999999999],[0.33],"[0.33, 0.33175]"
+results/hw_d3_noreset_dd_iqm_rounds_sweep/20261004T125240_909340Z,01a106f9-5c87-70c2-acf7-c9ebbdbd83e1,memory_x,3,2000,0.428,0.385,"[0.36050000000000004, 0.41125, 0.427875]","[0.519125, 0.38875000000000004, 0.511]","[0.3605, 0.4, 0.364625, 0.361]"
+results/hw_d3_noreset_dd_iqm_rounds_sweep/20261004T125240_909340Z,01a106f9-5c87-70c2-acf7-c9ebbdbd83e1,memory_z,3,2000,0.4125,0.3785,"[0.5309999999999999, 0.40125, 0.5253749999999999]","[0.32987500000000003, 0.38175, 0.41237500000000005]","[0.329875, 0.3915, 0.3601875, 0.339]"

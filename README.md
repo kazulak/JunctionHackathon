@@ -14,7 +14,7 @@ Simulator-first quantum error-correction pipeline for surface-code memory experi
 
 Built on the challenge baseline provided by the organizers (see [NOTICE](NOTICE)).
 
-Current development goal: confirm on IQM hardware that the corrected mid-circuit design (no reset, grouped readout, dynamical decoupling, active reset) recovers logical memory; see [docs/HARDWARE_RUNBOOK.md](docs/HARDWARE_RUNBOOK.md).
+Current status: the corrected design (no mid-circuit reset, grouped readout, dynamical decoupling) runs on IQM Emerald with **ε = 0.033 (memory_z) / 0.040 (memory_x) logical error per round** for d = 3 (2026-10-04); see [docs/HARDWARE_RUNBOOK.md](docs/HARDWARE_RUNBOOK.md).
 
 ## Flow
 
@@ -189,7 +189,19 @@ From [`baselines/hackathon_2026-06-07/`](baselines/hackathon_2026-06-07/):
 
 From [`baselines/post_hackathon/`](baselines/post_hackathon/). Each folder README states when and how it was produced.
 
-**1. Hardware: mid-circuit operations destroy the data.**
+**0. Hardware, corrected design (2026-10-04)** ([`hw_d3_noreset_dd_20261004`](baselines/post_hackathon/hw_d3_noreset_dd_20261004/)), d = 3 on IQM Emerald, 2000 shots per point, calibrated MWPM:
+
+| Rounds | memory_z | memory_x | June hardware |
+| ---: | ---: | ---: | ---: |
+| 1 | 0.036 | 0.040 | 0.049 / 0.055 |
+| 3 | 0.089 | 0.112 | 0.487 / 0.493 |
+| 5 | 0.154 | 0.163 | 0.484 / 0.497 |
+| 7 | 0.189 | 0.229 | 0.472 / 0.483 |
+| Error per round | 0.033 ± 0.002 | 0.040 ± 0.002 | saturated |
+
+The pre-registered simulator prediction was 0.039 / 0.059 per round.
+
+**1. Hardware in June: mid-circuit operations destroyed the data.**
 A post-hackathon replication on IQM Emerald (`iqm_baseline_replication_20260608`) reproduces the saturation (LER 0.48–0.50 for r ≥ 3).
 In the raw data the *uncorrected* logical observable already flips with probability ≈0.5 for r ≥ 3 in both bases (≈0.13 at r = 1):
 the data qubits are scrambled once mid-circuit measure/reset begins ([ERRATA E5](ERRATA.md#e5-surface-code-hardware-runs-data-qubits-are-randomized-by-mid-circuit-measurereset), [`midcircuit_diagnosis_20261004`](baselines/post_hackathon/midcircuit_diagnosis_20261004/)).

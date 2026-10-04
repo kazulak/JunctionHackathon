@@ -23,16 +23,16 @@ The pipeline now:
 1. Encodes the reset strategy in the Stim circuit. With no reset (or feed-forward), detectors compare ancilla outcomes two rounds apart and readout errors form two-round edges (Gehér et al., arXiv:2408.00758). The decoder model is correct for each strategy.
 2. Groups every measurement layer between barriers, so IQM reads them out in one ~1 µs window.
 3. Uses IQM's native dynamical decoupling (`dynamical_decoupling: true`), as Google did for data qubits during readout (arXiv:2207.06431).
-4. Uses active reset between shots (`active_reset_cycles: 2`): ~0.01–0.02 ms of schedule per shot instead of ~0.41 ms.
-5. Uses today's calibration (`scripts/fetch_calibration.py`), per-shot memory, recorded physical qubits, and a layout guard.
+4. Keeps IQM's passive reset between shots. Active reset (`active_reset_cycles`) is ~25× cheaper per shot, but on 2026-10-04 it left ~10–20% initialization error, so it is **off** (`baselines/post_hackathon/hw_controls_reset_dd_20261004`).
+5. Uses today's calibration (`scripts/fetch_calibration.py`) and refuses to submit if the QPU has been recalibrated since, plus per-shot memory, recorded physical qubits, and a layout guard.
 
 ## Before spending credits (all free)
 
 ```bash
 python scripts/fetch_calibration.py                              # current calibration -> configs/calibration/
 python scripts/sweep_rounds.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 2 --preflight
-python scripts/pulla_schedule_report.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 5 7 9 \
-    --active-reset-cycles 2 --dd --shots 4000                    # schedule length per shot
+python scripts/pulla_schedule_report.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 5 7 \
+    --dd --shots 2000                                            # schedule length per shot
 python scripts/sweep_rounds.py configs/hw_d3_noreset_dd_sim.yaml --rounds 1 9 5   # simulator twin
 ```
 
@@ -58,18 +58,32 @@ The October 2026 calibration still ranks the June patch (QB13–QB45) best among
 
 June hardware gave 0.49 at r = 3.
 
-## Credit plan (30 credits)
+## What happened on 2026-10-04 (5 jobs, ~12.3 s of QPU execution in total)
 
-The schedule cost is tiny, but each job also carries fixed overhead. The June jobs ran 1.4–4.2 s beyond their schedule; the real per-job cost is unknown until the first job. So run in this order and check the cost in the Resonance dashboard (Jobs) after each step.
+| Job | What | Outcome |
+| --- | --- | --- |
+| Pilot | r = 1, 3, both bases, active reset + DD | Failed at r = 1 (LER 0.29): active reset leaves qubits excited |
+| Controls A/B/C | r = 1, memory_z: active/passive × DD on/off | Passive reset fixes it: LER 0.027; DD neutral at r = 1 |
+| **Main sweep** | r = 1, 3, 5, 7, both bases, passive reset + DD, 2000 shots | **ε = 0.033 (Z), 0.040 (X) per round**; r = 3 LER 0.089 / 0.112 vs 0.49 in June |
 
-| Step | Command | Circuits × shots | Estimated credits | Go / no-go |
+Archives: `hw_pilot_noreset_dd_activereset_20261004`, `hw_controls_reset_dd_20261004`, `hw_d3_noreset_dd_20261004`.
+
+## Cost model (measured)
+
+- Each job carries **~0.6–0.8 s of fixed QPU execution** and ~3 s end to end.
+- With passive reset each shot costs ~0.41 ms of schedule (≈0.5 ms measured), so 16 000 shots ≈ 8 s of execution.
+- Prefer few large jobs. One sweep job (all rounds × both bases) is much cheaper than many small ones.
+- Check the exact credits charged in the Resonance dashboard (Jobs).
+
+## Suggested next experiments
+
+| Experiment | Command | Shots | ~QPU s | Question |
 | --- | --- | --- | ---: | --- |
-| 1. Pilot | `sweep_rounds.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 2` | 4 × 2000 | 1–5 | r=3 memory_z LER < 0.2 means the fix works; ≈0.5 means go to step 4 |
-| 2. Main sweep | `sweep_rounds.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 9 5` (set `shots: 4000`) | 10 × 4000 | 3–8 | Compare with the prediction |
-| 3. Controls | same with `dynamical_decoupling: false`, and `mid_circuit_reset: reset`, r = 1, 3 | 8 × 2000 | 2–5 | Quantifies DD and reset strategy on hardware |
-| 4. Only if step 1 fails | `sweep_rounds.py configs/probe_midcircuit_{measure_reset,measure,none}_iqm.yaml --rounds 1 3 2` | 4 × 2000 each | 1–5 each | See the hypothesis table in `baselines/post_hackathon/midcircuit_diagnosis_20261004` |
+| DD effect at depth | main sweep with `--set backend.options.dynamical_decoupling=false`, `--rounds 3 7 2` | 4 × 2000 | 4–5 | The model predicts DD roughly halves memory_x error per round |
+| Feed-forward vs no reset | `--set code.mid_circuit_reset=feedforward --set noise.options.round_duration_s=1.75e-6`, `--rounds 3 7 2` | 4 × 2000 | 4–5 | Do conditional resets help or hurt on Emerald? |
+| Longer memory | main sweep `--rounds 1 13 4` | 8 × 2000 | 8–9 | Fit quality and drift at higher r |
 
-Keep ~10 credits in reserve.
+Always run `--preflight` (free) first, and `scripts/fetch_calibration.py` after IQM recalibrates.
 
 ## After each run (free)
 

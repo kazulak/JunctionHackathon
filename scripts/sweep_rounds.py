@@ -30,6 +30,16 @@ def main() -> int:
         help="Optional output root. Defaults to artifacts.root from YAML.",
     )
     parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="DOTTED.KEY=VALUE",
+        help=(
+            "Override a config value (YAML-parsed), e.g. backend.options.dynamical_decoupling=false, "
+            "backend.options.active_reset_cycles=null, code.basis=memory_z, backend.shots=1000."
+        ),
+    )
+    parser.add_argument(
         "--preflight",
         action="store_true",
         help=(
@@ -45,6 +55,8 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_experiment_config(args.config)
+    for item in args.set:
+        apply_override(config, item)
     rounds = round_values(args.rounds[0], args.rounds[1], args.rounds[2])
 
     if args.dry_run:
@@ -72,6 +84,23 @@ def main() -> int:
     print(f"CSV: {sweep_dir / 'sweep_results.csv'}")
     print(f"Plot: {sweep_dir / 'ler_vs_rounds.png'}")
     return 0
+
+
+def apply_override(config: dict, item: str) -> None:
+    """Set config[a][b][c] = value for an override 'a.b.c=value' (value parsed as YAML)."""
+    import yaml
+
+    if "=" not in item:
+        raise SystemExit(f"--set expects DOTTED.KEY=VALUE, got {item!r}")
+    key, raw_value = item.split("=", 1)
+    *parents, leaf = key.split(".")
+    node = config
+    for part in parents:
+        node = node.setdefault(part, {})
+    node[leaf] = yaml.safe_load(raw_value)
+    if parents[:1] == ["experiment"] or key == "experiment.name":
+        return
+    config["experiment"]["name"] = f"{config['experiment']['name']}__{key.split('.')[-1]}={raw_value}"
 
 
 if __name__ == "__main__":

@@ -1,0 +1,132 @@
+{
+  "base_experiment": "hw_d3_noreset_dd_iqm",
+  "config_path": "configs\\hw_d3_noreset_dd_iqm.yaml",
+  "provenance": {
+    "recorded_utc": "2026-10-04T12:52:57+00:00",
+    "git_commit": "0bcdd12deab8a75b7db37ddd252b6de65be12ff7",
+    "git_branch": "main",
+    "git_dirty": false,
+    "python": "3.11.0",
+    "packages": {
+      "stim": "1.16.0",
+      "PyMatching": "2.4.0",
+      "numpy": "2.4.6",
+      "qiskit": "2.1.2",
+      "iqm-client": "34.0.3"
+    }
+  },
+  "rounds": [
+    1,
+    3
+  ],
+  "rows": [
+    {
+      "rounds": 1,
+      "basis": "memory_z",
+      "ler": 0.29,
+      "uncertainty": 0.010146427942877236,
+      "ler_ci_low": 0.2799605123666086,
+      "ler_ci_high": 0.30024938268586504,
+      "logical_error_per_round": 0.29,
+      "logical_error_per_round_uncertainty": 0.010146427942877236,
+      "logical_failures": 580,
+      "shots": 2000,
+      "mean_detector_firing_rate": 0.33087500000000003,
+      "max_detector_firing_rate": 0.3875,
+      "mean_syndrome_weight": 2.647,
+      "original_shots": 2000,
+      "kept_shots": 2000,
+      "postselection_fraction": 1.0,
+      "selection_is_in_sample": false,
+      "memory_experiment": true,
+      "run_dir": "results\\hw_d3_noreset_dd_iqm_rounds_sweep\\20261004T125240_909340Z\\runs\\hw_d3_noreset_dd_iqm_rounds_1\\20261004T125240_909340Z",
+      "notes": "memory_z: LER 0.29 +/- 0.010146427942877236"
+    },
+    {
+      "rounds": 1,
+      "basis": "memory_x",
+      "ler": 0.3095,
+      "uncertainty": 0.010337063170939801,
+      "ler_ci_low": 0.2992602840266214,
+      "ler_ci_high": 0.3199301207709797,
+      "logical_error_per_round": 0.3095,
+      "logical_error_per_round_uncertainty": 0.010337063170939801,
+      "logical_failures": 619,
+      "shots": 2000,
+      "mean_detector_firing_rate": 0.3515625,
+      "max_detector_firing_rate": 0.3865,
+      "mean_syndrome_weight": 2.8125,
+      "original_shots": 2000,
+      "kept_shots": 2000,
+      "postselection_fraction": 1.0,
+      "selection_is_in_sample": false,
+      "memory_experiment": true,
+      "run_dir": "results\\hw_d3_noreset_dd_iqm_rounds_sweep\\20261004T125240_909340Z\\runs\\hw_d3_noreset_dd_iqm_rounds_1\\20261004T125240_909340Z",
+      "notes": "memory_z: LER 0.29 +/- 0.010146427942877236; memory_x: LER 0.3095 +/- 0.010337063170939801"
+    },
+    {
+      "rounds": 3,
+      "basis": "memory_z",
+      "ler": 0.3785,
+      "uncertainty": 0.010845223603042953,
+      "ler_ci_low": 0.3677180363086781,
+      "ler_ci_high": 0.3894034029716817,
+      "logical_error_per_round": 0.1879874265422144,
+      "logical_error_per_round_uncertainty": 0.009283528466695612,
+      "logical_failures": 757,
+      "shots": 2000,
+      "mean_detector_firing_rate": 0.36204166666666665,
+      "max_detector_firing_rate": 0.464,
+      "mean_syndrome_weight": 8.689,
+      "original_shots": 2000,
+      "kept_shots": 2000,
+      "postselection_fraction": 1.0,
+      "selection_is_in_sample": false,
+      "memory_experiment": true,
+      "run_dir": "results\\hw_d3_noreset_dd_iqm_rounds_sweep\\20261004T125240_909340Z\\runs\\hw_d3_noreset_dd_iqm_rounds_3\\20261004T125242_435821Z",
+      "notes": "memory_z: LER 0.3785 +/- 0.010845223603042953"
+    },
+    {
+      "rounds": 3,
+      "basis": "memory_x",
+      "ler": 0.385,
+      "uncertainty": 0.010880602005403929,
+      "ler_ci_low": 0.3741794365715425,
+      "ler_ci_high": 0.3959355059571932,
+      "logical_error_per_round": 0.1936537162385792,
+      "logical_error_per_round_uncertainty": 0.009661541998384223,
+      "logical_failures": 770,
+      "shots": 2000,
+      "mean_detector_firing_rate": 0.375125,
+      "max_detector_firing_rate": 0.456,
+      "mean_syndrome_weight": 9.003,
+      "original_shots": 2000,
+      "kept_shots": 2000,
+      "postselection_fraction": 1.0,
+      "selection_is_in_sample": false,
+      "memory_experiment": true,
+      "run_dir": "results\\hw_d3_noreset_dd_iqm_rounds_sweep\\20261004T125240_909340Z\\runs\\hw_d3_noreset_dd_iqm_rounds_3\\20261004T125242_435821Z",
+      "notes": "memory_z: LER 0.3785 +/- 0.010845223603042953; memory_x: LER 0.385 +/- 0.010880602005403929"
+    }
+  ],
+  "per_round_fits": {
+    "memory_x": {
+      "fit_points": 2,
+      "fitted_logical_error_per_round": 0.11151859188790564,
+      "fitted_logical_error_per_round_uncertainty": 0.021185843588750673,
+      "fit_amplitude": 0.4903704455085185,
+      "fit_method": "binomial_mle",
+      "note": null,
+      "excluded_points": []
+    },
+    "memory_z": {
+      "fit_points": 2,
+      "fitted_logical_error_per_round": 0.11968058645237797,
+      "fitted_logical_error_per_round_uncertainty": 0.01930096823101195,
+      "fit_amplitude": 0.552166785918585,
+      "fit_method": "binomial_mle",
+      "note": null,
+      "excluded_points": []
+    }
+  }
+}

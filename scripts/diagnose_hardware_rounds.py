@@ -29,6 +29,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from qec_pipeline.mapping import active_stim_to_dense
+from qec_pipeline.mapping.patch_selection import surface_code_qubit_roles
 from qec_pipeline.measurements import measurement_order_from_stim_circuit
 
 
@@ -86,7 +88,9 @@ def ancilla_one_rate_by_round(circuit: stim.Circuit, measurements: np.ndarray, k
     order = measurement_order_from_stim_circuit(circuit)
     flattened = list(circuit.flattened())
     hadamard_qubits = {target.value for item in flattened if item.name == "H" for target in item.targets_copy()}
-    ancillas = {target.value for item in flattened if item.name == "MR" for target in item.targets_copy()}
+    # Works for every reset strategy (MR, M + feed-forward, M only).
+    roles = surface_code_qubit_roles(circuit, active_stim_to_dense(circuit))
+    ancillas = {qubit for qubit, role in roles.items() if role == "ancilla"}
     wanted = {qubit for qubit in ancillas if (qubit in hadamard_qubits) == (kind == "X")}
 
     by_round: dict[int, list[float]] = {}

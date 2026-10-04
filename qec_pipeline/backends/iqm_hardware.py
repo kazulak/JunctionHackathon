@@ -87,12 +87,47 @@ def prepare_iqm_batch(
         for request in requests
     ]
     compile_options = circuit_compilation_options(options)
-    iqm_backend.create_run_request(
+    run_request = iqm_backend.create_run_request(
         [item["transpiled_circuit"] for item in prepared],
         shots=int(backend["shots"]),
         circuit_compilation_options=compile_options,
     )
+    _check_calibration_is_current(run_request.calibration_set_id, requests, options)
     return iqm_backend, prepared, compile_options
+
+
+def _check_calibration_is_current(
+    live_calibration_set_id: Any,
+    requests: list[dict[str, Any]],
+    options: dict[str, Any],
+) -> None:
+    """Refuse to submit when patch selection / noise used a different calibration than the QPU has now.
+
+    IQM recalibrates regularly; a stale file means the chosen qubits and the decoder's
+    priors describe a device state that no longer exists. Refresh with
+    `scripts/fetch_calibration.py`, or set `backend.options.allow_stale_calibration: true`.
+    """
+    if live_calibration_set_id is None or bool(options.get("allow_stale_calibration", False)):
+        return
+    used = set()
+    for request in requests:
+        info = request["circuit"][3]
+        for path in {info.get("noise_calibration_file"), (request.get("mapping") or {}).get("calibration_file")}:
+            if not path or not Path(path).exists():
+                continue
+            try:
+                data = json.loads(Path(path).read_text(encoding="utf-8"))
+            except ValueError:
+                continue  # not a JSON observation set (e.g. a hand-written YAML grid)
+            set_id = data.get("calibration_set_id") or data.get("describes_id")
+            if set_id:
+                used.add((str(set_id), str(path)))
+    stale = sorted(path for set_id, path in used if set_id != str(live_calibration_set_id))
+    if stale:
+        raise RuntimeError(
+            f"QPU is on calibration set {live_calibration_set_id}, but these files describe another set: {stale}. "
+            "Run scripts/fetch_calibration.py and update the config (or allow_stale_calibration: true)."
+        )
 
 
 def circuit_compilation_options(options: dict[str, Any]) -> Any:
