@@ -21,7 +21,7 @@ Consequences:
 - The real gap between hardware (≈0.49 at r=3) and the model is therefore much larger than reported, so the hardware failure is not "missing physics in the noise model" (see E5).
 - Detector error models used to decode hardware data carried the same bug.
 
-Status: **fixed on `main`** (audit phase 3, regression tests in `CalibratedNoiseScalingTests`). Corrected re-runs: `baselines/post_hackathon/surface_d3_sim_idlefix_20261004` (d3: error per round ≈0.028 memory-Z / ≈0.034 memory-X, constant in r) and `baselines/post_hackathon/surface_d5_sim_idlefix_20261004` (routed d5: ≈0.047–0.050 per round).
+Status: **fixed on `main`** (audit phase 3, regression tests in `CalibratedNoiseScalingTests`). Corrected re-runs gave d3 error per round ≈0.028 (memory-Z) / ≈0.034 (memory-X), constant in r, and routed d5 ≈0.047–0.050 (folders `surface_d{3,5}_sim_idlefix_20261004`, superseded by the fitted-noise runs and removed on 2026-10-06; in git history at `f3c0b3d`).
 
 ## E2. The "calibrated" simulator was hand-tuned towards low LER
 
@@ -44,7 +44,7 @@ Status: **fixed on `main`** (audit phase 5). The model now converts RB infidelit
 
 This affects the submission's surface-code tables (best of ~11 candidates), the repetition-code tables (best of 7), and the post-hackathon `decoder_improvements` / `best_combined` baselines. Holdout and k-fold also broke ties using the evaluation LER (a small test-set leak, ~0.0003).
 
-Status: **fixed on `main`** (audit phase 4): `pymatching_auto` defaults to k-fold selection, in-sample selection is flagged `selection_is_in_sample`, ties are broken by candidate order, and the baseline configs use plain calibrated MWPM. On the corrected simulator, k-fold selection still gives a genuine gain for memory_x (0.035 → 0.030 per round; `baselines/post_hackathon/decoder_validation_idlefix_20261004`).
+Status: **fixed on `main`** (audit phase 4): `pymatching_auto` defaults to k-fold selection, in-sample selection is flagged `selection_is_in_sample`, ties are broken by candidate order, and the baseline configs use plain calibrated MWPM. On the corrected simulator, k-fold selection still gives a genuine gain for memory_x (0.035 → 0.030 per round on the idle-fixed model; with the fitted model 0.092 → 0.083, `baselines/post_hackathon/decoder_and_postselection_fitted_noise_20261004`).
 
 ## E4. Repetition-code per-round LER on IQM Garnet is not supported by the data
 
@@ -65,7 +65,7 @@ r=1 circuits contain no mid-circuit operations; r ≥ 2 circuits contain mid-cir
 
 **Leading explanation (Oct 2026, from IQM's own compiler, no credits used).** Compiling the June circuits with IQM Pulla against the live Emerald calibration shows that each syndrome round took 7.6 µs instead of ~1.3 µs. Two things caused this. First, the converter emitted `measure, reset` per ancilla, which stops IQM from multiplexing the readouts. Second, every Qiskit `reset` is an extra measurement plus a feedback pulse. Meanwhile the data qubits idled without dynamical decoupling (Ramsey T2 ≈ 15 µs). The pipeline now groups readouts, encodes reset strategies faithfully (default for hardware: no reset, Gehér et al. arXiv:2408.00758), and enables IQM's native DD. See `docs/HARDWARE_RUNBOOK.md`. **Confirmed on hardware (2026-10-04):** with the corrected design and passive reset between shots, IQM Emerald gives r = 3 LER 0.089 (memory_z) / 0.112 (memory_x) and ε = 0.033 / 0.040 per round, in line with the pre-registered prediction (`baselines/post_hackathon/hw_d3_noreset_dd_20261004`). IQM's active reset between shots was found to leave qubits excited and is not used (`hw_controls_reset_dd_20261004`).
 
-Status: offline diagnostics done (audit phase 7). `scripts/diagnose_hardware_rounds.py` reproduces these numbers (`baselines/post_hackathon/midcircuit_diagnosis_20261004`). A characterization experiment is ready but **not yet run** on hardware (needs IQM credits): the `midcircuit_probe` code family (`configs/probe_midcircuit_{measure_reset,measure,none}_{sim,iqm}.yaml`) and `configs/sweep_d3_no_reset_iqm.yaml`. Simulator reference: `baselines/post_hackathon/midcircuit_probe_sim_reference_20261004`.
+Status: **resolved** (2026-10-04). Offline diagnostics (audit phase 7): `scripts/diagnose_hardware_rounds.py` reproduces these numbers (`baselines/post_hackathon/midcircuit_diagnosis_20261004`). The probe experiment prepared at the time was not needed and was removed on 2026-10-06; the fix above was confirmed directly on hardware.
 
 ## E6. Statistics and reporting
 

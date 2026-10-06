@@ -102,5 +102,5 @@ python scripts/fit_noise_to_hardware.py export-targets --config configs/hw_d3_no
 ## Known limits
 
 - The noise model is still approximate: no leakage, crosstalk, or measurement-induced dephasing.
-- The two-qubit scale (1.5) was fitted to June r=1 data. Refit it on the pilot's r=1 data.
+- The two-qubit scale (1.5) was fitted to June r=1 data. A refit on the October r=1 data (2q 1.5, readout ×3) over-predicted higher rounds and was not adopted.
 - A d=5 patch needs routing on Emerald and is above threshold in simulation, so it is not worth credits yet.

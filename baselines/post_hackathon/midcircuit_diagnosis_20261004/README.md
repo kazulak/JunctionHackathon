@@ -28,20 +28,6 @@ So this is a hardware or compilation problem in the mid-circuit operations. It i
 
 IQM's own pulse library warns that its relaxation-based reset ("reset_wait") destroys the states of other qubits. Which reset implementation Emerald used for `reset` is not visible from the client side.
 
-## Ready-to-run probe experiment (not yet run, needs IQM credits)
+## Outcome
 
-Code family `midcircuit_probe` keeps the d = 3 surface-code qubits and pinned Emerald patch, but has **no entangling gates**. The data qubits are prepared in |0⟩ (memory_z) or |+⟩ (memory_x) and left alone. The 8 ancillas repeat `H` followed by one of three operations:
-
-- `measure_reset`: measure, then reset;
-- `measure`: measure only;
-- `none`: nothing.
-
-At the end the data qubits are measured. The reported "LER" is the probability that any data qubit flipped.
-
-```bash
-python scripts/sweep_rounds.py configs/probe_midcircuit_measure_reset_sim.yaml --rounds 1 7 4   # simulator reference
-python scripts/sweep_rounds.py configs/probe_midcircuit_measure_reset_iqm.yaml --rounds 1 7 4 --dry-run
-python scripts/sweep_rounds.py configs/probe_midcircuit_measure_reset_iqm.yaml --rounds 1 7 4   # needs credits
-```
-
-The same pairs exist for `measure` and `none`. `configs/sweep_d3_no_reset_iqm.yaml` runs the full surface code without mid-circuit resets (records virtualized in software) as a fourth comparison.
+The probe experiment prepared here was never run. IQM's pulse compiler (Pulla) showed the cause directly: unmultiplexed readouts and Qiskit `reset` (an extra measurement plus feedback) made each round 7.6 µs long, with no dynamical decoupling. The corrected design was confirmed on hardware on 2026-10-04 (`hw_d3_noreset_dd_20261004`), and the probe code and configs were removed on 2026-10-06 (still in git history at `f3c0b3d`).

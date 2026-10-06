@@ -1,279 +1,68 @@
 # Configs
 
-Run one config:
-
 ```bash
-python main.py configs/demo_stim_no_noise.yaml
+python main.py <config>                                         # one run
+python main.py --dry-run --print-config <config>                # show the plan, run nothing
+python scripts/sweep_rounds.py <config> --rounds 1 7 4          # LER vs rounds (start stop count)
+python scripts/sweep_rounds.py <config> --set code.mid_circuit_reset=feedforward   # override any key
 ```
-
-Dry-run without executing:
-
-```bash
-python main.py --dry-run --print-config configs/sweep_d3_baseline_sim.yaml
-```
-
-> Simulator configs use the calibration-informed noise model described in `docs/CALIBRATED_SIMULATION.md`
-> (`two_qubit_scale: 2.0` fitted to r=1 hardware). The old hand-tuned `qnd_scale: 0` / `idle_scale: 0.5` are gone.
->
-> `pymatching_auto` now selects decoder candidates by k-fold cross-validation unless a config sets
-> `candidate_selection_mode: current_batch` explicitly (in-sample, optimistic; see ERRATA E3).
-
-## Active Files
 
 | Config | Purpose |
 | --- | --- |
-| `demo_stim_no_noise.yaml` | No-noise simulator smoke test. |
-| `hw_d3_noreset_dd_iqm.yaml` | **Recommended hardware config**: d3, no mid-circuit reset, grouped readout, IQM DD, active reset between shots, Oct 2026 calibration. Run `--preflight` first; see `docs/HARDWARE_RUNBOOK.md`. |
+| `hw_d3_noreset_dd_iqm.yaml` | **Hardware.** d3 on IQM Emerald: no mid-circuit reset, grouped readout, IQM dynamical decoupling, passive reset between shots, pinned patch QB13–QB45. Run `--preflight` first ([runbook](../docs/HARDWARE_RUNBOOK.md)). |
 | `hw_d3_noreset_dd_sim.yaml` | Simulator twin of the hardware config (prediction). |
-| `sweep_d3_baseline_sim.yaml` | Main d3 calibration-informed simulator sweep (noise fitted to r=1 hardware), plain calibrated MWPM decoder (renamed from `sweep_d3_best_sim.yaml`, which used in-sample best-of-N decoder selection). |
-| `sweep_d3_postselected_sim.yaml` | D3 simulator with low-syndrome postselection. |
-| `sweep_d3_best_combined_sim.yaml` | Best reported-LER simulator recipe: postselection plus full PyMatching candidate set. |
-| `sweep_d3_best_combined_iqm.yaml` | Best reported-LER IQM recipe: Emerald patch, omitted initial resets, DD attempt, postselection, full decoder candidates. |
-| `sweep_d3_low_syndrome_sim.yaml` | D3 simulator with aggressive 25% low-syndrome postselection. |
-| `sweep_d3_gated_decoder_sim.yaml` | D3 simulator with full-dataset gated MWPM/no-correction decoder. |
-| `sweep_d3_decoder_improvements_sim.yaml` | D3 simulator with correlated MWPM, MWPM ensembles, and gated candidates, selected **in-sample** on purpose (optimistic; diagnostic only). |
-| `sweep_d3_decoder_holdout_sim.yaml` | Same decoder candidates as above, but selected on one shot split and reported on held-out shots. |
-| `sweep_d3_decoder_kfold_sim.yaml` | Same decoder candidates as above, evaluated with k-fold out-of-fold candidate selection. |
-| `probe_midcircuit_{measure_reset,measure,none}_{sim,iqm}.yaml` | Mid-circuit probe (ERRATA E5): surface-code qubits without entangling gates; ancillas repeat H + measure/reset, measure, or nothing while data qubits idle. IQM versions need credits. |
-| `sweep_d3_no_reset_iqm.yaml` | d3 IQM sweep without mid-circuit resets (records virtualized in software). |
-| `sim_iqm_emerald_surface_d3_calibrated.yaml` | Single d3 calibrated simulator run. |
-| `sim_iqm_emerald_surface_d3_unrotated_calibrated.yaml` | Unrotated d3 simulator variant. |
-| `sim_iqm_emerald_surface_d5_calibrated.yaml` | D5 calibrated simulator with routed layout. |
-| `sweep_d3_baseline_iqm.yaml` | Hardware template matching `sweep_d3_baseline_sim.yaml` (renamed from `sweep_d3_best_iqm.yaml`). Use only after simulator results justify it. |
-| `2026-06-06T06_08_52.470451Z.json` | Emerald-like IQM calibration dump. |
-| `2026-06-06T16_44_10.718568Z.json` | Garnet-like IQM calibration dump. |
+| `demo_stim_no_noise.yaml` | Noiseless smoke test; LER must be 0. |
+| `sweep_d3_baseline_sim.yaml` | Reference d3 simulator with Qiskit-style reset every round and June calibration, plain calibrated MWPM. |
+| `sweep_d3_decoder_kfold_sim.yaml` | Same circuit; decoder candidates (correlated matching, ensembles, gating) chosen by k-fold cross-validation. |
+| `sweep_d3_postselected_sim.yaml` | Same circuit with low-syndrome postselection (diagnostic; discards shots). |
+| `sim_iqm_emerald_surface_d5_calibrated.yaml` | d5 simulator on a routed Emerald layout (above threshold). |
+| `calibration/emerald_<timestamp>.json` | IQM calibration dumps. Fetch a fresh one with `scripts/fetch_calibration.py`; the hardware preflight refuses a stale file. |
 
-## YAML Sections
-
-### `experiment`
+## YAML sections
 
 ```yaml
-experiment:
-  name: sweep_d3_baseline_sim
-  description: "D3 calibrated simulator sweep."
-  seed: 1
-```
+experiment: {name: my_run, description: "...", seed: 1}   # name = folder under results/
 
-- `name`: output folder under `results/`.
-- `description`: free text.
-- `seed`: experiment-level note; backend seed controls simulator sampling.
-
-### `code`
-
-```yaml
 code:
-  family: surface_code
+  family: surface_code_iqm        # surface_code | surface_code_iqm | surface_code_unrotated
   distance: 3
-  rounds: 1
-  basis: both
-  reset_mode: reset
-```
+  rounds: 1                       # overwritten by sweeps
+  basis: both                     # memory_z | memory_x | both
+  mid_circuit_reset: none         # reset (MR) | feedforward (M + conditional X) | none (two-round detectors)
 
-- `family`: `surface_code`, `surface_code_iqm`, `surface_code_unrotated`, or placeholder `color_code`.
-- `distance`: code distance.
-- `rounds`: syndrome rounds.
-- `basis`: `memory_z`, `memory_x`, or `both`.
-- `reset_mode`: currently only reset-style behavior is implemented.
-
-### `backend`
-
-Simulator:
-
-```yaml
 backend:
-  name: simulator
+  name: iqm_hardware              # or simulator (options: {seed: 1})
   shots: 2000
   options:
-    seed: 1
-```
-
-Hardware:
-
-```yaml
-backend:
-  name: iqm_hardware
-  shots: 2000
-  options:
-    server_url: https://resonance.meetiqm.com
     quantum_computer: emerald
     optimization_level: 3
-    batch_submit: true
-```
+    batch_submit: true            # a sweep is one IQM job
+    omit_initial_resets: true     # qubits start in |0> after IQM's reset between shots
+    group_measurements: true      # adjacent readouts, so IQM multiplexes them
+    dynamical_decoupling: true    # IQM native DD
+    # active_reset_cycles: 2      # IQM active reset between shots; left 10-20 % init error in Oct 2026, keep off
 
-Notes:
-
-- `backend.name`: `simulator` or `iqm_hardware`.
-- `shots`: number of samples.
-- `batch_submit: true`: sweeps submit all IQM jobs first, then wait.
-- `omit_initial_resets: true`: skips the initial hardware reset when converting to Qiskit; this was the best hardware-side reset choice in hackathon runs.
-- `dynamical_decoupling`: not implemented for IQM. Requesting it raises an error (the old pass failed silently, ERRATA E6).
-- IQM token is read from `.env` or `IQM_TOKEN`.
-
-### `noise`
-
-Simple scalar noise:
-
-```yaml
-noise:
-  model: simple_depolarizing
-  parameters:
-    one_qubit_error: 0.003
-    two_qubit_error: 0.003
-    measurement_error: 0.003
-    reset_error: 0.003
-    idle_error: 0.003
-```
-
-Calibration-aware noise:
-
-```yaml
-noise:
-  model: iqm_calibration
-  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+noise:                            # simulator: injected noise; hardware: decoder's error model only
+  model: iqm_calibration          # or no_noise | simple_depolarizing (parameters: {one_qubit_error: ..., ...})
+  calibration_file: configs/calibration/emerald_2026-10-04T05_09_03Z.json
   options:
-    apply_idle: true
-    route_error_multiplier: 1.0
-    qnd_scale: 0.0
-    idle_scale: 0.5
-```
+    two_qubit_scale: 1.5          # fitted to r = 1 hardware
+    round_duration_s: 1.29e-6     # per reset strategy, from scripts/pulla_schedule_report.py
+    idle_t2: echo                 # echo with DD, ramsey without
+    # full list: docs/CALIBRATED_SIMULATION.md
 
-Meaning:
-
-- Simulator: noise is injected into the Stim circuit and affects samples.
-- IQM hardware: real hardware supplies the noise; YAML noise is still used to build the detector error model for decoding.
-- `iqm_calibration` uses selected qubits/couplers from `mapping`.
-
-### `decoder`
-
-```yaml
 decoder:
-  name: pymatching_auto
-  options:
-    uniform_probabilities: [0.001, 0.003, 0.01, 0.02, 0.05]
-```
+  name: pymatching_calibrated     # observable_rate | pymatching | pymatching_calibrated | pymatching_auto | pymatching_pij
+  options: {}
+  # pymatching_auto options: candidate_selection_mode (kfold default, holdout, current_batch = in-sample/optimistic),
+  #   include_correlated_matching, include_matching_ensembles, gated_no_correction_quantiles,
+  #   postselect_weight_quantile (reports LER on kept shots only)
 
-Available:
-
-- `observable_rate`: sanity check, no correction.
-- `pymatching`: MWPM from the configured detector model.
-- `pymatching_calibrated`: calibrated MWPM route.
-- `pymatching_auto`: tries configured/calibrated and optional uniform detector models.
-- `gnn`, `ising`: placeholders.
-
-Postselection:
-
-```yaml
-decoder:
-  name: pymatching_auto
-  options:
-    postselect_weight_quantile: 0.5
-```
-
-This reports LER only on kept low-syndrome shots.
-
-Full-shot decoder experiments:
-
-```yaml
-decoder:
-  name: pymatching_auto
-  options:
-    include_correlated_matching: true
-    include_matching_ensembles: true
-    gated_no_correction_quantiles: [0.25, 0.5, 0.75]
-```
-
-These keep all shots and add extra MWPM candidates. The selected candidate is written to `metrics.json`.
-
-Held-out candidate selection:
-
-```yaml
-decoder:
-  name: pymatching_auto
-  options:
-    candidate_selection_mode: holdout
-    selection_fraction: 0.5
-    selection_seed: 1
-```
-
-This selects the decoder candidate on `selection_fraction` of postselected shots and reports LER on the rest.
-
-K-fold candidate selection:
-
-```yaml
-decoder:
-  name: pymatching_auto
-  options:
-    candidate_selection_mode: kfold
-    candidate_selection_folds: 5
-    selection_seed: 1
-```
-
-This selects candidates on `k-1` folds and reports on the held-out fold, repeated until all shots are evaluated out-of-fold.
-
-### `mapping`
-
-No fixed layout:
-
-```yaml
 mapping:
-  strategy: none
-```
+  strategy: calibration_best_patch   # none | calibration_best_patch (native d3) | calibration_routed_layout (d5)
+  calibration_file: configs/calibration/emerald_2026-10-04T05_09_03Z.json
+  options: {exclude_qubits: [QB9, QB25, QB41, QB46, QB47]}
+  hardware_patch: {stim_to_hardware: {...}}   # pin a patch (scripts/select_patch.py)
 
-Calibration-selected native d3 patch:
-
-```yaml
-mapping:
-  strategy: calibration_best_patch
-  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
-  weights:
-    one_qubit: 1.0
-    two_qubit: 1.0
-    measurement: 1.0
-    idle: 1.0
-    qnd: 1.0
-    max_coupler: 10.0
-  options:
-    exclude_qubits: [QB9, QB25, QB41, QB46, QB47]
-```
-
-D5 currently needs routed layout selection:
-
-```yaml
-mapping:
-  strategy: calibration_routed_layout
-  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
-  weights:
-    route_distance: 0.2
-  options:
-    seed: 1
-    max_iterations: 5000
-```
-
-### `artifacts`
-
-```yaml
-artifacts:
-  root: results
-  save_raw_measurements: true
-  save_syndromes: true
-  save_report: true
-```
-
-Standard outputs are written under:
-
-```text
-results/<experiment>/<timestamp>/
-```
-
-For sweeps:
-
-```text
-results/<experiment>_rounds_sweep/<timestamp>/
-```
-
-When enabled, full arrays are also saved:
-
-```text
-raw_measurements.npz
-syndromes.npz
+artifacts: {root: results, save_raw_measurements: true, save_syndromes: true, save_report: true}
 ```

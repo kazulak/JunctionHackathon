@@ -10,7 +10,7 @@ Two steps:
     # 1. Extract per-detector firing counts from raw hardware runs (needs results/).
     python scripts/fit_noise_to_hardware.py export-targets \\
         --config configs/sweep_d3_baseline_sim.yaml \\
-        --run results/sweep_d3_best_iqm_rounds_sweep/<ts>/runs/sweep_d3_best_iqm_rounds_1/<ts> \\
+        --run results/<hardware_sweep>/<ts>/runs/<..._rounds_1>/<ts> \\
         --output baselines/post_hackathon/noise_fit_targets_r1/targets.json
 
     # 2. Grid-search noise scales against the archived targets (no results/ needed).

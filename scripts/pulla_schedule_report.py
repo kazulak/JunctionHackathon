@@ -10,9 +10,9 @@ Nothing is executed on the QPU, so no credits are spent. Reports, per circuit:
 
 Examples:
 
-    python scripts/pulla_schedule_report.py configs/sweep_d3_baseline_iqm.yaml --rounds 1 2 3
-    python scripts/pulla_schedule_report.py configs/sweep_d3_baseline_iqm.yaml --rounds 1 3 \\
-        --mid-circuit-reset none --active-reset-cycles 2 --dd
+    python scripts/pulla_schedule_report.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 5 7 --dd --shots 2000
+    python scripts/pulla_schedule_report.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 \\
+        --mid-circuit-reset reset   # June-style Qiskit resets, for comparison
 """
 
 from __future__ import annotations

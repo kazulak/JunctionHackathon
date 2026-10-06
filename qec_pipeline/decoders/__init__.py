@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
-from qec_pipeline.decoders.ising_decoder import decode_with_ising
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_auto_decoder import decode_with_pymatching_auto
 from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
@@ -20,8 +18,6 @@ DECODERS: dict[str, Decoder] = {
     "pymatching_calibrated": decode_with_calibrated_pymatching,
     "pymatching_auto": decode_with_pymatching_auto,
     "pymatching_pij": decode_with_pymatching_pij,
-    "gnn": decode_with_gnn,
-    "ising": decode_with_ising,
 }
 
 

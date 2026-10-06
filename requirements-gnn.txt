@@ -1,4 +1,0 @@
-# Optional dependencies for future GNN decoder experiments.
-# The GNN decoder is still a placeholder (qec_pipeline/decoders/gnn_decoder.py).
-jax==0.7.1
-jaxlib==0.7.1

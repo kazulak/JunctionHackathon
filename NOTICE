@@ -14,7 +14,7 @@ terms:
    adapted from it.
 
 2. IQM calibration data
-   configs/2026-06-06T*.json are calibration observation sets from IQM quantum
+   configs/calibration/emerald_2026-06-06T*.json are calibration observation sets from IQM quantum
    computers (54-qubit Emerald and 20-qubit Garnet), dated 2026-06-06 and
    added during the hackathon.
 

@@ -1,9 +1,0 @@
-label,basis,fit_points,fitted_logical_error_per_round,fitted_logical_error_per_round_uncertainty,fit_amplitude,fit_method,excluded_points
-baseline,memory_x,4,0.03504962488285702,0.0012077272267100704,1.0,binomial_mle,0
-baseline,memory_z,4,0.02790890204287839,0.0010449306425337312,1.0,binomial_mle,0
-gated_kfold,memory_x,4,0.03459008510723123,0.0011974545447543325,1.0,binomial_mle,0
-gated_kfold,memory_z,4,0.02790890204287839,0.0010449306425337312,1.0,binomial_mle,0
-in_sample_improved,memory_x,4,0.030032637655913456,0.00109409774610969,1.0,binomial_mle,0
-in_sample_improved,memory_z,4,0.026923372805610045,0.0010220311894001387,1.0,binomial_mle,0
-kfold,memory_x,4,0.030032637655913456,0.00109409774610969,1.0,binomial_mle,0
-kfold,memory_z,4,0.027473493375141704,0.0010348025762820995,1.0,binomial_mle,0

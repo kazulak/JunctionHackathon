@@ -33,7 +33,7 @@ def write_run_summary(
         f"- Code: {config['code']['family']}, d={config['code']['distance']}, "
         f"rounds={config['code']['rounds']}",
         f"- Basis: {config['code']['basis']}",
-        f"- Reset: {config['code']['reset_mode']}",
+        f"- Mid-circuit reset: {config['code'].get('mid_circuit_reset', 'reset')}",
         f"- Backend: {config['backend']['name']}, shots={config['backend']['shots']}",
         f"- Noise: {config['noise']['model']}",
         f"- Decoder: {config['decoder']['name']}",

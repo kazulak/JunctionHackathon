@@ -1,7 +1,7 @@
 """Download the current IQM calibration (quality metric set) for patch selection and noise.
 
 Read-only API call with the token from `.env`; nothing is executed, no credits are used.
-The file has the same observation-set format as configs/2026-06-06T*.json.
+The file has the same observation-set format as configs/calibration/emerald_2026-06-06T*.json.
 
     python scripts/fetch_calibration.py --output-dir configs/calibration
 """
