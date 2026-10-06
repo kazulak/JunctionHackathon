@@ -8,7 +8,6 @@ code:
   distance: 3
   rounds: 1
   basis: both
-  reset_mode: reset
 
 backend:
   name: simulator

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 import stim
@@ -42,26 +41,6 @@ def build_surface_code_circuit(
     _validate_distance(distance)
     _validate_rounds(rounds)
 
-    requested_reset_mode = str(code.get("reset_mode", "reset")).lower()
-
-    force_active_reset = requested_reset_mode in {
-        "no_reset",
-        "no-reset",
-        "no_active_reset",
-        "no-active-reset",
-        "none",
-        "false",
-    }
-
-    if force_active_reset:
-        warnings.warn(
-            f"Requested reset_mode={requested_reset_mode!r}, but this builder "
-            "does not implement no-reset surface-code circuits. Falling back "
-            "to standard active-reset Stim rotated memory circuit.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-
     task = _stim_task_for_basis(basis)
     noise_kwargs = _stim_noise_parameters(noise)
 
@@ -86,10 +65,7 @@ def build_surface_code_circuit(
         "distance": distance,
         "rounds": rounds,
 
-        "requested_reset_mode": requested_reset_mode,
-        "implemented_reset_mode": "active_reset",
         "mid_circuit_reset": mid_circuit_reset,
-        "forced_active_reset": force_active_reset,
 
         "num_qubits": stim_circuit.num_qubits,
         "num_measurements": stim_circuit.num_measurements,

@@ -20,7 +20,6 @@ SURFACE_D3_R1 = {
     "distance": 3,
     "rounds": 1,
     "basis": "both",
-    "reset_mode": "reset",
 }
 
 
@@ -53,7 +52,6 @@ class StimToQiskitConversionTests(unittest.TestCase):
             "distance": 3,
             "rounds": 1,
             "basis": "both",
-            "reset_mode": "reset",
         }
 
         for basis in ("memory_z", "memory_x"):
@@ -83,7 +81,6 @@ class StimToQiskitConversionTests(unittest.TestCase):
             "distance": 3,
             "rounds": 3,
             "basis": "both",
-            "reset_mode": "reset",
             "mid_circuit_reset": "none",
         }
 

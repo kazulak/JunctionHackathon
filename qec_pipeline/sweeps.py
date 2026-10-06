@@ -20,7 +20,7 @@ from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
 from qec_pipeline.decoders import get_decoder
 from qec_pipeline.mapping import active_stim_to_dense, select_mapping_from_config
-from qec_pipeline.pipeline import basis_list, build_basis_metrics, is_memory_experiment, run_pipeline
+from qec_pipeline.pipeline import basis_list, build_basis_metrics, run_pipeline
 from qec_pipeline.provenance import provenance_line, run_provenance
 from qec_pipeline.syndromes import extract_detection_events
 
@@ -154,7 +154,6 @@ def redecode_sweep(sweep_dir: Path, decoder: dict[str, Any], output_dir: Path) -
             int(circuit_info["rounds"]),
             decoded,
             syndromes[2],
-            memory_experiment=is_memory_experiment(circuit),
         )
         rows.append(_sweep_row(int(circuit_info["rounds"]), metrics, basis_dir.parent, [f"redecoded from {basis_dir}"]))
 
@@ -281,7 +280,6 @@ def _run_iqm_rounds_sweep_batch(
             group["rounds"],
             decoded,
             syndrome_info,
-            memory_experiment=is_memory_experiment(circuit),
         )
 
         basis_run_dir = group["run_dir"] / basis
@@ -336,7 +334,6 @@ def _sweep_row(
         "kept_shots": metrics.get("kept_shots", metrics["shots"]),
         "postselection_fraction": metrics.get("postselection_fraction", 1.0),
         "selection_is_in_sample": bool(metrics.get("selection_is_in_sample", False)),
-        "memory_experiment": bool(metrics.get("memory_experiment", True)),
         "run_dir": str(run_dir),
         "notes": "; ".join(notes),
     }
@@ -369,7 +366,6 @@ def _write_sweep_outputs(
         "kept_shots",
         "postselection_fraction",
         "selection_is_in_sample",
-        "memory_experiment",
         "run_dir",
         "notes",
     ]

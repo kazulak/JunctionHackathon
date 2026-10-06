@@ -4,7 +4,7 @@
 It is **calibration-informed and fitted to r=1 hardware**, not a full calibration: see "Limits" below and [ERRATA.md](../ERRATA.md) E2.
 
 ```text
-IQM calibration dump (configs/2026-06-06T*.json)
+IQM calibration dump (configs/calibration/*.json)
 -> select mapped qubits/couplers
 -> inject per-qubit/per-coupler Pauli noise into the Stim circuit
 -> sample locally
@@ -55,7 +55,7 @@ python scripts/fit_noise_to_hardware.py fit --config configs/sweep_d3_baseline_s
 ```yaml
 noise:
   model: iqm_calibration
-  calibration_file: configs/2026-06-06T06_08_52.470451Z.json
+  calibration_file: configs/calibration/emerald_2026-06-06T06_08_52Z.json
   options:
     apply_idle: true
     two_qubit_scale: 1.5        # fitted; other *_scale options default to 1.0
@@ -79,4 +79,4 @@ python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d5_calibrated.yam
 
 - The fit to r = 1 hardware is poor in absolute terms: uniform scales cannot reproduce the per-detector rates, which range from 0.05 to 0.25.
 - The model has no leakage, crosstalk, drift, measurement-induced dephasing, or pulse-level timing.
-- In particular, it does not reproduce the hardware failure at r ≥ 2, where mid-circuit measure/reset scrambles the data qubits (ERRATA E5). Treat simulator results for r ≥ 2 as "what the hardware would do if mid-circuit operations worked".
+- With the corrected hardware design it predicted 0.039 / 0.059 error per round; hardware gave 0.033 / 0.040 (`baselines/post_hackathon/hw_d3_noreset_dd_20261004/model_comparison`). It is pessimistic for memory_x.

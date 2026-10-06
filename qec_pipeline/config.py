@@ -28,7 +28,7 @@ def config_summary(config: dict[str, Any]) -> str:
         [
             f"name: {experiment['name']}",
             f"code: {code['family']} d={code['distance']} rounds={code['rounds']}",
-            f"basis/reset: {code['basis']}/{code['reset_mode']}",
+            f"basis: {code['basis']}, mid-circuit reset: {code.get('mid_circuit_reset', 'reset')}",
             f"backend: {backend['name']} shots={backend['shots']}",
             f"noise: {noise['model']}",
             f"decoder: {decoder['name']}",
@@ -42,3 +42,5 @@ def _validate_minimum_config(config: dict[str, Any]) -> None:
     for section in required_sections:
         if section not in config:
             raise ValueError(f"Missing config section: {section}")
+    if "reset_mode" in config["code"]:
+        raise ValueError("code.reset_mode was removed; use code.mid_circuit_reset (reset | feedforward | none)")

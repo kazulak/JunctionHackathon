@@ -20,4 +20,3 @@ pylatexenc==2.10
 tqdm==4.68.1
 
 # Dev tools: requirements-dev.txt
-# Future GNN experiments: requirements-gnn.txt

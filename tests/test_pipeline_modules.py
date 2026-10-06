@@ -26,15 +26,11 @@ from qec_pipeline.backends.iqm_hardware import (
 from qec_pipeline.backends.simulator import run_simulator_backend
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
-from qec_pipeline.codes.color_code import build_color_code_circuit
 from qec_pipeline.codes.surface_code import build_surface_code_circuit
 from qec_pipeline.codes.surface_code_iqm import build_iqm_surface_code_circuit
 from qec_pipeline.codes.surface_code_unrotated import build_unrotated_surface_code_circuit
 from qec_pipeline.config import config_summary, load_experiment_config
-from qec_pipeline.conversion_checks import convert_and_sample
 from qec_pipeline.decoders import get_decoder
-from qec_pipeline.decoders.gnn_decoder import decode_with_gnn
-from qec_pipeline.decoders.ising_decoder import decode_with_ising
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_auto_decoder import _select_candidate, decode_with_pymatching_auto
 from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
@@ -69,7 +65,6 @@ SURFACE_D3_R1 = {
     "distance": 3,
     "rounds": 1,
     "basis": "memory_z",
-    "reset_mode": "reset",
 }
 
 
@@ -88,6 +83,15 @@ class ConfigTests(unittest.TestCase):
             config_path.write_text("experiment:\n  name: bad\n", encoding="utf-8")
 
             with self.assertRaisesRegex(ValueError, "Missing config section"):
+                load_experiment_config(config_path)
+
+    def test_removed_reset_mode_option_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "old.yaml"
+            text = Path("configs/demo_stim_no_noise.yaml").read_text(encoding="utf-8")
+            config_path.write_text(text.replace("code:\n", "code:\n  reset_mode: reset\n", 1), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "mid_circuit_reset"):
                 load_experiment_config(config_path)
 
 
@@ -167,20 +171,6 @@ class CircuitAndBackendTests(unittest.TestCase):
         self.assertIn("DEPOLARIZE1", circuit_text)
         self.assertIn("X_ERROR", circuit_text)
 
-    def test_no_reset_falls_back_to_active_reset_with_warning(self) -> None:
-        code = dict(SURFACE_D3_R1)
-        code["reset_mode"] = "no_reset"
-
-        with self.assertWarnsRegex(RuntimeWarning, "Falling back"):
-            _stim_circuit, _detector_model, _measurement_order, info = build_surface_code_circuit(
-                code,
-                NO_NOISE,
-                "memory_z",
-            )
-
-        self.assertEqual(info["implemented_reset_mode"], "active_reset")
-        self.assertTrue(info["forced_active_reset"])
-
     def test_simulator_backend_returns_raw_measurement_matrix(self) -> None:
         stim_circuit = stim.Circuit("R 0\nM 0")
         circuit = (stim_circuit, None, (0,), {"basis": "unit"})
@@ -194,7 +184,7 @@ class CircuitAndBackendTests(unittest.TestCase):
 
     def test_iqm_surface_code_builder_starts_clean_for_calibrated_noise(self) -> None:
         stim_circuit, _detector_model, _measurement_order, info = build_iqm_surface_code_circuit(
-            {"family": "surface_code_iqm", "distance": 3, "rounds": 1, "reset_mode": "reset"},
+            {"family": "surface_code_iqm", "distance": 3, "rounds": 1},
             {"model": "iqm_calibration"},
             "memory_z",
         )
@@ -205,7 +195,7 @@ class CircuitAndBackendTests(unittest.TestCase):
 
     def test_unrotated_surface_code_builder_is_selectable(self) -> None:
         stim_circuit, detector_model, measurement_order, info = build_unrotated_surface_code_circuit(
-            {"family": "surface_code_unrotated", "distance": 3, "rounds": 1, "reset_mode": "reset"},
+            {"family": "surface_code_unrotated", "distance": 3, "rounds": 1},
             NO_NOISE,
             "memory_z",
         )
@@ -479,13 +469,6 @@ class DecoderTests(unittest.TestCase):
         self.assertEqual(len(failures), 6)
         self.assertEqual(len(info["fold_selected_candidates"]), 3)
 
-    def test_placeholder_modules_fail_clearly(self) -> None:
-        with self.assertRaisesRegex(NotImplementedError, "color-code"):
-            build_color_code_circuit({}, {}, "memory_z")
-        with self.assertRaisesRegex(NotImplementedError, "GNN"):
-            decode_with_gnn({}, (), ())
-        with self.assertRaisesRegex(NotImplementedError, "NVIDIA Ising"):
-            decode_with_ising({}, (), ())
 
 
 class ReportingAndPipelineTests(unittest.TestCase):
@@ -545,7 +528,6 @@ class ReportingAndPipelineTests(unittest.TestCase):
                     "distance": 3,
                     "rounds": 1,
                     "basis": "memory_z",
-                    "reset_mode": "reset",
                 },
                 "backend": {"name": "simulator", "shots": 8, "options": {"seed": 1}},
                 "noise": NO_NOISE,
@@ -596,27 +578,6 @@ class ReportingAndPipelineTests(unittest.TestCase):
 
         self.assertIn("select routed layout", "\n".join(plan))
 
-    def test_color_code_pipeline_path_fails_loudly(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config = {
-                "experiment": {"name": "unit_pipeline", "description": "", "seed": 1},
-                "code": {
-                    "family": "color_code",
-                    "distance": 2,
-                    "rounds": 1,
-                    "basis": "memory_z",
-                    "reset_mode": "reset",
-                },
-                "backend": {"name": "simulator", "shots": 8, "options": {"seed": 1}},
-                "noise": NO_NOISE,
-                "decoder": {"name": "pymatching", "options": {}},
-                "mapping": {"strategy": "none", "hardware_patch": None},
-                "artifacts": {"root": temp_dir},
-            }
-
-            with self.assertRaisesRegex(NotImplementedError, "color-code"):
-                run_pipeline(config)
-
     def test_calibrated_simulator_pipeline_uses_qubit_level_noise(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             calibration_path = Path(temp_dir) / "calibration.yaml"
@@ -631,7 +592,6 @@ class ReportingAndPipelineTests(unittest.TestCase):
                     "distance": 3,
                     "rounds": 1,
                     "basis": "memory_z",
-                    "reset_mode": "reset",
                 },
                 "backend": {"name": "simulator", "shots": 16, "options": {"seed": 1}},
                 "noise": {
@@ -667,7 +627,7 @@ class ReportingAndPipelineTests(unittest.TestCase):
 
     def test_prepare_circuit_requires_mapping_for_calibrated_noise(self) -> None:
         circuit = build_iqm_surface_code_circuit(
-            {"family": "surface_code_iqm", "distance": 3, "rounds": 1, "reset_mode": "reset"},
+            {"family": "surface_code_iqm", "distance": 3, "rounds": 1},
             {"model": "iqm_calibration"},
             "memory_z",
         )
@@ -707,7 +667,6 @@ class ReportingAndPipelineTests(unittest.TestCase):
                     "distance": 3,
                     "rounds": 1,
                     "basis": "both",
-                    "reset_mode": "reset",
                 },
                 "backend": {
                     "name": "iqm_hardware",
@@ -780,7 +739,6 @@ class DiagnosticAndSweepTests(unittest.TestCase):
                     "distance": 3,
                     "rounds": 1,
                     "basis": "memory_z",
-                    "reset_mode": "reset",
                 },
                 "backend": {"name": "simulator", "shots": 8, "options": {"seed": 1}},
                 "noise": NO_NOISE,
@@ -1186,7 +1144,6 @@ class HardwarePathTests(unittest.TestCase):
                     "distance": 3,
                     "rounds": 1,
                     "basis": "memory_z",
-                    "reset_mode": "reset",
                 },
                 "backend": {"name": "simulator", "shots": 16, "options": {"seed": 1}},
                 "noise": {"model": "iqm_calibration", "calibration_file": str(calibration_path), "options": {}},
@@ -1236,55 +1193,6 @@ class HardwarePathTests(unittest.TestCase):
         wrong = {"dense_to_hardware": {"0": "QB1", "1": "QB2"}}
         with self.assertRaises(RuntimeError):
             _check_layout_matches_mapping(loci, wrong)
-
-
-class MidcircuitProbeTests(unittest.TestCase):
-    """The mid-circuit probe used to diagnose ERRATA E5."""
-
-    def test_noiseless_probe_never_flips_data_in_any_mode(self) -> None:
-        for mode in ["measure_reset", "measure", "none"]:
-            with tempfile.TemporaryDirectory() as temp_dir:
-                config = {
-                    "experiment": {"name": f"unit_probe_{mode}", "description": "", "seed": 1},
-                    "code": {
-                        "family": "midcircuit_probe",
-                        "probe_mode": mode,
-                        "distance": 3,
-                        "rounds": 3,
-                        "basis": "both",
-                        "reset_mode": "reset",
-                    },
-                    "backend": {"name": "simulator", "shots": 64, "options": {"seed": 1}},
-                    "noise": NO_NOISE,
-                    "decoder": {"name": "observable_rate", "options": {}},
-                    "mapping": {"strategy": "none", "hardware_patch": None},
-                    "artifacts": {"root": temp_dir},
-                }
-                _run_dir, basis_results, _notes = run_pipeline(config)
-                for _basis, _circuit, _raw, _syndromes, decoded, metrics in basis_results:
-                    self.assertEqual(decoded[2], 0.0)
-                    self.assertFalse(metrics["memory_experiment"])
-                    self.assertIsNone(metrics["logical_error_per_round"])
-
-    def test_probe_uses_surface_code_qubits_and_converts_to_qiskit(self) -> None:
-        probe, *_ = get_code_builder("midcircuit_probe")(
-            {"distance": 3, "rounds": 2, "probe_mode": "measure_reset"}, NO_NOISE, "memory_z"
-        )
-        surface, *_ = build_surface_code_circuit(
-            {"family": "surface_code", "distance": 3, "rounds": 2}, NO_NOISE, "memory_z"
-        )
-        self.assertEqual(probe.get_final_qubit_coordinates(), surface.get_final_qubit_coordinates())
-
-        for mode in ["measure_reset", "measure"]:
-            probe, *_ = get_code_builder("midcircuit_probe")(
-                {"distance": 3, "rounds": 2, "probe_mode": mode}, NO_NOISE, "memory_x"
-            )
-            _stim_samples, qiskit_samples, *_ = convert_and_sample(probe, shots=8, seed=1)
-            detections, observables = probe.compile_m2d_converter().convert(
-                measurements=qiskit_samples, separate_observables=True
-            )
-            self.assertFalse(detections.any())
-            self.assertFalse(observables.any())
 
 
 class ResetStrategyTests(unittest.TestCase):
@@ -1397,7 +1305,6 @@ class PijDecoderTests(unittest.TestCase):
                     "distance": 3,
                     "rounds": 1,
                     "basis": "memory_z",
-                    "reset_mode": "reset",
                 },
                 "backend": {"name": "simulator", "shots": 200, "options": {"seed": 1}},
                 "noise": {
@@ -1432,7 +1339,6 @@ class PatchSelectionTests(unittest.TestCase):
             "distance": 3,
             "rounds": 1,
             "basis": "memory_z",
-            "reset_mode": "reset",
         }
         stim_circuit, _detector_model, _measurement_order, _info = build_surface_code_circuit(
             code,
@@ -1453,7 +1359,6 @@ class PatchSelectionTests(unittest.TestCase):
             "distance": 3,
             "rounds": 1,
             "basis": "memory_z",
-            "reset_mode": "reset",
         }
         stim_circuit, _detector_model, _measurement_order, _info = build_surface_code_circuit(
             code,
@@ -1475,7 +1380,6 @@ class PatchSelectionTests(unittest.TestCase):
             "distance": 3,
             "rounds": 1,
             "basis": "memory_z",
-            "reset_mode": "reset",
         }
         stim_circuit, _detector_model, _measurement_order, _info = build_surface_code_circuit(
             code,
@@ -1497,7 +1401,6 @@ class PatchSelectionTests(unittest.TestCase):
             "distance": 3,
             "rounds": 1,
             "basis": "memory_z",
-            "reset_mode": "reset",
         }
         stim_circuit, _detector_model, _measurement_order, _info = build_surface_code_circuit(
             code,
