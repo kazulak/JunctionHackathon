@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -17,10 +16,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from qec_pipeline.codes import get_code_builder
+from qec_pipeline.codes import build_code_circuit
 from qec_pipeline.config import load_experiment_config
-from qec_pipeline.mapping import active_stim_to_dense, rank_calibration_best_patches
-from qec_pipeline.mapping.patch_selection import select_fixed_stim_to_hardware_patch
+from qec_pipeline.mapping import (
+    load_calibration,
+    rank_calibration_best_patches,
+    select_fixed_stim_to_hardware_patch,
+)
+from qec_pipeline.stim_utils import stim_to_dense as dense_order
 
 
 def main() -> int:
@@ -32,11 +35,9 @@ def main() -> int:
 
     config = load_experiment_config(args.config)
     code = dict(config["code"], rounds=max(2, int(config["code"].get("rounds", 1))))
-    stim_circuit = get_code_builder(code.get("family", "surface_code"))(
-        code, {"model": "no_noise", "parameters": {}}, "memory_z"
-    )[0]
-    stim_to_dense = active_stim_to_dense(stim_circuit)
-    calibration = json.loads(args.calibration.read_text(encoding="utf-8"))
+    stim_circuit = build_code_circuit(code, {"model": "no_noise", "parameters": {}}, "memory_z")[0]
+    stim_to_dense = dense_order(stim_circuit)
+    calibration = load_calibration(args.calibration)
     weights = config["mapping"].get("weights")
     options = config["mapping"].get("options") or {}
 

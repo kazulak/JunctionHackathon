@@ -3,6 +3,11 @@ from __future__ import annotations
 import stim
 from qiskit import QuantumCircuit
 
+from qec_pipeline.stim_utils import ANNOTATIONS, NOISE_CHANNELS, qubits_used_later
+from qec_pipeline.stim_utils import stim_to_dense as dense_order
+
+_STIM_SKIP = ANNOTATIONS | NOISE_CHANNELS
+
 
 def stim_to_qiskit_minimal(
     stim_circuit: stim.Circuit,
@@ -33,17 +38,9 @@ def stim_to_qiskit_minimal(
     initial_reset_instruction_indices = (
         _initial_reset_instruction_indices(flat) if omit_initial_resets else set()
     )
-    future_qubits = _future_executable_qubits(flat)
-    all_stim_qubits = sorted(
-        {
-            target.value
-            for instruction in flat
-            for target in instruction.targets_copy()
-            if target.is_qubit_target
-        }
-    )
-    stim_to_dense = {stim_qubit: index for index, stim_qubit in enumerate(all_stim_qubits)}
-    qiskit_circuit = QuantumCircuit(len(all_stim_qubits), stim_circuit.num_measurements)
+    future_qubits = qubits_used_later(flat, ignored=_STIM_SKIP)
+    stim_to_dense = dense_order(stim_circuit)
+    qiskit_circuit = QuantumCircuit(len(stim_to_dense), stim_circuit.num_measurements)
 
     measurement_index = 0
     measurement_order: list[int] = []
@@ -203,22 +200,6 @@ def _qubit_targets(instruction: stim.CircuitInstruction) -> list[int]:
     return targets
 
 
-def _future_executable_qubits(instructions: list[stim.CircuitInstruction]) -> list[set[int]]:
-    future: list[set[int]] = [set() for _ in instructions]
-    seen_later: set[int] = set()
-
-    for index in range(len(instructions) - 1, -1, -1):
-        future[index] = set(seen_later)
-        instruction = instructions[index]
-        if instruction.name in _STIM_SKIP:
-            continue
-        for target in instruction.targets_copy():
-            if target.is_qubit_target:
-                seen_later.add(target.value)
-
-    return future
-
-
 def _initial_reset_instruction_indices(instructions: list[stim.CircuitInstruction]) -> set[int]:
     indices = set()
     for index, instruction in enumerate(instructions):
@@ -230,23 +211,3 @@ def _initial_reset_instruction_indices(instructions: list[stim.CircuitInstructio
             continue
         break
     return indices
-
-
-_STIM_SKIP = frozenset(
-    {
-        "QUBIT_COORDS",
-        "TICK",
-        "DETECTOR",
-        "OBSERVABLE_INCLUDE",
-        "SHIFT_COORDS",
-        "DEPOLARIZE1",
-        "DEPOLARIZE2",
-        "X_ERROR",
-        "Y_ERROR",
-        "Z_ERROR",
-        "PAULI_CHANNEL_1",
-        "PAULI_CHANNEL_2",
-        "CORRELATED_ERROR",
-        "ELSE_CORRELATED_ERROR",
-    }
-)

@@ -2,23 +2,22 @@ from __future__ import annotations
 
 import argparse
 import copy
-import csv
 import json
 import sys
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from qec_pipeline.analysis.tables import write_csv
 from qec_pipeline.artifacts import utc_timestamp
-from qec_pipeline.codes import get_code_builder
+from qec_pipeline.codes import build_code_circuit
 from qec_pipeline.config import load_experiment_config
-from qec_pipeline.mapping import active_stim_to_dense, rank_calibration_best_patches
+from qec_pipeline.mapping import load_calibration, rank_calibration_best_patches
 from qec_pipeline.pipeline import run_pipeline
+from qec_pipeline.stim_utils import stim_to_dense as dense_order
 
 
 def main() -> int:
@@ -115,14 +114,9 @@ def _patch_variant_configs(
 
     code = copy.deepcopy(base_config["code"])
     code["basis"] = basis if basis != "both" else "memory_z"
-    circuit = get_code_builder(code.get("family", "surface_code"))(
-        code,
-        base_config["noise"],
-        code["basis"],
-    )
-    stim_circuit, _detector_model, _measurement_order, _circuit_info = circuit
-    stim_to_dense = active_stim_to_dense(stim_circuit)
-    calibration = yaml.safe_load(Path(mapping["calibration_file"]).read_text(encoding="utf-8")) or {}
+    stim_circuit = build_code_circuit(code, base_config["noise"], code["basis"])[0]
+    stim_to_dense = dense_order(stim_circuit)
+    calibration = load_calibration(mapping["calibration_file"])
     ranked = rank_calibration_best_patches(
         stim_circuit,
         stim_to_dense,
@@ -181,19 +175,7 @@ def _write_outputs(
     rows: list[dict[str, Any]],
     configs: list[dict[str, Any]],
 ) -> None:
-    fieldnames = [
-        "variant",
-        "basis",
-        "ler",
-        "uncertainty",
-        "logical_failures",
-        "shots",
-        "run_dir",
-    ]
-    with (search_dir / "search_results.csv").open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
+    write_csv(search_dir / "search_results.csv", rows)
 
     payload = {
         "rows": rows,

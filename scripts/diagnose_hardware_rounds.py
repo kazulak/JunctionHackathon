@@ -16,7 +16,6 @@ decoding and no decoder can help. Requires runs saved with
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
@@ -29,9 +28,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from qec_pipeline.mapping import active_stim_to_dense
-from qec_pipeline.mapping.patch_selection import surface_code_qubit_roles
+from qec_pipeline.analysis.tables import write_csv
+from qec_pipeline.artifacts import load_basis_run, sweep_basis_dirs
+from qec_pipeline.mapping import surface_code_qubit_roles
 from qec_pipeline.measurements import measurement_order_from_stim_circuit
+from qec_pipeline.stim_utils import stim_to_dense
 
 
 def main() -> int:
@@ -42,13 +43,13 @@ def main() -> int:
 
     rows = []
     for sweep_dir in args.sweep_dir:
-        for basis_dir in sorted(sweep_dir.glob("runs/*/*/memory_*")):
+        for basis_dir in sweep_basis_dirs(sweep_dir):
             rows.append(diagnose_run(basis_dir, sweep_dir))
     if not rows:
         raise SystemExit("No runs with raw_measurements.npz found.")
 
     args.output.mkdir(parents=True, exist_ok=True)
-    _write_csv(args.output / "round_diagnostics.csv", rows)
+    write_csv(args.output / "round_diagnostics.csv", rows)
     (args.output / "round_diagnostics.json").write_text(json.dumps(rows, indent=2) + "\n", encoding="utf-8")
     (args.output / "summary.md").write_text(_summary(rows), encoding="utf-8")
     print(f"Diagnostics: {args.output}")
@@ -56,10 +57,9 @@ def main() -> int:
 
 
 def diagnose_run(basis_dir: Path, sweep_dir: Path) -> dict[str, Any]:
-    circuit = stim.Circuit.from_file(basis_dir / "circuit.stim")
-    measurements = np.load(basis_dir / "raw_measurements.npz")["measurements"].astype(bool)
-    metrics = json.loads((basis_dir / "metrics.json").read_text(encoding="utf-8"))
-    raw_metadata = json.loads((basis_dir / "raw_metadata.json").read_text(encoding="utf-8"))
+    run = load_basis_run(basis_dir)
+    circuit, measurements = run["circuit"], run["measurements"]
+    metrics, raw_metadata = run["metrics"], run["raw_info"]
 
     detections, observables = circuit.compile_m2d_converter().convert(
         measurements=measurements,
@@ -89,7 +89,7 @@ def ancilla_one_rate_by_round(circuit: stim.Circuit, measurements: np.ndarray, k
     flattened = list(circuit.flattened())
     hadamard_qubits = {target.value for item in flattened if item.name == "H" for target in item.targets_copy()}
     # Works for every reset strategy (MR, M + feed-forward, M only).
-    roles = surface_code_qubit_roles(circuit, active_stim_to_dense(circuit))
+    roles = surface_code_qubit_roles(circuit, stim_to_dense(circuit))
     ancillas = {qubit for qubit, role in roles.items() if role == "ancilla"}
     wanted = {qubit for qubit in ancillas if (qubit in hadamard_qubits) == (kind == "X")}
 
@@ -115,15 +115,6 @@ def detector_rate_by_layer(circuit: stim.Circuit, detections: np.ndarray) -> lis
 def _rounds_from_path(basis_dir: Path) -> int:
     name = basis_dir.parent.parent.name
     return int(name.rsplit("_", 1)[-1])
-
-
-def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
-        writer.writeheader()
-        for row in rows:
-            flat = {key: json.dumps(value) if isinstance(value, list) else value for key, value in row.items()}
-            writer.writerow(flat)
 
 
 def _summary(rows: list[dict[str, Any]]) -> str:

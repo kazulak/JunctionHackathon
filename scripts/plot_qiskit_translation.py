@@ -10,6 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from qec_pipeline.artifacts import find_stim_circuits
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -70,21 +72,6 @@ def main() -> int:
                 print(f"Could not write PNG for {circuit_path}: {exc}")
 
     return 0
-
-
-def find_stim_circuits(path: Path) -> list[Path]:
-    if path.is_file() and path.name == "circuit.stim":
-        return [path]
-    if path.is_dir() and (path / "circuit.stim").exists():
-        return [path / "circuit.stim"]
-    if path.is_dir():
-        basis_circuits = sorted(path.glob("*/circuit.stim"))
-        if basis_circuits:
-            return basis_circuits
-        child_dirs = sorted([child for child in path.iterdir() if child.is_dir()])
-        if child_dirs:
-            return sorted(child_dirs[-1].glob("*/circuit.stim"))
-    return []
 
 
 if __name__ == "__main__":

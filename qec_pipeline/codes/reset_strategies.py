@@ -25,8 +25,9 @@ from __future__ import annotations
 
 import stim
 
+from qec_pipeline.stim_utils import qubit_targets, qubits_used_later
+
 MID_CIRCUIT_RESET_STRATEGIES = ("reset", "feedforward", "none")
-_NON_OPERATIONS = frozenset({"TICK", "DETECTOR", "OBSERVABLE_INCLUDE", "QUBIT_COORDS", "SHIFT_COORDS"})
 
 
 def apply_mid_circuit_reset(circuit: stim.Circuit, strategy: str) -> stim.Circuit:
@@ -37,7 +38,7 @@ def apply_mid_circuit_reset(circuit: stim.Circuit, strategy: str) -> stim.Circui
         return circuit
 
     instructions = list(circuit.flattened())
-    used_later = _qubits_used_later(instructions)
+    used_later = qubits_used_later(instructions)
     output = stim.Circuit()
     num_records = 0
     # Qubit -> raw record of its last no-reset measurement (the state it still carries).
@@ -49,7 +50,7 @@ def apply_mid_circuit_reset(circuit: stim.Circuit, strategy: str) -> stim.Circui
         name = instruction.name
 
         if name in {"R", "RX"}:
-            for qubit in _qubits(instruction):
+            for qubit in qubit_targets(instruction):
                 carried_record.pop(qubit, None)
             output.append(instruction)
             continue
@@ -59,7 +60,7 @@ def apply_mid_circuit_reset(circuit: stim.Circuit, strategy: str) -> stim.Circui
             continue
 
         if name in {"M", "MX", "MY", "MR", "MRX", "MRY"}:
-            qubits = _qubits(instruction)
+            qubits = qubit_targets(instruction)
             is_reset_measurement = name in {"MR", "MRX", "MRY"}
             measured_name = {"MR": "M", "MRX": "MX", "MRY": "MY"}.get(name, name)
             output.append(measured_name, instruction.targets_copy(), instruction.gate_args_copy())
@@ -106,17 +107,3 @@ def _rewrite_record_references(
         absolute ^= expanded
     targets = [stim.target_rec(record - num_records) for record in sorted(absolute)]
     return stim.CircuitInstruction(instruction.name, targets, instruction.gate_args_copy())
-
-
-def _qubits(instruction: stim.CircuitInstruction) -> list[int]:
-    return [target.value for target in instruction.targets_copy() if target.is_qubit_target]
-
-
-def _qubits_used_later(instructions: list[stim.CircuitInstruction]) -> list[set[int]]:
-    used_later: list[set[int]] = [set() for _ in instructions]
-    seen: set[int] = set()
-    for index in range(len(instructions) - 1, -1, -1):
-        used_later[index] = set(seen)
-        if instructions[index].name not in _NON_OPERATIONS:
-            seen.update(_qubits(instructions[index]))
-    return used_later

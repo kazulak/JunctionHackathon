@@ -89,6 +89,7 @@ Always run `--preflight` (free) first, and `scripts/fetch_calibration.py` after 
 
 ```bash
 python scripts/diagnose_hardware_rounds.py results/<sweep>/<ts> --output results/<sweep>/<ts>/diagnosis
+python scripts/redecode_sweep.py results/<sweep>/<ts> --decoder pymatching --option enable_correlations=true
 python scripts/redecode_sweep.py results/<sweep>/<ts> --decoder pymatching_pij      # Google's p_ij decoder
 python scripts/archive_baseline.py results/<sweep>/<ts> --output-root baselines/post_hackathon \
     --name <name> --provenance post_hackathon --title "<title>"
@@ -96,7 +97,8 @@ python scripts/fit_noise_to_hardware.py export-targets --config configs/hw_d3_no
     --run results/<sweep>/<ts>/runs/<..._rounds_1>/<ts> --output baselines/post_hackathon/<name>/targets_r1.json
 ```
 
-- `pymatching_pij` re-estimates every matching-graph edge probability from the hardware detection events, cross-fitted on odd/even shots (Google, Nature 595 and 614). It is usually the best decoder for real data.
+- Correlated matching lowered the October error per round from 0.0331 to 0.0315 (memory_z) and from 0.0404 to 0.0364 (memory_x), as the simulator's k-fold study predicted.
+- `pymatching_pij` re-estimates every matching-graph edge probability from the hardware detection events, cross-fitted on odd/even shots (Google, Nature 595 and 614). At 2000 shots per circuit it was slightly worse than calibrated matching; it needs more shots per circuit.
 - Report the error per round from the summary's per-round fit (binomial maximum likelihood with free amplitude), with its 1σ.
 
 ## Known limits

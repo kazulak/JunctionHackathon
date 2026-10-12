@@ -28,10 +28,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from qec_pipeline.backends.iqm_hardware import _load_dotenv, _prepare_iqm_request
-from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
-from qec_pipeline.codes import get_code_builder
-from qec_pipeline.config import load_experiment_config
+from qec_pipeline.backends.iqm_hardware import load_dotenv, prepare_iqm_request
+from qec_pipeline.circuit_preparation import build_circuit
+from qec_pipeline.config import apply_overrides, load_experiment_config
 
 
 def main() -> int:
@@ -43,8 +42,8 @@ def main() -> int:
         "--set",
         action="append",
         default=[],
-        metavar="KEY=VALUE",
-        help="Override backend.options, e.g. group_measurements=false.",
+        metavar="DOTTED.KEY=VALUE",
+        help="Override a config value (YAML-parsed), e.g. backend.options.group_measurements=false.",
     )
     parser.add_argument(
         "--mid-circuit-reset",
@@ -60,9 +59,7 @@ def main() -> int:
     config = load_experiment_config(args.config)
     if args.mid_circuit_reset:
         config["code"]["mid_circuit_reset"] = args.mid_circuit_reset
-    for item in args.set:
-        key, value = item.split("=", 1)
-        config["backend"].setdefault("options", {})[key] = _parse_value(value)
+    apply_overrides(config, args.set, rename=False)
 
     report = schedule_report(
         config,
@@ -91,7 +88,7 @@ def schedule_report(
     active_reset_cycles: int | None = None,
     dynamical_decoupling: bool = False,
 ) -> dict[str, Any]:
-    _load_dotenv()
+    load_dotenv()
     from iqm.pulla.pulla import Pulla
     from iqm.pulla.utils_qiskit import qiskit_to_pulla
     from iqm.qiskit_iqm import IQMProvider
@@ -105,11 +102,8 @@ def schedule_report(
     for value in rounds:
         run_config = copy.deepcopy(config)
         run_config["code"]["rounds"] = int(value)
-        circuit = get_code_builder(run_config["code"].get("family", "surface_code"))(
-            run_config["code"], run_config["noise"], basis
-        )
-        circuit = prepare_circuit_for_execution(run_config, circuit)
-        request = _prepare_iqm_request(run_config["backend"], circuit, run_config["mapping"], backend)
+        circuit = build_circuit(run_config, basis)
+        request = prepare_iqm_request(run_config["backend"], circuit, run_config["mapping"], backend)
         transpiled.append(request["transpiled_circuit"])
 
     circuits, compiler = qiskit_to_pulla(pulla, backend, transpiled)
@@ -143,19 +137,6 @@ def schedule_report(
             }
         )
     return {"chip": pulla.get_chip_label(), "end_delay_us": end_delay * 1e6, "rows": rows}
-
-
-def _parse_value(text: str) -> Any:
-    lowered = text.lower()
-    if lowered in {"true", "false"}:
-        return lowered == "true"
-    try:
-        return int(text)
-    except ValueError:
-        try:
-            return float(text)
-        except ValueError:
-            return text
 
 
 if __name__ == "__main__":

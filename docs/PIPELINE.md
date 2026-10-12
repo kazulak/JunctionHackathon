@@ -16,17 +16,21 @@ config YAML
 ## Key files
 
 ```text
-qec_pipeline/config.py                  YAML loading and validation
-qec_pipeline/pipeline.py                single-run orchestration, per-basis metrics
-qec_pipeline/sweeps.py                  LER-vs-rounds sweeps (one IQM job per sweep)
-qec_pipeline/codes/                     Stim circuit builders, mid-circuit reset strategies
+qec_pipeline/config.py                  YAML loading, validation, command-line overrides (--set)
+qec_pipeline/pipeline.py                run_experiments: build -> execute -> decode -> artifacts (single runs and sweeps)
+qec_pipeline/sweeps.py                  LER-vs-rounds sweeps, IQM preflight, re-decoding saved runs
+qec_pipeline/circuit_preparation.py     code circuit + hardware mapping + calibration noise for one basis
+qec_pipeline/codes/                     surface-code builders (rotated, unrotated, IQM), mid-circuit reset strategies
 qec_pipeline/noise/iqm_calibration.py   calibration-informed Stim noise (docs/CALIBRATED_SIMULATION.md)
-qec_pipeline/mapping/patch_selection.py calibration parsing, patch/layout selection
+qec_pipeline/mapping/calibration.py     IQM calibration files -> per-qubit / per-coupler error table
+qec_pipeline/mapping/patch_selection.py native patch ranking, pinned patches, routed layouts
 qec_pipeline/conversion.py              Stim -> Qiskit (grouped readout, feed-forward)
 qec_pipeline/backends/                  simulator and IQM runners
 qec_pipeline/syndromes.py               measurements -> detector events
-qec_pipeline/decoders/                  decoders
-qec_pipeline/analysis/                  metrics, fits, reports
+qec_pipeline/decoders/                  decoders; scoring.py turns predictions into logical failures
+qec_pipeline/analysis/                  metrics and fits, run reports, sweep tables, plots
+qec_pipeline/artifacts.py               result folders: writing and reading saved runs
+qec_pipeline/stim_utils.py              small Stim circuit helpers shared by all stages
 ```
 
 ## Artifacts

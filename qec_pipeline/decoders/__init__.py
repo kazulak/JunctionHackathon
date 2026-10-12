@@ -5,7 +5,6 @@ from typing import Any
 
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_auto_decoder import decode_with_pymatching_auto
-from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
 from qec_pipeline.decoders.pymatching_decoder import decode_with_pymatching
 from qec_pipeline.decoders.pymatching_pij_decoder import decode_with_pymatching_pij
 
@@ -15,7 +14,8 @@ Decoder = Callable[[dict[str, Any], tuple, tuple], tuple]
 DECODERS: dict[str, Decoder] = {
     "observable_rate": decode_observable_rate,
     "pymatching": decode_with_pymatching,
-    "pymatching_calibrated": decode_with_calibrated_pymatching,
+    # Same decoder: with iqm_calibration noise the circuit's detector error model is the calibrated one.
+    "pymatching_calibrated": decode_with_pymatching,
     "pymatching_auto": decode_with_pymatching_auto,
     "pymatching_pij": decode_with_pymatching_pij,
 }
