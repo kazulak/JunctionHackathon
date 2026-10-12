@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from qec_pipeline.mapping import active_stim_to_dense, select_mapping_from_config
+from qec_pipeline.codes import build_code_circuit
+from qec_pipeline.mapping import select_mapping_from_config
 from qec_pipeline.noise.iqm_calibration import apply_iqm_calibration_noise
+from qec_pipeline.stim_utils import stim_to_dense as dense_order
+
+
+def build_circuit(config: dict[str, Any], basis: str) -> tuple:
+    """The executable circuit for one basis: code circuit, hardware mapping, calibration noise."""
+    return prepare_circuit_for_execution(config, build_code_circuit(config["code"], config["noise"], basis))
 
 
 def prepare_circuit_for_execution(config: dict[str, Any], circuit: tuple) -> tuple:
@@ -22,7 +29,7 @@ def _attach_mapping(mapping: dict[str, Any], circuit: tuple) -> tuple:
     if strategy in {"none", None}:
         return circuit
 
-    stim_to_dense = active_stim_to_dense(stim_circuit)
+    stim_to_dense = dense_order(stim_circuit)
     mapping_info = select_mapping_from_config(mapping, stim_circuit, stim_to_dense)
     if mapping_info is None:
         return circuit

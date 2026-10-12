@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 import random
-import re
 from collections import Counter
-from pathlib import Path
 from typing import Any
 
 import networkx as nx
 import numpy as np
 import stim
-import yaml
 from scipy.optimize import linear_sum_assignment
 
-IQM_QUBIT_RE = re.compile(r"QB\d+")
-DEFAULT_ROUND_SECONDS = 1e-6
+from qec_pipeline.mapping.calibration import (
+    build_hardware_graph,
+    filter_hardware_qubits,
+    label_sort_key,
+    load_calibration,
+    normalize_qubit_label,
+    parse_hardware,
+    sorted_pair,
+)
 
 
 def select_calibration_best_patch(
@@ -46,10 +50,7 @@ def rank_calibration_best_patches(
     """Return all valid native patches sorted by mapping score."""
     weights = weights or {}
     options = options or {}
-    interaction_counts = two_qubit_interaction_counts(stim_circuit)
-    roles = surface_code_qubit_roles(stim_circuit, stim_to_dense)
-    hardware = _parse_hardware(calibration)
-    hardware = _filter_hardware_qubits(hardware, options.get("exclude_qubits", []) or [])
+    interaction_counts, roles, hardware = _problem(stim_circuit, stim_to_dense, calibration, options)
 
     if not hardware["coord_to_label"]:
         candidates = _rank_graph_patches(stim_to_dense, interaction_counts, roles, hardware, weights)
@@ -97,11 +98,8 @@ def select_calibration_routed_layout(
     """Select a low-cost initial layout when the exact native patch does not exist."""
     weights = weights or {}
     options = options or {}
-    interaction_counts = two_qubit_interaction_counts(stim_circuit)
-    roles = surface_code_qubit_roles(stim_circuit, stim_to_dense)
-    hardware = _parse_hardware(calibration)
-    hardware = _filter_hardware_qubits(hardware, options.get("exclude_qubits", []) or [])
-    hardware_graph = _hardware_graph(hardware)
+    interaction_counts, roles, hardware = _problem(stim_circuit, stim_to_dense, calibration, options)
+    hardware_graph = build_hardware_graph(hardware)
     patch_coords = surface_code_patch_coordinates(stim_circuit, stim_to_dense)
 
     if len(hardware["qubits"]) < len(stim_to_dense):
@@ -162,69 +160,25 @@ def select_mapping_from_config(
     stim_circuit: stim.Circuit,
     stim_to_dense: dict[int, int],
 ) -> dict[str, Any] | None:
-    """Return mapping metadata for the configured strategy."""
+    """Return mapping metadata for the configured strategy (a pinned patch takes precedence)."""
     strategy = mapping.get("strategy", "none")
     if strategy in {"none", None}:
         return None
-
-    hardware_patch = mapping.get("hardware_patch")
-    if hardware_patch and hardware_patch.get("stim_to_hardware"):
-        calibration_file = mapping.get("calibration_file")
-        if not calibration_file:
-            raise ValueError("mapping.calibration_file is required for fixed hardware_patch")
-        calibration = yaml.safe_load(Path(calibration_file).read_text(encoding="utf-8")) or {}
-        return select_fixed_stim_to_hardware_patch(
-            stim_circuit,
-            stim_to_dense,
-            calibration,
-            hardware_patch["stim_to_hardware"],
-            weights=mapping.get("weights"),
-            options=mapping.get("options"),
-        )
-
-    calibration_file = mapping.get("calibration_file")
-    if not calibration_file:
+    if not mapping.get("calibration_file"):
         raise ValueError(f"mapping.calibration_file is required for {strategy}")
-    calibration = yaml.safe_load(Path(calibration_file).read_text(encoding="utf-8")) or {}
-    if strategy == "calibration_best_patch":
-        return select_calibration_best_patch(
-            stim_circuit,
-            stim_to_dense,
-            calibration,
-            weights=mapping.get("weights"),
-            options=mapping.get("options"),
-        )
-    if strategy == "calibration_routed_layout":
-        return select_calibration_routed_layout(
-            stim_circuit,
-            stim_to_dense,
-            calibration,
-            weights=mapping.get("weights"),
-            options=mapping.get("options"),
-        )
-    raise NotImplementedError(f"mapping strategy not implemented: {strategy}")
+    calibration = load_calibration(mapping["calibration_file"])
+    kwargs = {"weights": mapping.get("weights"), "options": mapping.get("options")}
 
-
-def active_stim_to_dense(stim_circuit: stim.Circuit) -> dict[int, int]:
-    """Return the dense Qiskit order used by the converter and mapper."""
-    active = sorted(
-        {
-            target.value
-            for instruction in stim_circuit.flattened()
-            for target in instruction.targets_copy()
-            if target.is_qubit_target
-        }
-    )
-    return {stim_qubit: index for index, stim_qubit in enumerate(active)}
-
-
-def parse_hardware_calibration(
-    calibration: dict[str, Any],
-    exclude_qubits: list[str] | None = None,
-) -> dict[str, Any]:
-    """Parse supported calibration formats into the internal hardware table."""
-    hardware = _parse_hardware(calibration)
-    return _filter_hardware_qubits(hardware, exclude_qubits or [])
+    pinned = (mapping.get("hardware_patch") or {}).get("stim_to_hardware")
+    if pinned:
+        return select_fixed_stim_to_hardware_patch(stim_circuit, stim_to_dense, calibration, pinned, **kwargs)
+    selectors = {
+        "calibration_best_patch": select_calibration_best_patch,
+        "calibration_routed_layout": select_calibration_routed_layout,
+    }
+    if strategy not in selectors:
+        raise NotImplementedError(f"mapping strategy not implemented: {strategy}")
+    return selectors[strategy](stim_circuit, stim_to_dense, calibration, **kwargs)
 
 
 def select_fixed_stim_to_hardware_patch(
@@ -238,12 +192,9 @@ def select_fixed_stim_to_hardware_patch(
     """Use a pinned Stim-qubit-to-hardware-qubit assignment from YAML."""
     weights = weights or {}
     options = options or {}
-    interaction_counts = two_qubit_interaction_counts(stim_circuit)
-    roles = surface_code_qubit_roles(stim_circuit, stim_to_dense)
-    hardware = _parse_hardware(calibration)
-    hardware = _filter_hardware_qubits(hardware, options.get("exclude_qubits", []) or [])
+    interaction_counts, roles, hardware = _problem(stim_circuit, stim_to_dense, calibration, options)
 
-    normalized = {int(stim): _normalize_qubit_label(label) for stim, label in stim_to_hardware.items()}
+    normalized = {int(stim): normalize_qubit_label(label) for stim, label in stim_to_hardware.items()}
     missing = sorted(set(stim_to_dense) - set(normalized))
     extra = sorted(set(normalized) - set(stim_to_dense))
     if missing or extra:
@@ -274,6 +225,17 @@ def select_fixed_stim_to_hardware_patch(
     selected["num_candidates"] = 1
     selected["excluded_qubits"] = hardware.get("excluded_qubits", [])
     return selected
+
+
+def _problem(
+    stim_circuit: stim.Circuit,
+    stim_to_dense: dict[int, int],
+    calibration: dict[str, Any],
+    options: dict[str, Any],
+) -> tuple[Counter[tuple[int, int]], dict[int, str], dict[str, Any]]:
+    """Interaction counts, qubit roles, and the usable hardware table for one selection."""
+    hardware = filter_hardware_qubits(parse_hardware(calibration), options.get("exclude_qubits", []) or [])
+    return two_qubit_interaction_counts(stim_circuit), surface_code_qubit_roles(stim_circuit, stim_to_dense), hardware
 
 
 def surface_code_patch_coordinates(
@@ -342,43 +304,6 @@ def surface_code_qubit_roles(
     }
 
 
-def _parse_hardware(calibration: dict[str, Any]) -> dict[str, Any]:
-    if "observations" in calibration:
-        return _parse_iqm_observation_set(calibration)
-
-    qubits = {}
-    coord_to_label = {}
-    for label, data in calibration.get("qubits", {}).items():
-        if data.get("disabled", False):
-            continue
-        row = int(data["row"])
-        col = int(data["col"])
-        qubits[label] = {
-            "label": label,
-            "row": row,
-            "col": col,
-            "index": int(data.get("index", _index_from_label(label))),
-            "errors": data.get("errors", {}),
-        }
-        coord_to_label[(row, col)] = label
-
-    couplers = {}
-    for item in calibration.get("couplers", []):
-        if item.get("disabled", False):
-            continue
-        labels = _sorted_pair(item["qubits"][0], item["qubits"][1])
-        couplers[labels] = float(item.get("error", 0.0))
-
-    return {
-        "qpu": calibration.get("qpu"),
-        "qubits": qubits,
-        "coord_to_label": coord_to_label,
-        "couplers": couplers,
-        "has_couplers": bool(couplers),
-        "source_schema": "patch_grid",
-    }
-
-
 def _score_candidate(
     origin: tuple[int, int],
     patch_coords: dict[int, tuple[int, int]],
@@ -403,23 +328,6 @@ def _score_candidate(
     return candidate
 
 
-def _select_graph_patch(
-    stim_to_dense: dict[int, int],
-    interaction_counts: Counter[tuple[int, int]],
-    roles: dict[int, str],
-    hardware: dict[str, Any],
-    weights: dict[str, float],
-) -> dict[str, Any]:
-    """Find a native hardware subgraph matching the generated surface-code interactions."""
-    candidates = _rank_graph_patches(stim_to_dense, interaction_counts, roles, hardware, weights)
-    if not candidates:
-        raise ValueError(
-            "No native hardware graph patch found for this circuit and calibration data. "
-            "Use a smaller distance or disable mapping so Qiskit can route the circuit."
-        )
-    return candidates[0]
-
-
 def _rank_graph_patches(
     stim_to_dense: dict[int, int],
     interaction_counts: Counter[tuple[int, int]],
@@ -432,7 +340,7 @@ def _rank_graph_patches(
     code_graph.add_nodes_from(stim_to_dense)
     code_graph.add_edges_from(interaction_counts)
 
-    hardware_graph = _hardware_graph(hardware)
+    hardware_graph = build_hardware_graph(hardware)
 
     matcher = nx.algorithms.isomorphism.GraphMatcher(hardware_graph, code_graph)
     candidates = []
@@ -462,42 +370,6 @@ def _rank_graph_patches(
     return candidates
 
 
-def _hardware_graph(hardware: dict[str, Any]) -> nx.Graph:
-    graph = nx.Graph()
-    graph.add_nodes_from(hardware["qubits"])
-    graph.add_edges_from(hardware["couplers"])
-    return graph
-
-
-def _filter_hardware_qubits(hardware: dict[str, Any], exclude_qubits: list[str]) -> dict[str, Any]:
-    excluded = {_normalize_qubit_label(label) for label in exclude_qubits}
-    if not excluded:
-        return hardware
-
-    qubits = {
-        label: data
-        for label, data in hardware["qubits"].items()
-        if label not in excluded
-    }
-    couplers = {
-        pair: error
-        for pair, error in hardware["couplers"].items()
-        if pair[0] in qubits and pair[1] in qubits
-    }
-    coord_to_label = {
-        coord: label
-        for coord, label in hardware["coord_to_label"].items()
-        if label in qubits
-    }
-    result = dict(hardware)
-    result["qubits"] = qubits
-    result["couplers"] = couplers
-    result["coord_to_label"] = coord_to_label
-    result["has_couplers"] = bool(couplers)
-    result["excluded_qubits"] = sorted(excluded, key=_label_sort_key)
-    return result
-
-
 def _score_assignment(
     stim_to_hardware: dict[int, str],
     stim_to_dense: dict[int, int],
@@ -516,9 +388,9 @@ def _score_assignment(
     routed_code_edges = 0
     expected_swap_count = 0
     max_route_distance = 1
-    hardware_graph = _hardware_graph(hardware) if allow_routing else None
+    hardware_graph = build_hardware_graph(hardware) if allow_routing else None
     for (stim_a, stim_b), count in interaction_counts.items():
-        labels = _sorted_pair(stim_to_hardware[stim_a], stim_to_hardware[stim_b])
+        labels = sorted_pair(stim_to_hardware[stim_a], stim_to_hardware[stim_b])
         if hardware["has_couplers"] and labels not in hardware["couplers"]:
             missing_couplers.append(labels)
             if allow_routing and hardware_graph is not None:
@@ -530,7 +402,7 @@ def _score_assignment(
                     expected_swap_count += max(0, distance - 1)
                     score += float(weights.get("route_distance", 0.2)) * count * max(0, distance - 1)
                     for index in range(len(path) - 1):
-                        edge = _sorted_pair(path[index], path[index + 1])
+                        edge = sorted_pair(path[index], path[index + 1])
                         coupler_error = hardware["couplers"].get(edge, 0.0)
                         max_coupler_error = max(max_coupler_error, coupler_error)
                         score += float(weights.get("two_qubit", 1.0)) * count * coupler_error
@@ -546,38 +418,14 @@ def _score_assignment(
         return None
 
     unique_code_edges = len(interaction_counts)
-    total_code_interactions = int(sum(interaction_counts.values()))
-
-    dense_to_hardware = {
-        dense: stim_to_hardware[stim_qubit]
-        for stim_qubit, dense in stim_to_dense.items()
-    }
-    initial_layout = [
-        hardware["qubits"][dense_to_hardware[dense]]["index"]
-        for dense in range(len(dense_to_hardware))
-    ]
-
-    return {
-        "qpu": hardware["qpu"],
-        "score": score,
-        "initial_layout": initial_layout,
-        "stim_to_hardware": {str(key): value for key, value in sorted(stim_to_hardware.items())},
-        "dense_to_hardware": {str(key): value for key, value in sorted(dense_to_hardware.items())},
+    return _assignment_to_mapping(stim_to_hardware, stim_to_dense, roles, hardware, score) | {
         "unique_code_edges": unique_code_edges,
         "native_code_edges": unique_code_edges - len(missing_couplers),
         "routed_code_edges": routed_code_edges,
         "missing_couplers": [list(pair) for pair in missing_couplers],
         "max_route_distance": max_route_distance,
-        "total_code_two_qubit_interactions": total_code_interactions,
+        "total_code_two_qubit_interactions": int(sum(interaction_counts.values())),
         "expected_swap_count": expected_swap_count,
-        "data_hardware": sorted(
-            (label for stim_qubit, label in stim_to_hardware.items() if roles[stim_qubit] == "data"),
-            key=_label_sort_key,
-        ),
-        "ancilla_hardware": sorted(
-            (label for stim_qubit, label in stim_to_hardware.items() if roles[stim_qubit] == "ancilla"),
-            key=_label_sort_key,
-        ),
     }
 
 
@@ -610,13 +458,13 @@ def _initial_routed_assignments(
         }
         assignments.append(assignment)
 
-    label_sorted = sorted(hardware_labels, key=_label_sort_key)
+    label_sorted = sorted(hardware_labels, key=label_sort_key)
     best_49 = sorted(
         hardware_labels,
-        key=lambda label: (_node_error(hardware, label, "ancilla", weights), _label_sort_key(label)),
+        key=lambda label: (_node_error(hardware, label, "ancilla", weights), label_sort_key(label)),
     )[: len(code_nodes)]
     assignments.append(dict(zip(code_nodes, label_sorted[: len(code_nodes)], strict=True)))
-    assignments.append(dict(zip(code_nodes, sorted(best_49, key=_label_sort_key), strict=True)))
+    assignments.append(dict(zip(code_nodes, sorted(best_49, key=label_sort_key), strict=True)))
 
     unique = []
     seen = set()
@@ -711,7 +559,7 @@ def _routed_score_function(
 
             path_error = 0.0
             for index in range(distance):
-                labels = _sorted_pair(path[index], path[index + 1])
+                labels = sorted_pair(path[index], path[index + 1])
                 coupler_error = hardware["couplers"].get(labels, 0.0)
                 max_coupler_error = max(max_coupler_error, coupler_error)
                 path_error += coupler_error
@@ -752,11 +600,11 @@ def _assignment_to_mapping(
         "dense_to_hardware": {str(key): value for key, value in sorted(dense_to_hardware.items())},
         "data_hardware": sorted(
             (label for stim_qubit, label in stim_to_hardware.items() if roles[stim_qubit] == "data"),
-            key=_label_sort_key,
+            key=label_sort_key,
         ),
         "ancilla_hardware": sorted(
             (label for stim_qubit, label in stim_to_hardware.items() if roles[stim_qubit] == "ancilla"),
-            key=_label_sort_key,
+            key=label_sort_key,
         ),
     }
 
@@ -809,141 +657,3 @@ def _coordinate_transforms(points: dict[int, np.ndarray]) -> list[dict[int, np.n
     return transforms
 
 
-def _parse_iqm_observation_set(calibration: dict[str, Any]) -> dict[str, Any]:
-    qubit_labels = set()
-    one_qubit_errors: dict[str, list[float]] = {}
-    # Mid-circuit readout ("measure") and the high-fidelity terminal readout
-    # ("measure_fidelity", e.g. shelved) are calibrated separately on IQM QPUs.
-    assignment_errors: dict[str, list[float]] = {}
-    readout_infidelities: dict[str, list[float]] = {}
-    terminal_assignment_errors: dict[str, list[float]] = {}
-    terminal_readout_infidelities: dict[str, list[float]] = {}
-    qnd_values: dict[str, list[float]] = {}
-    t1_times: dict[str, float] = {}
-    t2_times: dict[str, float] = {}
-    t2_echo_times: dict[str, float] = {}
-    coupler_candidates: dict[tuple[str, str], list[tuple[int, float]]] = {}
-
-    for observation in calibration.get("observations", []):
-        field = str(observation.get("dut_field", ""))
-        value = float(observation.get("value", 0.0))
-        labels = IQM_QUBIT_RE.findall(field)
-        qubit_labels.update(labels)
-
-        if len(labels) == 1:
-            label = labels[0]
-            terminal = ".ssro.measure_fidelity." in field
-            if "ssro.measure" in field and field.endswith(("error_0_to_1", "error_1_to_0")):
-                target = terminal_assignment_errors if terminal else assignment_errors
-                target.setdefault(label, []).append(value)
-            elif "ssro.measure" in field and field.endswith(".fidelity"):
-                target = terminal_readout_infidelities if terminal else readout_infidelities
-                target.setdefault(label, []).append(1.0 - value)
-            elif ".rb.prx." in field and ".fidelity" in field:
-                one_qubit_errors.setdefault(label, []).append(1.0 - value)
-            elif ".rb.clifford." in field and ".fidelity" in field:
-                one_qubit_errors.setdefault(label, []).append(1.0 - value)
-            elif "qndness" in field and field.endswith(("qndness_0", "qndness_1")):
-                qnd_values.setdefault(label, []).append(value)
-            elif field.endswith(".t1_time"):
-                t1_times[label] = value
-            elif field.endswith(".t2_time"):
-                t2_times[label] = value
-            elif field.endswith(".t2_echo_time"):
-                t2_echo_times[label] = value
-
-        if len(labels) >= 2 and field.endswith("fidelity:par=d2"):
-            pair = tuple(sorted(labels[:2], key=_index_from_label))
-            priority = 0 if ".irb.cz." in field else 1
-            coupler_candidates.setdefault(pair, []).append((priority, 1.0 - value))
-
-    qubits = {}
-    for label in sorted(qubit_labels, key=_index_from_label):
-        qnd_error = 1.0 - min(qnd_values[label]) if label in qnd_values else 0.0
-        idle_time = t2_echo_times.get(label) or t2_times.get(label)
-        idle_error = 1.0 - np.exp(-DEFAULT_ROUND_SECONDS / idle_time) if idle_time else 0.0
-        qubits[label] = {
-            "label": label,
-            "index": _index_from_label(label),
-            "errors": {
-                "one_qubit": min(one_qubit_errors.get(label, [0.0])),
-                "measurement": _readout_error(
-                    assignment_errors.get(label, []),
-                    readout_infidelities.get(label, []),
-                ),
-                "measurement_terminal": _readout_error(
-                    terminal_assignment_errors.get(label, []) or assignment_errors.get(label, []),
-                    terminal_readout_infidelities.get(label, []) or readout_infidelities.get(label, []),
-                ),
-                "reset": 0.0,
-                "idle": idle_error,
-                "qnd": qnd_error,
-            },
-            "calibration": {
-                "t1_time": t1_times.get(label),
-                "t2_time": t2_times.get(label),
-                "t2_echo_time": t2_echo_times.get(label),
-            },
-        }
-
-    couplers = {}
-    for pair, candidates in coupler_candidates.items():
-        best_priority = min(priority for priority, _error in candidates)
-        best_errors = [
-            error
-            for priority, error in candidates
-            if priority == best_priority
-        ]
-        couplers[pair] = min(best_errors)
-
-    return {
-        "qpu": calibration.get("dut_label") or calibration.get("describes_id"),
-        "qubits": qubits,
-        "coord_to_label": {},
-        "couplers": couplers,
-        "has_couplers": bool(couplers),
-        "source_schema": "iqm_observation_set",
-    }
-
-
-def _readout_error(assignment_errors: list[float], infidelities: list[float]) -> float:
-    """Symmetric readout flip probability for a qubit.
-
-    The mean of the 0->1 and 1->0 assignment errors is the error averaged over
-    the two prepared states. Stim's pre-measurement flip is symmetric, so this
-    is the closest single number (the old code took the maximum of all fields,
-    which overstated readout error for the 0 state).
-    """
-    if assignment_errors:
-        return float(np.mean(assignment_errors))
-    if infidelities:
-        return float(np.mean(infidelities))
-    return 0.0
-
-
-def _index_from_label(label: str) -> int:
-    if label.upper().startswith("QB"):
-        return int(label[2:]) - 1
-    raise ValueError(f"Qubit label {label!r} needs explicit qiskit index")
-
-
-def _label_sort_key(label: str) -> tuple[int, int | str]:
-    if label.upper().startswith("QB") and label[2:].isdigit():
-        return (0, int(label[2:]))
-    return (1, label)
-
-
-def _sorted_pair(left: str, right: str) -> tuple[str, str]:
-    first, second = sorted((left, right), key=_label_sort_key)
-    return (first, second)
-
-
-def _normalize_qubit_label(label: str | int) -> str:
-    if isinstance(label, int):
-        return f"QB{label}"
-    text = str(label).strip().upper()
-    if text.startswith("QB"):
-        return f"QB{int(text[2:])}"
-    if text.isdigit():
-        return f"QB{int(text)}"
-    raise ValueError(f"Invalid qubit label in exclude_qubits: {label!r}")

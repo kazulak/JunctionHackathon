@@ -1,118 +1,55 @@
+"""Decoder-candidate study: several MWPM variants, one reported result.
+
+Candidates (each switched on by an option):
+    calibrated_or_configured   MWPM on the circuit's detector error model (always)
+    correlated_*               correlated matching (`include_correlated_matching`)
+    uniform_p=...              MWPM with uniform-noise priors (`uniform_probabilities`)
+    ensemble_*                 majority vote of MWPM variants (`include_matching_ensembles`)
+    ...|no_correction_for_*    no correction on low-syndrome shots (`gated_no_correction_*`)
+    no_correction              raw observable (`include_no_correction`, default on)
+
+Selection (`candidate_selection_mode`):
+    kfold (default)   choose on k-1 folds, report on the held-out fold, for every fold
+    holdout           choose on one split, report on the other
+    current_batch     choose and report on the same shots: optimistic (winner's curse),
+                      flagged `selection_is_in_sample`
+
+Postselection (`postselect_max_syndrome_weight` / `postselect_weight_quantile`) keeps only
+low-syndrome shots before decoding; it is a diagnostic, not a logical-memory result.
+"""
+
 from __future__ import annotations
 
 from typing import Any
 
 import numpy as np
 
-from qec_pipeline.analysis.metrics import binomial_standard_error
-from qec_pipeline.decoders.pymatching_decoder import (
-    decode_detection_events,
-    detector_model_with_uniform_noise,
-)
+from qec_pipeline.decoders.pymatching_decoder import decode_detection_events, detector_model_with_uniform_noise
+from qec_pipeline.decoders.scoring import as_2d_bool, score_predictions, uncertainty
 
 DEFAULT_SELECTION_MODE = "kfold"
 
 
-def decode_with_pymatching_auto(
-    decoder: dict[str, Any],
-    circuit: tuple,
-    syndromes: tuple,
-) -> tuple:
-    """Try several MWPM variants and report the selected one.
-
-    Selection modes (`options.candidate_selection_mode`):
-        kfold (default): choose on k-1 folds, report on the held-out fold.
-        holdout: choose on one split, report on the other.
-        current_batch: choose and report on the same shots. Optimistic
-            (winner's curse); `decoder_info["selection_is_in_sample"]` is True.
-    """
+def decode_with_pymatching_auto(decoder: dict[str, Any], circuit: tuple, syndromes: tuple) -> tuple:
     stim_circuit, detector_model, _measurement_order, circuit_info = circuit
     detection_events, observable_flips, syndrome_info = syndromes
     options = decoder.get("options", {}) or {}
     detection_events = np.asarray(detection_events, dtype=bool)
-    observable_flips = _as_2d_bool(observable_flips)
+    observable_flips = as_2d_bool(observable_flips)
 
     mask = _postselection_mask(detection_events, options)
-    used_detection_events = detection_events[mask]
-    used_observable_flips = observable_flips[mask]
+    events, flips = detection_events[mask], observable_flips[mask]
 
-    candidates = []
-    mwpm_candidates = []
-    configured_candidate = (
-        _decode_candidate(
-            "calibrated_or_configured",
-            detector_model,
-            used_detection_events,
-            used_observable_flips,
-        )
-    )
-    candidates.append(configured_candidate)
-    mwpm_candidates.append(configured_candidate)
-
-    if bool(options.get("include_correlated_matching", False)):
-        correlated_candidate = _decode_candidate(
-            "correlated_calibrated_or_configured",
-            detector_model,
-            used_detection_events,
-            used_observable_flips,
-            enable_correlations=True,
-        )
-        candidates.append(correlated_candidate)
-        mwpm_candidates.append(correlated_candidate)
-
-    for probability in options.get("uniform_probabilities", []):
-        uniform_model = detector_model_with_uniform_noise(stim_circuit, float(probability))
-        candidate = _decode_candidate(
-            f"uniform_p={float(probability):g}",
-            uniform_model,
-            used_detection_events,
-            used_observable_flips,
-        )
-        candidates.append(candidate)
-        mwpm_candidates.append(candidate)
-        if bool(options.get("include_correlated_matching", False)):
-            correlated_candidate = _decode_candidate(
-                f"correlated_uniform_p={float(probability):g}",
-                uniform_model,
-                used_detection_events,
-                used_observable_flips,
-                enable_correlations=True,
-            )
-            candidates.append(correlated_candidate)
-            mwpm_candidates.append(correlated_candidate)
-
-    candidates.extend(
-        _ensemble_candidates(
-            mwpm_candidates,
-            used_observable_flips,
-            options,
-        )
-    )
-    candidates.extend(
-        _gated_no_correction_candidates(
-            mwpm_candidates,
-            used_detection_events,
-            used_observable_flips,
-            options,
-        )
-    )
-
+    mwpm = _mwpm_candidates(stim_circuit, detector_model, events, flips, options)
+    candidates = [
+        *mwpm,
+        *_ensemble_candidates(mwpm, flips, options),
+        *_gated_no_correction_candidates(mwpm, events, flips, options),
+    ]
     if bool(options.get("include_no_correction", True)):
-        logical_failures = np.asarray(used_observable_flips, dtype=bool).any(axis=1)
-        shots = int(len(logical_failures))
-        ler = float(logical_failures.mean()) if shots else 0.0
-        uncertainty = _binomial_standard_error(ler, shots)
-        candidates.append(
-            {
-                "name": "no_correction",
-                "predicted_observables": np.zeros_like(used_observable_flips, dtype=bool),
-                "logical_failures": logical_failures,
-                "ler": ler,
-                "uncertainty": uncertainty,
-            }
-        )
+        candidates.append(_candidate("no_correction", np.zeros_like(flips, dtype=bool), flips))
 
-    best, candidate_selection_info = _select_candidate(candidates, options)
+    best, selection_info = _select_candidate(candidates, options)
     decoder_info = {
         "decoder": decoder["name"],
         "selected_candidate": best["name"],
@@ -124,7 +61,7 @@ def decode_with_pymatching_auto(
         "num_observables": int(circuit_info["num_observables"]),
         "noise_model": circuit_info.get("noise_model"),
         "mean_syndrome_weight": syndrome_info.get("mean_syndrome_weight"),
-        **candidate_selection_info,
+        **selection_info,
         "candidates": [
             {
                 "name": item["name"],
@@ -132,12 +69,11 @@ def decode_with_pymatching_auto(
                 "uncertainty": float(item["uncertainty"]),
                 "logical_failures": int(item["logical_failures"].sum()),
                 "shots": int(len(item["logical_failures"])),
-                **_candidate_split_info(item),
+                **{key: item[key] for key in _SPLIT_KEYS if key in item},
             }
             for item in candidates
         ],
     }
-
     return (
         best["predicted_observables"],
         best["logical_failures"],
@@ -147,74 +83,53 @@ def decode_with_pymatching_auto(
     )
 
 
-def _decode_candidate(
-    name: str,
-    detector_model: object,
-    detection_events: np.ndarray,
-    observable_flips: np.ndarray,
-    enable_correlations: bool = False,
-) -> dict[str, Any]:
-    predicted, logical_failures, ler, uncertainty = decode_detection_events(
-        detector_model,
-        detection_events,
-        observable_flips,
-        enable_correlations=enable_correlations,
-    )
+# --- candidates -------------------------------------------------------------------------------
+
+
+def _candidate(name: str, predicted: np.ndarray, observable_flips: np.ndarray) -> dict[str, Any]:
+    failures, ler, sigma = score_predictions(predicted, observable_flips)
     return {
         "name": name,
         "predicted_observables": predicted,
-        "logical_failures": logical_failures,
+        "logical_failures": failures,
         "ler": ler,
-        "uncertainty": uncertainty,
+        "uncertainty": sigma,
     }
 
 
-def _ensemble_candidates(
-    mwpm_candidates: list[dict[str, Any]],
-    observable_flips: np.ndarray,
-    options: dict[str, Any],
-) -> list[dict[str, Any]]:
-    """Add simple majority-vote MWPM ensembles.
-
-    This is a cheap local analogue of matching ensembles: several DEM priors
-    produce predictions, then the observable prediction is majority-voted.
-    """
-    if not bool(options.get("include_matching_ensembles", False)):
-        return []
-    if len(mwpm_candidates) < 3:
-        return []
-
-    groups = [("ensemble_all_mwpm", mwpm_candidates)]
-    uniform_candidates = [
-        candidate for candidate in mwpm_candidates if candidate["name"].startswith("uniform_p=")
+def _mwpm_candidates(stim_circuit, detector_model, events, flips, options) -> list[dict[str, Any]]:
+    """MWPM on the circuit's model and on uniform priors, each optionally also with correlated matching."""
+    correlated = bool(options.get("include_correlated_matching", False))
+    models = [("calibrated_or_configured", detector_model)]
+    models += [
+        (f"uniform_p={float(p):g}", detector_model_with_uniform_noise(stim_circuit, float(p)))
+        for p in options.get("uniform_probabilities", [])
     ]
-    if len(uniform_candidates) >= 3:
-        groups.append(("ensemble_uniform_mwpm", uniform_candidates))
-
-    result = []
-    observable_flips = _as_2d_bool(observable_flips)
-    for name, group in groups:
-        predicted = _majority_vote_predictions(
-            [candidate["predicted_observables"] for candidate in group]
-        )
-        logical_failures = np.logical_xor(predicted, observable_flips).any(axis=1)
-        shots = int(len(logical_failures))
-        ler = float(logical_failures.mean()) if shots else 0.0
-        uncertainty = _binomial_standard_error(ler, shots)
-        result.append(
-            {
-                "name": name,
-                "predicted_observables": predicted,
-                "logical_failures": logical_failures,
-                "ler": ler,
-                "uncertainty": uncertainty,
-            }
-        )
-    return result
+    candidates = []
+    for name, model in models:
+        for enable_correlations in (False, True) if correlated else (False,):
+            predicted, *_ = decode_detection_events(model, events, flips, enable_correlations=enable_correlations)
+            candidates.append(_candidate(f"correlated_{name}" if enable_correlations else name, predicted, flips))
+    return candidates
 
 
-def _majority_vote_predictions(predictions: list[np.ndarray]) -> np.ndarray:
-    stacked = np.stack([_as_2d_bool(prediction) for prediction in predictions])
+def _ensemble_candidates(
+    mwpm: list[dict[str, Any]], flips: np.ndarray, options: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Majority vote over several MWPM priors (a cheap analogue of matching ensembles)."""
+    if not bool(options.get("include_matching_ensembles", False)) or len(mwpm) < 3:
+        return []
+    groups = [("ensemble_all_mwpm", mwpm)]
+    uniform = [candidate for candidate in mwpm if candidate["name"].startswith("uniform_p=")]
+    if len(uniform) >= 3:
+        groups.append(("ensemble_uniform_mwpm", uniform))
+    return [
+        _candidate(name, _majority_vote([c["predicted_observables"] for c in group]), flips) for name, group in groups
+    ]
+
+
+def _majority_vote(predictions: list[np.ndarray]) -> np.ndarray:
+    stacked = np.stack([as_2d_bool(prediction) for prediction in predictions])
     votes = stacked.sum(axis=0)
     half = len(predictions) / 2
     majority = votes > half
@@ -224,251 +139,39 @@ def _majority_vote_predictions(predictions: list[np.ndarray]) -> np.ndarray:
     return majority
 
 
-def _select_candidate(
-    candidates: list[dict[str, Any]],
-    options: dict[str, Any],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    mode = str(options.get("candidate_selection_mode", DEFAULT_SELECTION_MODE)).lower()
-    if mode in {"current_batch", "best_on_current_batch"}:
-        best = _min_by_position(candidates, lambda item: item["ler"])
-        return best, {"candidate_selection": "best_on_current_batch", "selection_is_in_sample": True}
-
-    if mode == "kfold":
-        return _select_candidate_kfold(candidates, options)
-
-    if mode != "holdout":
-        raise ValueError(
-            "candidate_selection_mode must be 'current_batch', 'holdout', or 'kfold'"
-        )
-
-    shots = int(len(candidates[0]["logical_failures"])) if candidates else 0
-    if shots < 2:
-        best = _min_by_position(candidates, lambda item: item["ler"])
-        return best, {
-            "candidate_selection": "holdout_fallback_current_batch",
-            "selection_is_in_sample": True,
-            "selection_shots": shots,
-            "evaluation_shots": 0,
-        }
-
-    selection_fraction = float(options.get("selection_fraction", 0.5))
-    if not 0.0 < selection_fraction < 1.0:
-        raise ValueError("selection_fraction must be between 0 and 1")
-
-    selection_shots = int(round(shots * selection_fraction))
-    selection_shots = min(max(selection_shots, 1), shots - 1)
-
-    rng = np.random.default_rng(int(options.get("selection_seed", 1)))
-    indices = np.arange(shots)
-    rng.shuffle(indices)
-
-    selection_mask = np.zeros(shots, dtype=bool)
-    selection_mask[indices[:selection_shots]] = True
-    evaluation_mask = ~selection_mask
-
-    for candidate in candidates:
-        selection_failures = candidate["logical_failures"][selection_mask]
-        evaluation_failures = candidate["logical_failures"][evaluation_mask]
-        candidate["selection_ler"] = _mean_bool(selection_failures)
-        candidate["selection_logical_failures"] = int(selection_failures.sum())
-        candidate["selection_shots"] = int(selection_failures.size)
-        candidate["evaluation_ler"] = _mean_bool(evaluation_failures)
-        candidate["evaluation_logical_failures"] = int(evaluation_failures.sum())
-        candidate["evaluation_shots"] = int(evaluation_failures.size)
-
-    # Ties are broken by candidate order, never by evaluation LER (that would leak the test split).
-    selected = _min_by_position(candidates, lambda item: item["selection_ler"])
-    reported = {
-        "name": selected["name"],
-        "predicted_observables": selected["predicted_observables"][evaluation_mask],
-        "logical_failures": selected["logical_failures"][evaluation_mask],
-        "ler": float(selected["evaluation_ler"]),
-        "uncertainty": _binomial_standard_error(
-            float(selected["evaluation_ler"]),
-            int(selected["evaluation_shots"]),
-        ),
-    }
-    info = {
-        "candidate_selection": "holdout",
-        "selection_is_in_sample": False,
-        "selection_fraction": float(selection_fraction),
-        "selection_shots": int(selection_shots),
-        "evaluation_shots": int(evaluation_mask.sum()),
-        "selection_seed": int(options.get("selection_seed", 1)),
-        "selected_candidate_selection_ler": float(selected["selection_ler"]),
-        "selected_candidate_evaluation_ler": float(selected["evaluation_ler"]),
-    }
-    return reported, info
-
-
-def _select_candidate_kfold(
-    candidates: list[dict[str, Any]],
-    options: dict[str, Any],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    shots = int(len(candidates[0]["logical_failures"])) if candidates else 0
-    folds = int(options.get("candidate_selection_folds", 5))
-    if folds < 2:
-        raise ValueError("candidate_selection_folds must be at least 2")
-    if shots < folds:
-        best = _min_by_position(candidates, lambda item: item["ler"])
-        return best, {
-            "candidate_selection": "kfold_fallback_current_batch",
-            "selection_is_in_sample": True,
-            "candidate_selection_folds": folds,
-        }
-
-    rng = np.random.default_rng(int(options.get("selection_seed", 1)))
-    shuffled_indices = np.arange(shots)
-    rng.shuffle(shuffled_indices)
-    fold_indices = np.array_split(shuffled_indices, folds)
-
-    predicted = np.zeros_like(candidates[0]["predicted_observables"], dtype=bool)
-    logical_failures = np.zeros(shots, dtype=bool)
-    selected_names = []
-    fold_rows = []
-
-    for fold_index, evaluation_indices in enumerate(fold_indices):
-        evaluation_mask = np.zeros(shots, dtype=bool)
-        evaluation_mask[evaluation_indices] = True
-        selection_mask = ~evaluation_mask
-
-        fold_scores = []
-        for candidate in candidates:
-            selection_failures = candidate["logical_failures"][selection_mask]
-            evaluation_failures = candidate["logical_failures"][evaluation_mask]
-            fold_scores.append(
-                {
-                    "candidate": candidate,
-                    "selection_ler": _mean_bool(selection_failures),
-                    "selection_logical_failures": int(selection_failures.sum()),
-                    "selection_shots": int(selection_failures.size),
-                    "evaluation_ler": _mean_bool(evaluation_failures),
-                    "evaluation_logical_failures": int(evaluation_failures.sum()),
-                    "evaluation_shots": int(evaluation_failures.size),
-                }
-            )
-
-        selected = _min_by_position(fold_scores, lambda item: item["selection_ler"])
-        candidate = selected["candidate"]
-        predicted[evaluation_mask] = candidate["predicted_observables"][evaluation_mask]
-        logical_failures[evaluation_mask] = candidate["logical_failures"][evaluation_mask]
-        selected_names.append(candidate["name"])
-        fold_rows.append(
-            {
-                "fold": fold_index,
-                "selected_candidate": candidate["name"],
-                "selection_ler": float(selected["selection_ler"]),
-                "selection_logical_failures": int(selected["selection_logical_failures"]),
-                "selection_shots": int(selected["selection_shots"]),
-                "evaluation_ler": float(selected["evaluation_ler"]),
-                "evaluation_logical_failures": int(selected["evaluation_logical_failures"]),
-                "evaluation_shots": int(selected["evaluation_shots"]),
-            }
-        )
-
-    ler = _mean_bool(logical_failures)
-    reported = {
-        "name": "kfold_selected_candidates",
-        "predicted_observables": predicted,
-        "logical_failures": logical_failures,
-        "ler": ler,
-        "uncertainty": _binomial_standard_error(ler, shots),
-    }
-    info = {
-        "candidate_selection": "kfold",
-        "selection_is_in_sample": False,
-        "candidate_selection_folds": folds,
-        "selection_seed": int(options.get("selection_seed", 1)),
-        "fold_selected_candidates": fold_rows,
-        "unique_selected_candidates": sorted(set(selected_names)),
-    }
-    return reported, info
-
-
-def _min_by_position(items: list[dict[str, Any]], score) -> dict[str, Any]:
-    """Return the lowest-scoring item; ties go to the earliest item (label-free)."""
-    return min(enumerate(items), key=lambda pair: (score(pair[1]), pair[0]))[1]
-
-
-def _candidate_split_info(candidate: dict[str, Any]) -> dict[str, Any]:
-    keys = [
-        "selection_ler",
-        "selection_logical_failures",
-        "selection_shots",
-        "evaluation_ler",
-        "evaluation_logical_failures",
-        "evaluation_shots",
-    ]
-    return {key: candidate[key] for key in keys if key in candidate}
-
-
-def _mean_bool(values: np.ndarray) -> float:
-    if values.size == 0:
-        return 0.0
-    return float(values.mean())
-
-
 def _gated_no_correction_candidates(
-    mwpm_candidates: list[dict[str, Any]],
-    detection_events: np.ndarray,
-    observable_flips: np.ndarray,
+    mwpm: list[dict[str, Any]],
+    events: np.ndarray,
+    flips: np.ndarray,
     options: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    """Use no correction on low-syndrome shots and MWPM otherwise.
-
-    This is a cheap diagnostic inspired by detector-rate analysis: if low
-    syndrome-weight shots are already reliable, avoid over-correcting them.
-    """
-    if not mwpm_candidates:
-        return []
-
-    weights = detection_events.sum(axis=1)
-    observable_flips = _as_2d_bool(observable_flips)
-    thresholds = _gated_thresholds(weights, options)
+    """No correction on low-syndrome shots, MWPM on the rest: tests whether MWPM over-corrects clean shots."""
+    weights = events.sum(axis=1)
     candidates = []
-    for threshold_name, threshold in thresholds:
+    for threshold_name, threshold in _gated_thresholds(weights, options):
         low_syndrome = weights <= threshold
         if not low_syndrome.any() or low_syndrome.all():
             continue
-        for candidate in mwpm_candidates:
+        for candidate in mwpm:
             predicted = np.array(candidate["predicted_observables"], dtype=bool, copy=True)
             predicted[low_syndrome] = False
-            logical_failures = np.logical_xor(predicted, observable_flips).any(axis=1)
-            shots = int(len(logical_failures))
-            ler = float(logical_failures.mean()) if shots else 0.0
-            uncertainty = _binomial_standard_error(ler, shots)
-            candidates.append(
-                {
-                    "name": f"{candidate['name']}|no_correction_for_{threshold_name}",
-                    "predicted_observables": predicted,
-                    "logical_failures": logical_failures,
-                    "ler": ler,
-                    "uncertainty": uncertainty,
-                }
-            )
+            candidates.append(_candidate(f"{candidate['name']}|no_correction_for_{threshold_name}", predicted, flips))
     return candidates
 
 
-def _gated_thresholds(
-    syndrome_weights: np.ndarray,
-    options: dict[str, Any],
-) -> list[tuple[str, int]]:
-    thresholds: list[tuple[str, int]] = []
-    for quantile in options.get("gated_no_correction_quantiles", []):
-        q = float(quantile)
-        threshold = int(np.quantile(syndrome_weights, q))
-        thresholds.append((f"weight_le_{threshold}_q{q:g}", threshold))
-    for threshold in options.get("gated_no_correction_max_weights", []):
-        value = int(threshold)
-        thresholds.append((f"weight_le_{value}", value))
-
-    unique = []
-    seen = set()
+def _gated_thresholds(weights: np.ndarray, options: dict[str, Any]) -> list[tuple[str, int]]:
+    thresholds = [
+        (f"weight_le_{int(np.quantile(weights, float(q)))}_q{float(q):g}", int(np.quantile(weights, float(q))))
+        for q in options.get("gated_no_correction_quantiles", [])
+    ]
+    thresholds += [
+        (f"weight_le_{int(value)}", int(value)) for value in options.get("gated_no_correction_max_weights", [])
+    ]
+    unique, seen = [], set()
     for name, threshold in thresholds:
-        if threshold in seen:
-            continue
-        unique.append((name, threshold))
-        seen.add(threshold)
+        if threshold not in seen:
+            unique.append((name, threshold))
+            seen.add(threshold)
     return unique
 
 
@@ -477,18 +180,146 @@ def _postselection_mask(detection_events: np.ndarray, options: dict[str, Any]) -
     if "postselect_max_syndrome_weight" in options:
         return weights <= int(options["postselect_max_syndrome_weight"])
     if "postselect_weight_quantile" in options:
-        quantile = float(options["postselect_weight_quantile"])
-        threshold = int(np.quantile(weights, quantile))
-        return weights <= threshold
+        return weights <= int(np.quantile(weights, float(options["postselect_weight_quantile"])))
     return np.ones(len(detection_events), dtype=bool)
 
 
-def _as_2d_bool(array: object) -> np.ndarray:
-    result = np.asarray(array, dtype=bool)
-    if result.ndim == 1:
-        return result.reshape((-1, 1))
-    return result
+# --- selection --------------------------------------------------------------------------------
+
+_SPLIT_KEYS = (
+    "selection_ler",
+    "selection_logical_failures",
+    "selection_shots",
+    "evaluation_ler",
+    "evaluation_logical_failures",
+    "evaluation_shots",
+)
 
 
-def _binomial_standard_error(ler: float, shots: int) -> float:
-    return binomial_standard_error(ler, shots) if shots > 0 else 0.0
+def _select_candidate(
+    candidates: list[dict[str, Any]], options: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    mode = str(options.get("candidate_selection_mode", DEFAULT_SELECTION_MODE)).lower()
+    if mode in {"current_batch", "best_on_current_batch"}:
+        return _min_by_position(candidates, lambda item: item["ler"]), {
+            "candidate_selection": "best_on_current_batch",
+            "selection_is_in_sample": True,
+        }
+    if mode == "kfold":
+        return _select_kfold(candidates, options)
+    if mode == "holdout":
+        return _select_holdout(candidates, options)
+    raise ValueError("candidate_selection_mode must be 'current_batch', 'holdout', or 'kfold'")
+
+
+def _select_holdout(candidates: list[dict[str, Any]], options: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    shots = int(len(candidates[0]["logical_failures"])) if candidates else 0
+    if shots < 2:
+        return _min_by_position(candidates, lambda item: item["ler"]), {
+            "candidate_selection": "holdout_fallback_current_batch",
+            "selection_is_in_sample": True,
+            "selection_shots": shots,
+            "evaluation_shots": 0,
+        }
+    selection_fraction = float(options.get("selection_fraction", 0.5))
+    if not 0.0 < selection_fraction < 1.0:
+        raise ValueError("selection_fraction must be between 0 and 1")
+    selection_shots = min(max(int(round(shots * selection_fraction)), 1), shots - 1)
+
+    indices = _shuffled_shots(shots, options)
+    selection_mask = np.zeros(shots, dtype=bool)
+    selection_mask[indices[:selection_shots]] = True
+    evaluation_mask = ~selection_mask
+    for candidate in candidates:
+        candidate.update(_split_scores(candidate, selection_mask, evaluation_mask))
+
+    # Ties are broken by candidate order, never by evaluation LER (that would leak the test split).
+    selected = _min_by_position(candidates, lambda item: item["selection_ler"])
+    reported = {
+        "name": selected["name"],
+        "predicted_observables": selected["predicted_observables"][evaluation_mask],
+        "logical_failures": selected["logical_failures"][evaluation_mask],
+        "ler": float(selected["evaluation_ler"]),
+        "uncertainty": uncertainty(float(selected["evaluation_ler"]), int(selected["evaluation_shots"])),
+    }
+    return reported, {
+        "candidate_selection": "holdout",
+        "selection_is_in_sample": False,
+        "selection_fraction": selection_fraction,
+        "selection_shots": int(selection_shots),
+        "evaluation_shots": int(evaluation_mask.sum()),
+        "selection_seed": int(options.get("selection_seed", 1)),
+        "selected_candidate_selection_ler": float(selected["selection_ler"]),
+        "selected_candidate_evaluation_ler": float(selected["evaluation_ler"]),
+    }
+
+
+def _select_kfold(candidates: list[dict[str, Any]], options: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    shots = int(len(candidates[0]["logical_failures"])) if candidates else 0
+    folds = int(options.get("candidate_selection_folds", 5))
+    if folds < 2:
+        raise ValueError("candidate_selection_folds must be at least 2")
+    if shots < folds:
+        return _min_by_position(candidates, lambda item: item["ler"]), {
+            "candidate_selection": "kfold_fallback_current_batch",
+            "selection_is_in_sample": True,
+            "candidate_selection_folds": folds,
+        }
+
+    predicted = np.zeros_like(candidates[0]["predicted_observables"], dtype=bool)
+    failures = np.zeros(shots, dtype=bool)
+    fold_rows = []
+    for fold, evaluation_indices in enumerate(np.array_split(_shuffled_shots(shots, options), folds)):
+        evaluation_mask = np.zeros(shots, dtype=bool)
+        evaluation_mask[evaluation_indices] = True
+        scores = [_split_scores(candidate, ~evaluation_mask, evaluation_mask) for candidate in candidates]
+        index = min(range(len(candidates)), key=lambda i: (scores[i]["selection_ler"], i))
+        chosen = candidates[index]
+        predicted[evaluation_mask] = chosen["predicted_observables"][evaluation_mask]
+        failures[evaluation_mask] = chosen["logical_failures"][evaluation_mask]
+        fold_rows.append({"fold": fold, "selected_candidate": chosen["name"], **scores[index]})
+
+    ler = _mean(failures)
+    reported = {
+        "name": "kfold_selected_candidates",
+        "predicted_observables": predicted,
+        "logical_failures": failures,
+        "ler": ler,
+        "uncertainty": uncertainty(ler, shots),
+    }
+    return reported, {
+        "candidate_selection": "kfold",
+        "selection_is_in_sample": False,
+        "candidate_selection_folds": folds,
+        "selection_seed": int(options.get("selection_seed", 1)),
+        "fold_selected_candidates": fold_rows,
+        "unique_selected_candidates": sorted({row["selected_candidate"] for row in fold_rows}),
+    }
+
+
+def _shuffled_shots(shots: int, options: dict[str, Any]) -> np.ndarray:
+    indices = np.arange(shots)
+    np.random.default_rng(int(options.get("selection_seed", 1))).shuffle(indices)
+    return indices
+
+
+def _split_scores(candidate: dict[str, Any], selection_mask: np.ndarray, evaluation_mask: np.ndarray) -> dict[str, Any]:
+    selection = candidate["logical_failures"][selection_mask]
+    evaluation = candidate["logical_failures"][evaluation_mask]
+    return {
+        "selection_ler": _mean(selection),
+        "selection_logical_failures": int(selection.sum()),
+        "selection_shots": int(selection.size),
+        "evaluation_ler": _mean(evaluation),
+        "evaluation_logical_failures": int(evaluation.sum()),
+        "evaluation_shots": int(evaluation.size),
+    }
+
+
+def _min_by_position(items: list[dict[str, Any]], score) -> dict[str, Any]:
+    """Return the lowest-scoring item; ties go to the earliest item (label-free)."""
+    return min(enumerate(items), key=lambda pair: (score(pair[1]), pair[0]))[1]
+
+
+def _mean(values: np.ndarray) -> float:
+    return float(values.mean()) if values.size else 0.0

@@ -1,3 +1,9 @@
+"""Run experiments: build circuits, execute them, decode, and write artifacts.
+
+A single run and every round of a sweep go through `run_experiments`, so all of them
+share one code path; on IQM all their circuits are submitted as one batch job.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -7,8 +13,7 @@ from qec_pipeline.analysis.reports import write_run_artifacts, write_run_summary
 from qec_pipeline.artifacts import prepare_run_directory
 from qec_pipeline.backends import get_backend_runner
 from qec_pipeline.backends.iqm_hardware import run_iqm_hardware_batch_backend
-from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
-from qec_pipeline.codes import get_code_builder
+from qec_pipeline.circuit_preparation import build_circuit
 from qec_pipeline.decoders import get_decoder
 from qec_pipeline.syndromes import extract_detection_events
 
@@ -28,13 +33,8 @@ def describe_pipeline(config: dict[str, Any]) -> list[str]:
     if mapping_strategy == "calibration_routed_layout":
         stages.append("mapping calibration file + circuit -> select routed layout -> initial_layout")
     if config.get("noise", {}).get("model") == "iqm_calibration":
-        stages.append(
-            "selected mapping + IQM calibration file -> inject per-qubit/per-coupler Stim noise"
-        )
-    if (
-        config.get("backend", {}).get("name") == "iqm_hardware"
-        and bool(config.get("backend", {}).get("options", {}).get("batch_submit", True))
-    ):
+        stages.append("selected mapping + IQM calibration file -> inject per-qubit/per-coupler Stim noise")
+    if _iqm_batch(config.get("backend", {})):
         stages.append("IQM backend -> submit selected circuits as one batch job before waiting")
     stages.extend(
         [
@@ -50,59 +50,67 @@ def describe_pipeline(config: dict[str, Any]) -> list[str]:
 
 
 def run_pipeline(config: dict[str, Any]) -> tuple[Any, list[tuple], list[str]]:
-    """Run the configured experiment.
+    """Run one experiment (`code.basis: both` runs memory-Z and memory-X).
 
-    For `code.basis: both`, this runs memory-Z and memory-X in the same job.
-
-    Return tuple:
-        (run_dir, basis_results, notes)
+    Returns (run_dir, basis_results, notes); each basis result is
+    (basis, circuit, raw, syndromes, decoded, metrics).
     """
-    run_dir = prepare_run_directory(config)
-    notes = []
-    basis_results: list[tuple] = []
-    prepared_basis = []
+    return run_experiments([config])[0]
 
-    for basis in basis_list(config["code"]["basis"]):
-        circuit = _build_circuit(config["code"], config["noise"], basis)
-        circuit = prepare_circuit_for_execution(config, circuit)
-        prepared_basis.append((basis, circuit))
 
-    if _use_iqm_batch_submit(config["backend"], len(prepared_basis)):
-        raws = run_iqm_hardware_batch_backend(
-            config["backend"],
-            [
-                {"circuit": circuit, "mapping": config["mapping"]}
-                for _basis, circuit in prepared_basis
-            ],
-        )
-    else:
-        raws = [
-            _run_backend(config["backend"], config["mapping"], circuit)
-            for _basis, circuit in prepared_basis
-        ]
+def run_experiments(configs: list[dict[str, Any]], require_single_layout: bool = False) -> list[tuple]:
+    """Run several experiments that share one backend; returns (run_dir, basis_results, notes) per config.
 
-    for (basis, circuit), raw in zip(prepared_basis, raws, strict=True):
+    Every circuit is built (and, with `require_single_layout`, checked to use one qubit layout)
+    before anything executes, so a hardware batch fails before spending credits.
+    """
+    runs = [(prepare_run_directory(config), [], []) for config in configs]  # (run_dir, basis_results, notes)
+    jobs = [
+        (index, basis, build_circuit(config, basis))
+        for index, config in enumerate(configs)
+        for basis in basis_list(config["code"]["basis"])
+    ]
+    if require_single_layout:
+        check_single_layout([circuit for _index, _basis, circuit in jobs])
+
+    requests = [{"circuit": circuit, "mapping": configs[index]["mapping"]} for index, _basis, circuit in jobs]
+    raws = execute_circuits(configs[0]["backend"], requests)
+
+    for (index, basis, circuit), raw in zip(jobs, raws, strict=True):
+        config = configs[index]
+        run_dir, basis_results, notes = runs[index]
         syndromes = extract_detection_events(circuit, raw)
-        _detection_events, _observable_flips, syndrome_info = syndromes
-        decoded = _run_decoder(config["decoder"], circuit, syndromes)
+        decoded = get_decoder(config["decoder"]["name"])(config["decoder"], circuit, syndromes)
+        _predicted, _failures, ler, uncertainty, _info = decoded
+        metrics = build_basis_metrics(basis, int(config["code"].get("rounds", 1)), decoded, syndromes[2])
 
-        _predicted, _failures, ler, uncertainty, _decoder_info = decoded
-        metrics = build_basis_metrics(
-            basis,
-            int(config["code"].get("rounds", 1)),
-            decoded,
-            syndrome_info,
-        )
-
-        basis_run_dir = run_dir / basis
-        basis_run_dir.mkdir(parents=True, exist_ok=False)
-        write_run_artifacts(basis_run_dir, circuit, raw, syndromes, metrics, config["artifacts"])
-
+        (run_dir / basis).mkdir(parents=True, exist_ok=False)
+        write_run_artifacts(run_dir / basis, circuit, raw, syndromes, metrics, config["artifacts"])
         basis_results.append((basis, circuit, raw, syndromes, decoded, metrics))
         notes.append(f"{basis}: LER {ler} +/- {uncertainty}")
 
-    write_run_summary(run_dir, config, basis_results, notes)
-    return run_dir, basis_results, notes
+    for config, (run_dir, basis_results, notes) in zip(configs, runs, strict=True):
+        write_run_summary(run_dir, config, basis_results, notes)
+    return runs
+
+
+def execute_circuits(backend: dict[str, Any], requests: list[dict[str, Any]]) -> list[tuple]:
+    """Run each {"circuit", "mapping"} request; on IQM with `batch_submit` (default) as one job."""
+    if _iqm_batch(backend):
+        return run_iqm_hardware_batch_backend(backend, requests)
+    runner = get_backend_runner(backend["name"])
+    return [runner(backend, request["circuit"], request["mapping"]) for request in requests]
+
+
+def check_single_layout(circuits: list[tuple]) -> None:
+    """Refuse a set of circuits mapped to different physical qubit layouts."""
+    layouts = set()
+    for circuit in circuits:
+        stim_to_hardware = (circuit[3].get("mapping") or {}).get("stim_to_hardware")
+        if stim_to_hardware:
+            layouts.add(tuple(sorted(stim_to_hardware.items())))
+    if len(layouts) > 1:
+        raise RuntimeError(f"Sweep used {len(layouts)} different qubit layouts; expected one.")
 
 
 def basis_list(config_basis: str) -> list[str]:
@@ -113,25 +121,8 @@ def basis_list(config_basis: str) -> list[str]:
     raise ValueError("code.basis must be memory_z, memory_x, or both")
 
 
-def _run_backend(backend: dict[str, Any], mapping: dict[str, Any], circuit: tuple) -> tuple:
-    return get_backend_runner(backend["name"])(backend, circuit, mapping)
-
-
-def _build_circuit(code: dict[str, Any], noise: dict[str, Any], basis: str) -> tuple:
-    return get_code_builder(code.get("family", "surface_code"))(code, noise, basis)
-
-
-def _run_decoder(decoder: dict[str, Any], circuit: tuple, syndromes: tuple) -> tuple:
-    return get_decoder(decoder["name"])(decoder, circuit, syndromes)
-
-
-def _use_iqm_batch_submit(backend: dict[str, Any], num_circuits: int) -> bool:
-    if backend.get("name") != "iqm_hardware":
-        return False
-    if num_circuits <= 1:
-        return False
-    return bool(backend.get("options", {}).get("batch_submit", True))
-
+def _iqm_batch(backend: dict[str, Any]) -> bool:
+    return backend.get("name") == "iqm_hardware" and bool(backend.get("options", {}).get("batch_submit", True))
 
 
 def build_basis_metrics(
@@ -140,10 +131,7 @@ def build_basis_metrics(
     decoded: tuple,
     syndrome_info: dict[str, Any],
 ) -> dict[str, Any]:
-    """Build the metrics dictionary for one decoded basis run.
-
-    Shared by single runs and IQM batch sweeps so both report identical fields.
-    """
+    """Build the metrics dictionary for one decoded basis run."""
     _predicted, _failures, ler, uncertainty, decoder_info = decoded
     failures = int(decoder_info["logical_failures"])
     shots = int(decoder_info["shots"])

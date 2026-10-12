@@ -1,15 +1,23 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import networkx as nx
 import numpy as np
 import stim
-import yaml
 
-from qec_pipeline.codes.surface_code import count_flattened_ticks
-from qec_pipeline.mapping import parse_hardware_calibration
+from qec_pipeline.mapping.calibration import (
+    build_hardware_graph,
+    load_calibration,
+    parse_hardware_calibration,
+    sorted_pair,
+)
+from qec_pipeline.stim_utils import (
+    count_detector_model_errors,
+    count_flattened_ticks,
+    qubit_targets,
+    qubits_used_later,
+)
 
 
 def apply_iqm_calibration_noise(
@@ -27,7 +35,7 @@ def apply_iqm_calibration_noise(
     if not calibration_file:
         raise ValueError("noise.model=iqm_calibration requires noise.calibration_file or mapping.calibration_file")
 
-    calibration = yaml.safe_load(Path(calibration_file).read_text(encoding="utf-8")) or {}
+    calibration = load_calibration(calibration_file)
     hardware = parse_hardware_calibration(
         calibration,
         exclude_qubits=(mapping.get("options", {}) or {}).get("exclude_qubits", []),
@@ -53,7 +61,7 @@ def apply_iqm_calibration_noise(
     info["implemented_noise_model"] = "iqm_calibration_per_qubit"
     info["noise_calibration_file"] = str(calibration_file)
     info["calibration_noise"] = noise_builder.metadata()
-    info["detector_model_num_errors"] = _count_detector_model_errors(detector_model)
+    info["detector_model_num_errors"] = count_detector_model_errors(detector_model)
 
     return noisy_circuit, detector_model, measurement_order, info
 
@@ -94,7 +102,7 @@ class _IqmNoiseBuilder:
             for stim_qubit, hardware_label in mapping_info["stim_to_hardware"].items()
         }
         self.active_stim_qubits = sorted(self.stim_to_hardware)
-        self.hardware_graph = _hardware_graph(hardware)
+        self.hardware_graph = build_hardware_graph(hardware)
         self.route_cache: dict[tuple[str, str], list[str] | None] = {}
         self.operation_counts = {
             "one_qubit_noise": 0,
@@ -131,11 +139,11 @@ class _IqmNoiseBuilder:
 
     def noisy_copy(self, stim_circuit: stim.Circuit) -> stim.Circuit:
         instructions = list(stim_circuit.flattened())
-        used_later = _qubits_used_later(instructions)
+        used_later = qubits_used_later(instructions)
         noisy = stim.Circuit()
         for index, instruction in enumerate(instructions):
             name = instruction.name
-            targets = _qubit_targets(instruction)
+            targets = qubit_targets(instruction)
 
             if name in {"M", "MR", "MX", "MRX"}:
                 basis = "x" if name in {"MX", "MRX"} else "z"
@@ -317,7 +325,7 @@ class _IqmNoiseBuilder:
     def _two_qubit_error(self, left_stim: int, right_stim: int) -> float:
         left = self.stim_to_hardware[left_stim]
         right = self.stim_to_hardware[right_stim]
-        pair = _sorted_pair(left, right)
+        pair = sorted_pair(left, right)
         scale = self.error_scales["two_qubit"]
         if pair in self.hardware["couplers"]:
             return _clamp_probability(scale * float(self.hardware["couplers"][pair]))
@@ -330,12 +338,12 @@ class _IqmNoiseBuilder:
         self.operation_counts["routed_two_qubit_interactions"] += 1
         path_errors = []
         for index in range(len(path) - 1):
-            edge = _sorted_pair(path[index], path[index + 1])
+            edge = sorted_pair(path[index], path[index + 1])
             path_errors.append(float(self.hardware["couplers"].get(edge, self.missing_coupler_error)))
         return _clamp_probability(scale * self.route_error_multiplier * _combined_probability(path_errors))
 
     def _route(self, left: str, right: str) -> list[str] | None:
-        pair = _sorted_pair(left, right)
+        pair = sorted_pair(left, right)
         if pair not in self.route_cache:
             try:
                 self.route_cache[pair] = nx.shortest_path(self.hardware_graph, left, right)
@@ -367,46 +375,9 @@ def _is_classically_controlled(instruction: stim.CircuitInstruction) -> bool:
     return any(target.is_measurement_record_target for target in instruction.targets_copy())
 
 
-def _qubits_used_later(instructions: list[stim.CircuitInstruction]) -> list[set[int]]:
-    """For each instruction, the qubits touched by any later gate, reset, or measurement."""
-    ignored = {"TICK", "DETECTOR", "OBSERVABLE_INCLUDE", "QUBIT_COORDS", "SHIFT_COORDS"}
-    used_later: list[set[int]] = [set() for _ in instructions]
-    seen: set[int] = set()
-    for index in range(len(instructions) - 1, -1, -1):
-        used_later[index] = set(seen)
-        if instructions[index].name not in ignored:
-            seen.update(_qubit_targets(instructions[index]))
-    return used_later
-
-
-def _hardware_graph(hardware: dict[str, Any]) -> nx.Graph:
-    graph = nx.Graph()
-    graph.add_nodes_from(hardware["qubits"])
-    graph.add_edges_from(hardware["couplers"])
-    return graph
-
-
-def _qubit_targets(instruction: stim.CircuitInstruction) -> list[int]:
-    return [
-        target.value
-        for target in instruction.targets_copy()
-        if target.is_qubit_target
-    ]
-
-
 def _require_even_targets(name: str, targets: list[int]) -> None:
     if len(targets) % 2 != 0:
         raise ValueError(f"{name} requires an even number of qubit targets")
-
-
-def _sorted_pair(left: str, right: str) -> tuple[str, str]:
-    return tuple(sorted((left, right), key=_label_sort_key))
-
-
-def _label_sort_key(label: str) -> tuple[int, int | str]:
-    if label.upper().startswith("QB") and label[2:].isdigit():
-        return (0, int(label[2:]))
-    return (1, label)
 
 
 def _combined_probability(probabilities: list[float]) -> float:
@@ -429,11 +400,3 @@ def _stats(values: list[float]) -> dict[str, float | int]:
         "mean": sum(values) / len(values),
         "max": max(values),
     }
-
-
-def _count_detector_model_errors(detector_model: stim.DetectorErrorModel) -> int:
-    return sum(
-        1
-        for instruction in detector_model
-        if instruction.type == "error"
-    )

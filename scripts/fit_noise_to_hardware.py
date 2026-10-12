@@ -35,14 +35,13 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import stim
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
-from qec_pipeline.codes import get_code_builder
+from qec_pipeline.artifacts import load_basis_run
+from qec_pipeline.circuit_preparation import build_circuit
 from qec_pipeline.config import load_experiment_config
 from qec_pipeline.provenance import run_provenance
 
@@ -111,11 +110,10 @@ def export_targets(config: dict[str, Any], run_dirs: list[Path]) -> dict[str, An
         observable_flips = 0
         shots = 0
         for run_dir in run_dirs:
-            basis_dir = run_dir / basis
-            circuit = stim.Circuit.from_file(basis_dir / "circuit.stim")
+            run = load_basis_run(run_dir / basis)
+            circuit, raw = run["circuit"], run["measurements"]
             if circuit.without_noise() != reference:
-                raise ValueError(f"{basis_dir} was not produced by {config.get('_config_path')} at r=1")
-            raw = np.load(basis_dir / "raw_measurements.npz")["measurements"].astype(bool)
+                raise ValueError(f"{run_dir / basis} was not produced by {config.get('_config_path')} at r=1")
             detections, observables = circuit.compile_m2d_converter().convert(
                 measurements=raw,
                 separate_observables=True,
@@ -186,18 +184,13 @@ def _basis_circuit(
     config: dict[str, Any],
     basis: str,
     scales: dict[str, float] | None = None,
-) -> stim.Circuit:
+) -> Any:
     run_config = copy.deepcopy(config)
     run_config["code"]["rounds"] = 1
     options = dict(run_config["noise"].get("options") or {})
     options.update(scales or {})
     run_config["noise"]["options"] = options
-    circuit = get_code_builder(run_config["code"].get("family", "surface_code"))(
-        run_config["code"],
-        run_config["noise"],
-        basis,
-    )
-    return prepare_circuit_for_execution(run_config, circuit)[0]
+    return build_circuit(run_config, basis)[0]
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -44,3 +45,24 @@ def _validate_minimum_config(config: dict[str, Any]) -> None:
             raise ValueError(f"Missing config section: {section}")
     if "reset_mode" in config["code"]:
         raise ValueError("code.reset_mode was removed; use code.mid_circuit_reset (reset | feedforward | none)")
+
+
+def apply_overrides(config: dict[str, Any], items: list[str], rename: bool = True) -> dict[str, Any]:
+    """Apply command-line overrides `dotted.key=value` (value parsed as YAML) in place.
+
+    With `rename`, each override is appended to `experiment.name` (`__key=value`, made
+    filesystem-safe) so results of different variants never share a folder.
+    """
+    for item in items:
+        if "=" not in item:
+            raise ValueError(f"override must look like dotted.key=value, got {item!r}")
+        key, raw_value = item.split("=", 1)
+        *parents, leaf = key.split(".")
+        node = config
+        for part in parents:
+            node = node.setdefault(part, {})
+        node[leaf] = yaml.safe_load(raw_value)
+        if rename and parents[:1] != ["experiment"]:
+            label = re.sub(r"[^A-Za-z0-9._=-]+", "_", f"{leaf}={raw_value}").strip("_")[:48]
+            config["experiment"]["name"] = f"{config['experiment']['name']}__{label}"
+    return config

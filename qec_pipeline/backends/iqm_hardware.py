@@ -6,6 +6,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from qec_pipeline.mapping.calibration import label_sort_key
+
 
 def run_iqm_hardware_backend(
     backend: dict[str, Any],
@@ -48,7 +50,7 @@ def run_iqm_hardware_batch_backend(
         memory = _memory_or_none(result, index)
         calibration_set_id = getattr(result.results[index], "calibration_set_id", None)
         raws.append(
-            _raw_tuple_from_counts(
+            _raw_tuple(
                 backend,
                 item,
                 counts,
@@ -73,7 +75,7 @@ def prepare_iqm_batch(
     """
     options = backend.get("options", {}) or {}
     _validate_backend_options(options)
-    _load_dotenv()
+    load_dotenv()
 
     from iqm.qiskit_iqm import IQMProvider
 
@@ -83,7 +85,7 @@ def prepare_iqm_batch(
     )
     iqm_backend = provider.get_backend()
     prepared = [
-        _prepare_iqm_request(backend, request["circuit"], request.get("mapping"), iqm_backend)
+        prepare_iqm_request(backend, request["circuit"], request.get("mapping"), iqm_backend)
         for request in requests
     ]
     compile_options = circuit_compilation_options(options)
@@ -113,13 +115,7 @@ def _check_calibration_is_current(
     for request in requests:
         info = request["circuit"][3]
         for path in {info.get("noise_calibration_file"), (request.get("mapping") or {}).get("calibration_file")}:
-            if not path or not Path(path).exists():
-                continue
-            try:
-                data = json.loads(Path(path).read_text(encoding="utf-8"))
-            except ValueError:
-                continue  # not a JSON observation set (e.g. a hand-written YAML grid)
-            set_id = data.get("calibration_set_id") or data.get("describes_id")
+            set_id = _calibration_header(path).get("set_id")
             if set_id:
                 used.add((str(set_id), str(path)))
     stale = sorted(path for set_id, path in used if set_id != str(live_calibration_set_id))
@@ -172,7 +168,7 @@ def _memory_or_none(result: Any, index: int) -> list[str] | None:
         return None
 
 
-def _prepare_iqm_request(
+def prepare_iqm_request(
     backend: dict[str, Any],
     circuit: tuple,
     mapping: dict[str, Any] | None,
@@ -223,7 +219,7 @@ def _prepare_iqm_request(
     }
 
 
-def _raw_tuple_from_counts(
+def _raw_tuple(
     backend: dict[str, Any],
     item: dict[str, Any],
     counts: dict[str, int],
@@ -248,6 +244,10 @@ def _raw_tuple_from_counts(
             total_shots=int(backend["shots"]),
         )
 
+    qiskit_ops = dict(item["qiskit_circuit"].count_ops())
+    transpiled_ops = dict(item["transpiled_circuit"].count_ops())
+    qiskit_depth = item["qiskit_circuit"].depth()
+    transpiled_depth = item["transpiled_circuit"].depth()
     raw_info = {
         "backend": backend["name"],
         "quantum_computer": backend.get("options", {}).get("quantum_computer", "emerald"),
@@ -255,16 +255,12 @@ def _raw_tuple_from_counts(
         "job_id": job.job_id(),
         "batch_index": batch_index,
         "batch_size": batch_size,
-        "qiskit_depth": item["qiskit_circuit"].depth(),
-        "transpiled_depth": item["transpiled_circuit"].depth(),
-        "qiskit_ops": dict(item["qiskit_circuit"].count_ops()),
-        "transpiled_ops": dict(item["transpiled_circuit"].count_ops()),
+        "qiskit_depth": qiskit_depth,
+        "transpiled_depth": transpiled_depth,
+        "qiskit_ops": qiskit_ops,
+        "transpiled_ops": transpiled_ops,
         "transpilation_metrics": _transpilation_metrics(
-            dict(item["qiskit_circuit"].count_ops()),
-            dict(item["transpiled_circuit"].count_ops()),
-            item["qiskit_circuit"].depth(),
-            item["transpiled_circuit"].depth(),
-            item["mapping_info"],
+            qiskit_ops, transpiled_ops, qiskit_depth, transpiled_depth, item["mapping_info"]
         ),
         "shot_order_preserved": memory is not None,
         "calibration_set_id": str(calibration_set_id) if calibration_set_id else None,
@@ -350,7 +346,7 @@ def _provider_args(options: dict[str, Any]) -> dict[str, Any]:
     return provider_args
 
 
-def _load_dotenv() -> None:
+def load_dotenv() -> None:
     repo_env = Path(__file__).resolve().parents[2] / ".env"
     if not repo_env.exists():
         return
@@ -399,11 +395,11 @@ def physical_loci(transpiled_circuit: Any, iqm_backend: Any) -> dict[str, Any]:
         index: iqm_backend.index_to_qubit_name(index) for index in range(transpiled_circuit.num_qubits)
     }
     instructions = serialize_instructions(transpiled_circuit, index_to_name)
-    qubits = sorted({name for op in instructions for name in op.locus}, key=_qubit_sort_key)
+    qubits = sorted({name for op in instructions for name in op.locus}, key=label_sort_key)
     two_qubit = sorted({tuple(op.locus) for op in instructions if len(op.locus) == 2})
     measured = sorted(
         {name for op in instructions if op.name == "measure" for name in op.locus},
-        key=_qubit_sort_key,
+        key=label_sort_key,
     )
     return {
         "physical_qubits": qubits,
@@ -429,12 +425,7 @@ def _check_layout_matches_mapping(loci: dict[str, Any], mapping_info: dict[str, 
 def _calibration_file_age(mapping: dict[str, Any], circuit_info: dict[str, Any]) -> dict[str, Any] | None:
     """How old the calibration snapshot used for mapping/noise was at submission time."""
     calibration_file = circuit_info.get("noise_calibration_file") or mapping.get("calibration_file")
-    if not calibration_file or not Path(calibration_file).exists():
-        return None
-    try:
-        created = json.loads(Path(calibration_file).read_text(encoding="utf-8")).get("created_timestamp")
-    except (OSError, ValueError):
-        return None
+    created = _calibration_header(calibration_file).get("created")
     if not created:
         return None
     created_at = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
@@ -442,8 +433,15 @@ def _calibration_file_age(mapping: dict[str, Any], circuit_info: dict[str, Any])
     return {"file": str(calibration_file), "created_utc": str(created), "age_hours_at_submission": age_hours}
 
 
-def _qubit_sort_key(label: str) -> tuple[int, int | str]:
-    text = str(label)
-    if text.upper().startswith("QB") and text[2:].isdigit():
-        return (0, int(text[2:]))
-    return (1, text)
+def _calibration_header(path: str | None) -> dict[str, Any]:
+    """Set id and creation time of an IQM observation-set file; {} for missing or non-JSON files."""
+    if not path or not Path(path).exists():
+        return {}
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}  # not a JSON observation set (e.g. a hand-written YAML grid)
+    return {
+        "set_id": data.get("calibration_set_id") or data.get("describes_id"),
+        "created": data.get("created_timestamp"),
+    }

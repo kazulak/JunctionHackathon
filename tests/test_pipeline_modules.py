@@ -15,6 +15,7 @@ from qec_pipeline.analysis.diagnostics import build_run_diagnostics
 from qec_pipeline.analysis.measurement_diagnostics import build_measurement_diagnostics
 from qec_pipeline.analysis.metrics import binomial_standard_error, fit_per_round_error, wilson_interval
 from qec_pipeline.analysis.reports import write_run_artifacts
+from qec_pipeline.analysis.tables import read_sweep_csv, write_csv
 from qec_pipeline.artifacts import utc_timestamp
 from qec_pipeline.backends import get_backend_runner
 from qec_pipeline.backends.iqm_hardware import (
@@ -26,14 +27,15 @@ from qec_pipeline.backends.iqm_hardware import (
 from qec_pipeline.backends.simulator import run_simulator_backend
 from qec_pipeline.circuit_preparation import prepare_circuit_for_execution
 from qec_pipeline.codes import get_code_builder
-from qec_pipeline.codes.surface_code import build_surface_code_circuit
-from qec_pipeline.codes.surface_code_iqm import build_iqm_surface_code_circuit
-from qec_pipeline.codes.surface_code_unrotated import build_unrotated_surface_code_circuit
-from qec_pipeline.config import config_summary, load_experiment_config
+from qec_pipeline.codes.surface_code import (
+    build_iqm_surface_code_circuit,
+    build_surface_code_circuit,
+    build_unrotated_surface_code_circuit,
+)
+from qec_pipeline.config import apply_overrides, config_summary, load_experiment_config
 from qec_pipeline.decoders import get_decoder
 from qec_pipeline.decoders.observable_decoder import decode_observable_rate
 from qec_pipeline.decoders.pymatching_auto_decoder import _select_candidate, decode_with_pymatching_auto
-from qec_pipeline.decoders.pymatching_calibrated_decoder import decode_with_calibrated_pymatching
 from qec_pipeline.decoders.pymatching_decoder import (
     decode_with_pymatching,
     detector_model_with_uniform_noise,
@@ -55,6 +57,7 @@ from qec_pipeline.measurements import (
 from qec_pipeline.noise.iqm_calibration import _IqmNoiseBuilder
 from qec_pipeline.pipeline import build_basis_metrics, describe_pipeline, run_pipeline
 from qec_pipeline.provenance import uuid7_time
+from qec_pipeline.stim_utils import ANNOTATIONS, NOISE_CHANNELS, qubits_used_later
 from qec_pipeline.sweeps import pin_sweep_mapping, redecode_sweep, round_values, run_rounds_sweep
 from qec_pipeline.syndrome_extraction import extract_syndromes
 from qec_pipeline.syndromes import extract_detection_events
@@ -101,7 +104,7 @@ class RegistryTests(unittest.TestCase):
         self.assertIs(get_code_builder("surface_code_iqm"), build_iqm_surface_code_circuit)
         self.assertIs(get_code_builder("surface_code_unrotated"), build_unrotated_surface_code_circuit)
         self.assertIs(get_decoder("pymatching"), decode_with_pymatching)
-        self.assertIs(get_decoder("pymatching_calibrated"), decode_with_calibrated_pymatching)
+        self.assertIs(get_decoder("pymatching_calibrated"), decode_with_pymatching)
         self.assertIs(get_backend_runner("simulator"), run_simulator_backend)
 
     def test_pipeline_registries_fail_with_available_names(self) -> None:
@@ -190,7 +193,8 @@ class CircuitAndBackendTests(unittest.TestCase):
         )
 
         self.assertNotIn("DEPOLARIZE", str(stim_circuit))
-        self.assertEqual(info["surface_code_variant"], "rotated_iqm_calibration_first")
+        self.assertEqual(info["code_family"], "surface_code_iqm")
+        self.assertEqual(info["surface_code_variant"], "rotated")
         self.assertEqual(info["noise_model"], "iqm_calibration")
 
     def test_unrotated_surface_code_builder_is_selectable(self) -> None:
@@ -241,7 +245,7 @@ class DecoderTests(unittest.TestCase):
             syndromes,
         )
 
-        self.assertEqual(failures, [False, True, True])
+        self.assertEqual(failures.tolist(), [False, True, True])
         self.assertEqual(ler, 2 / 3)
         self.assertAlmostEqual(uncertainty, binomial_standard_error(2 / 3, 3))
         self.assertEqual(info["logical_failures"], 2)
@@ -305,7 +309,7 @@ class DecoderTests(unittest.TestCase):
             {},
         )
 
-        _predicted, failures, ler, _uncertainty, info = decode_with_calibrated_pymatching(
+        _predicted, failures, ler, _uncertainty, info = decode_with_pymatching(
             {"name": "pymatching_calibrated"},
             circuit,
             syndromes,
@@ -830,7 +834,7 @@ class CalibratedNoiseScalingTests(unittest.TestCase):
             circuit = prepare_circuit_for_execution(config, circuit)
             raw = run_simulator_backend({"name": "simulator", "shots": 20000, "options": {"seed": 7}}, circuit)
             syndromes = extract_detection_events(circuit, raw)
-            _predicted, _failures, ler, _sigma, _info = decode_with_calibrated_pymatching(
+            _predicted, _failures, ler, _sigma, _info = decode_with_pymatching(
                 {"name": "pymatching_calibrated"}, circuit, syndromes
             )
             error_per_round[rounds] = (1.0 - (1.0 - 2.0 * ler) ** (1.0 / rounds)) / 2.0
@@ -1580,6 +1584,58 @@ def _stim_to_dense(stim_circuit: stim.Circuit) -> dict[int, int]:
         }
     )
     return {stim_qubit: index for index, stim_qubit in enumerate(active)}
+
+
+class SharedHelperTests(unittest.TestCase):
+    """Helpers shared by the pipeline stages and scripts."""
+
+    def test_overrides_set_nested_values_and_keep_folder_names_valid(self) -> None:
+        config = {"experiment": {"name": "run"}, "noise": {}}
+        apply_overrides(
+            config,
+            ["noise.parameters={one_qubit_error: 0.002, two_qubit_error: 0.004}", "backend.shots=500"],
+        )
+        self.assertEqual(config["noise"]["parameters"], {"one_qubit_error": 0.002, "two_qubit_error": 0.004})
+        self.assertEqual(config["backend"]["shots"], 500)
+        # Structured values used to put '{', ':' and spaces into the results folder name.
+        self.assertRegex(config["experiment"]["name"], r"^[A-Za-z0-9._=-]+$")
+        self.assertTrue(config["experiment"]["name"].endswith("__shots=500"))
+
+        apply_overrides(config, ["experiment.name=custom"])
+        self.assertEqual(config["experiment"]["name"], "custom")
+        options = {}
+        apply_overrides(options, ["folds=3"], rename=False)
+        self.assertEqual(options, {"folds": 3})
+
+    def test_pymatching_correlated_option_and_calibrated_alias(self) -> None:
+        self.assertIs(get_decoder("pymatching_calibrated"), get_decoder("pymatching"))
+        noise = {"model": "simple_depolarizing", "parameters": {"one_qubit_error": 0.01, "measurement_error": 0.01}}
+        circuit = build_surface_code_circuit({"distance": 3, "rounds": 3}, noise, "memory_z")
+        sampler = circuit[0].compile_detector_sampler(seed=1)
+        detections, observables = sampler.sample(500, separate_observables=True)
+        syndromes = (detections, observables, {})
+
+        for correlated in (False, True):
+            decoder = {"name": "pymatching", "options": {"enable_correlations": correlated}}
+            _predicted, failures, ler, _sigma, info = decode_with_pymatching(decoder, circuit, syndromes)
+            self.assertIs(info["enable_correlations"], correlated)
+            self.assertEqual(len(failures), 500)
+            self.assertLess(ler, 0.2)
+
+    def test_sweep_csv_round_trip_parses_numbers_and_blanks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "sweep_results.csv"
+            write_csv(path, [{"rounds": 3, "basis": "memory_z", "ler": 0.1, "logical_error_per_round": None}])
+            (row,) = read_sweep_csv(path)
+        self.assertEqual(row["rounds"], 3)
+        self.assertEqual(row["ler"], 0.1)
+        self.assertIsNone(row["logical_error_per_round"])
+        self.assertEqual(row["basis"], "memory_z")
+
+    def test_qubits_used_later_can_ignore_noise_channels(self) -> None:
+        instructions = list(stim.Circuit("M 0 1\nX_ERROR(0.1) 1\nH 0\nTICK").flattened())
+        self.assertEqual(qubits_used_later(instructions)[0], {0, 1})
+        self.assertEqual(qubits_used_later(instructions, ignored=ANNOTATIONS | NOISE_CHANNELS)[0], {0})
 
 
 def _grid_calibration(

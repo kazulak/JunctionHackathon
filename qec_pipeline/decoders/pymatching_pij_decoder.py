@@ -25,7 +25,7 @@ from typing import Any
 import numpy as np
 import pymatching
 
-from qec_pipeline.analysis.metrics import binomial_standard_error
+from qec_pipeline.decoders.scoring import as_2d_bool, decoder_output, score_predictions
 
 MIN_PROBABILITY = 1e-6
 MAX_PROBABILITY = 0.5 - 1e-6
@@ -44,7 +44,7 @@ def decode_with_pymatching_pij(
         raise ValueError("pymatching_pij needs folds >= 2 so edge estimates never use the decoded shots")
 
     detection_events = np.asarray(detection_events, dtype=bool)
-    observable_flips = _as_2d_bool(observable_flips)
+    observable_flips = as_2d_bool(observable_flips)
     prior = pymatching.Matching.from_detector_error_model(detector_model)
     shots = len(detection_events)
 
@@ -55,22 +55,14 @@ def decode_with_pymatching_pij(
         training = ~evaluation
         probabilities, summary = estimate_edge_probabilities(prior, detection_events[training])
         matching = matching_with_probabilities(prior, probabilities)
-        predicted[evaluation] = _as_2d_bool(matching.decode_batch(detection_events[evaluation]))
+        predicted[evaluation] = as_2d_bool(matching.decode_batch(detection_events[evaluation]))
         fold_summaries.append(summary)
 
-    logical_failures = np.logical_xor(predicted, observable_flips).any(axis=1)
-    ler = float(logical_failures.mean()) if shots else 0.0
-    uncertainty = binomial_standard_error(ler, shots) if shots else 0.0
-    decoder_info = {
-        "decoder": decoder["name"],
-        "shots": shots,
-        "logical_failures": int(logical_failures.sum()),
-        "num_observables": int(circuit_info["num_observables"]),
-        "note": "MWPM with p_ij edge probabilities estimated on other folds (Google 2021/2023).",
-        "folds": folds,
-        "fold_summaries": fold_summaries,
-    }
-    return predicted, logical_failures, ler, uncertainty, decoder_info
+    failures, ler, _uncertainty = score_predictions(predicted, observable_flips)
+    note = "MWPM with p_ij edge probabilities estimated on other folds (Google 2021/2023)."
+    return decoder_output(
+        decoder, circuit_info, predicted, failures, ler, note, folds=folds, fold_summaries=fold_summaries
+    )
 
 
 def estimate_edge_probabilities(
@@ -155,10 +147,3 @@ def matching_with_probabilities(
 
 def _clip(probability: float) -> float:
     return float(min(max(probability, MIN_PROBABILITY), MAX_PROBABILITY))
-
-
-def _as_2d_bool(array: object) -> np.ndarray:
-    result = np.asarray(array, dtype=bool)
-    if result.ndim == 1:
-        return result.reshape((-1, 1))
-    return result

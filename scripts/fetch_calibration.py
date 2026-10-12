@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from qec_pipeline.backends.iqm_hardware import _load_dotenv
+from qec_pipeline.backends.iqm_hardware import load_dotenv
 
 
 def main() -> int:
@@ -27,7 +27,7 @@ def main() -> int:
     parser.add_argument("--quantum-computer", default=None, help="Defaults to IQM_QUANTUM_COMPUTER from .env.")
     args = parser.parse_args()
 
-    _load_dotenv()
+    load_dotenv()
     from iqm.iqm_client import IQMClient
 
     computer = args.quantum_computer or os.environ.get("IQM_QUANTUM_COMPUTER", "emerald")

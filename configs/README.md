@@ -52,8 +52,8 @@ noise:                            # simulator: injected noise; hardware: decoder
     # full list: docs/CALIBRATED_SIMULATION.md
 
 decoder:
-  name: pymatching_calibrated     # observable_rate | pymatching | pymatching_calibrated | pymatching_auto | pymatching_pij
-  options: {}
+  name: pymatching_calibrated     # observable_rate | pymatching (= pymatching_calibrated) | pymatching_auto | pymatching_pij
+  options: {}                     # pymatching: enable_correlations (correlated matching), noise_sweep_probabilities
   # pymatching_auto options: candidate_selection_mode (kfold default, holdout, current_batch = in-sample/optimistic),
   #   include_correlated_matching, include_matching_ensembles, gated_no_correction_quantiles,
   #   postselect_weight_quantile (reports LER on kept shots only)

@@ -8,7 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from qec_pipeline.config import load_experiment_config
+from qec_pipeline.config import apply_overrides, load_experiment_config
 from qec_pipeline.sweeps import preflight_rounds_sweep, round_values, run_rounds_sweep
 
 
@@ -55,8 +55,7 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_experiment_config(args.config)
-    for item in args.set:
-        apply_override(config, item)
+    apply_overrides(config, args.set)
     rounds = round_values(args.rounds[0], args.rounds[1], args.rounds[2])
 
     if args.dry_run:
@@ -84,23 +83,6 @@ def main() -> int:
     print(f"CSV: {sweep_dir / 'sweep_results.csv'}")
     print(f"Plot: {sweep_dir / 'ler_vs_rounds.png'}")
     return 0
-
-
-def apply_override(config: dict, item: str) -> None:
-    """Set config[a][b][c] = value for an override 'a.b.c=value' (value parsed as YAML)."""
-    import yaml
-
-    if "=" not in item:
-        raise SystemExit(f"--set expects DOTTED.KEY=VALUE, got {item!r}")
-    key, raw_value = item.split("=", 1)
-    *parents, leaf = key.split(".")
-    node = config
-    for part in parents:
-        node = node.setdefault(part, {})
-    node[leaf] = yaml.safe_load(raw_value)
-    if parents[:1] == ["experiment"] or key == "experiment.name":
-        return
-    config["experiment"]["name"] = f"{config['experiment']['name']}__{key.split('.')[-1]}={raw_value}"
 
 
 if __name__ == "__main__":
