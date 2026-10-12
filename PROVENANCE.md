@@ -16,17 +16,17 @@ python scripts/verify_submission.py
 
 | What | Reference |
 | --- | --- |
-| Submission code | commit `16e86b1`, tag **`hackathon-submission-2026-06-07`** |
-| Checkpoint with submission files | commit `3cfa714`, tag **`junction-quantum-hackathon-final-2026`**, branch `checkpoint/junction-quantum-hackathon-final` |
+| Submission (tag) | tag **`junction-quantum-hackathon-final-2026`** → commit `3cfa714` |
+| Submission code | commit `16e86b1`, the parent of `3cfa714` |
 | Submission archive + slides | [GitHub release](https://github.com/kazulak/JunctionHackathon/releases/tag/junction-quantum-hackathon-final-2026) |
 | Submission zip SHA-256 | `248c62a0072bebed92ce9b04b375af564c6d484191e5e372c9fabc5dd522260c` |
 
-Both tags and `checkpoint/*` branches are protected by repository rulesets (no deletion, no moving, no force-push).
+The tag is protected by a repository ruleset (no deletion, no moving). Until 2026-10-12 the same snapshot also had a second tag (`hackathon-submission-2026-06-07` → `16e86b1`) and a branch (`checkpoint/junction-quantum-hackathon-final` → `3cfa714`); both were removed as redundant, since `16e86b1` is the tagged commit's parent and the only difference is the zip and slides.
 
 `3cfa714` was committed on 2026-06-08, after the event. It adds only the submission zip and slides on top of `16e86b1`; the code tree is identical.
 All 99 files that exist in both the zip and `16e86b1` are byte-identical (line endings normalized). The zip additionally contains 8 gitignored `.npz` shot-data files; git additionally contains 31 files of provided reference material under `archive/`.
 
-Some hackathon work (the repetition-code route, `judge_results/`, the judge pack script) was removed from `main` in `feeee3e`. It exists only on the tags and in the release.
+Some hackathon work (the repetition-code route, `judge_results/`, the judge pack script) was removed from `main` in `feeee3e`. It exists only in the tag and the release.
 
 ## Timeline
 
