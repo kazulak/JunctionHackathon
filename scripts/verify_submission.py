@@ -1,7 +1,8 @@
 """Verify the provenance claims in PROVENANCE.md from the git history alone.
 
 Checks:
-1. The submission tags point at the expected commits.
+1. The submission tag points at the checkpoint commit, whose parent is the submission code and which
+   adds only the submission zip and slides.
 2. The submission zip stored in the checkpoint commit has the expected SHA-256.
 3. Every file in the zip that also exists in the submission commit is identical
    (line endings normalized).
@@ -25,10 +26,8 @@ from pathlib import Path
 
 SUBMISSION_COMMIT = "16e86b15860e089933a6cdf0d58931253abe31f5"
 CHECKPOINT_COMMIT = "3cfa7149549b9f4d59aaafb865cb56a6a6f0e01a"
-EXPECTED_TAGS = {
-    "hackathon-submission-2026-06-07": SUBMISSION_COMMIT,
-    "junction-quantum-hackathon-final-2026": CHECKPOINT_COMMIT,
-}
+EXPECTED_TAGS = {"junction-quantum-hackathon-final-2026": CHECKPOINT_COMMIT}
+CHECKPOINT_ADDS_ONLY = {"Quantum Hack 26.pdf", "gate_crushers_submission_20260607_085338.zip"}
 ZIP_PATH = "gate_crushers_submission_20260607_085338.zip"
 ZIP_SHA256 = "248c62a0072bebed92ce9b04b375af564c6d484191e5e372c9fabc5dd522260c"
 UUID7_RE = re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}\b")
@@ -60,6 +59,11 @@ def _check_tags() -> int:
         status = "ok  " if actual == expected else "FAIL"
         failures += actual != expected
         print(f"  {status} {tag} -> {actual[:7]} (expected {expected[:7]})")
+    parent = _git_text("rev-parse", f"{CHECKPOINT_COMMIT}^")
+    added = set(_git_text("diff", "--name-only", SUBMISSION_COMMIT, CHECKPOINT_COMMIT).splitlines())
+    ok = parent == SUBMISSION_COMMIT and added == CHECKPOINT_ADDS_ONLY
+    failures += not ok
+    print(f"  {'ok  ' if ok else 'FAIL'} {CHECKPOINT_COMMIT[:7]} = submission code {parent[:7]} + {sorted(added)}")
     return failures
 
 

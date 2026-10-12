@@ -7,8 +7,9 @@ Surface-code memory experiments on IQM superconducting hardware: Stim circuits, 
 >
 > | | Where |
 > | --- | --- |
-> | Hackathon submission (frozen) | tag `hackathon-submission-2026-06-07` (code), tag `junction-quantum-hackathon-final-2026` + [release](https://github.com/kazulak/JunctionHackathon/releases/tag/junction-quantum-hackathon-final-2026) (code + submitted zip and slides) |
+> | Hackathon submission (frozen) | tag `junction-quantum-hackathon-final-2026` and its [release](https://github.com/kazulak/JunctionHackathon/releases/tag/junction-quantum-hackathon-final-2026) (code + submitted zip and slides) |
 > | Post-hackathon development | `main` (from 2026-06-08 onward) |
+> | Results page | <https://kazulak.github.io/JunctionHackathon/> |
 > | Timeline and verification | [PROVENANCE.md](PROVENANCE.md) |
 > | Known issues in submitted and archived numbers | [ERRATA.md](ERRATA.md) |
 
@@ -16,7 +17,7 @@ Built on the challenge baseline provided by the organizers (see [NOTICE](NOTICE)
 
 ## Results: d = 3 surface-code memory on IQM Emerald
 
-**Results page:** <https://kazulak.github.io/JunctionHackathon/>. It is built from `site/`; every number on it is read from
+The [results page](https://kazulak.github.io/JunctionHackathon/) is built from `site/`; every number on it is read from
 `site/data/`, which `scripts/build_site_data.py` generates from the archives in `baselines/` (a test fails if they disagree).
 
 Logical error rate (LER) after r rounds, 2000 shots per point, calibrated MWPM decoder:

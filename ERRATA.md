@@ -1,8 +1,8 @@
 # Errata
 
-Issues found in an audit in October 2026, after the hackathon. They affect numbers in the frozen submission (tags `hackathon-submission-2026-06-07` / `junction-quantum-hackathon-final-2026`) and in archived baselines.
+Issues found in an audit in October 2026, after the hackathon. They affect numbers in the frozen submission (tag `junction-quantum-hackathon-final-2026`) and in archived baselines.
 
-The tags and the release are intentionally **not** changed. Corrections are made on `main` only; each entry says where it is fixed.
+The tag and the release are intentionally **not** changed. Corrections are made on `main` only; each entry says where it is fixed.
 
 ## E1. Calibrated simulator: idle noise grows with the square of the round count (critical)
 
