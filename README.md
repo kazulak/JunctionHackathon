@@ -16,6 +16,9 @@ Built on the challenge baseline provided by the organizers (see [NOTICE](NOTICE)
 
 ## Results: d = 3 surface-code memory on IQM Emerald
 
+**Results page:** <https://kazulak.github.io/JunctionHackathon/>. It is built from `site/`; every number on it is read from
+`site/data/`, which `scripts/build_site_data.py` generates from the archives in `baselines/` (a test fails if they disagree).
+
 Logical error rate (LER) after r rounds, 2000 shots per point, calibrated MWPM decoder:
 
 | Rounds | Hackathon (2026-06-07) memory_z / memory_x | Now (2026-10-04) memory_z | Now memory_x |

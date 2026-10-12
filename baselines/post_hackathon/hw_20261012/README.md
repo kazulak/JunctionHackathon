@@ -39,14 +39,14 @@ Error per round (binomial maximum-likelihood fit, ±1σ):
 
 ## Findings
 
-1. **The fix is the circuit, shown on the same day and qubits.** The June design's uncorrected logical observable flips with probability 0.49–0.51 from r = 3 (`C_diagnosis/`): the data qubits are scrambled, exactly as in June. The current design keeps a working memory out to 13 rounds.
-2. **The result reproduces.** memory_x is unchanged from 2026-10-04 (0.038 vs 0.040). memory_z is worse (0.049 vs 0.033); today's calibration has higher readout error on the patch (mean 1.5% vs 1.1%, QB13 3.0% vs 0.7%) and ~10% higher CZ error.
+1. **The fix is the circuit, shown on the same day and qubits.** From r = 3 the June design's uncorrected logical observable flips with probability 0.49–0.51 (`C_diagnosis/`) and decoding does not help (LER 0.45–0.51): the logical information is lost, as in June. The June circuit here is gate-for-gate the hackathon-tag circuit (same dependency graph, measurement order and qubits; checked against commit `16e86b1`). The current design keeps a working memory out to 13 rounds.
+2. **The result reproduces.** memory_x is unchanged from 2026-10-04 (0.038 vs 0.040). memory_z is worse (0.049 vs 0.033); today's calibration has higher readout error on the patch (mean 1.5% vs 1.1%, QB13 3.0% vs 0.7%) and slightly higher CZ error (mean 0.51% vs 0.49%, worst coupler 2.0% vs 1.6%).
 3. **DD matters, but not the way the model says.** Without DD the error per round rises by 58% (memory_z) and 31% (memory_x). The simulator attributes DD only to dephasing of idle data qubits, so it predicted no change for memory_z and a doubling for memory_x. The hardware shows the opposite emphasis. The model is missing an error source that DD suppresses (candidates: coherent ZZ crosstalk during readout, measurement-induced errors on neighbours).
 4. **Correlated matching helps on hardware again** (−19% memory_z, −12% memory_x), consistent with 2026-10-04.
 
 ## Cost
 
-16.07 s of QPU execution in total. Job A cost 0.80 ms per shot, versus 0.42 ms per shot predicted by IQM's pulse compiler and ~0.47 ms measured on 2026-10-04; jobs B and C matched the estimate. Long, many-measurement circuits appear to carry extra per-shot overhead that the schedule length does not show.
+16.07 s of QPU execution in total. Job A cost 0.80 ms per shot, versus 0.42 ms per shot predicted by IQM's pulse compiler and ~0.47 ms measured on 2026-10-04; jobs B and C cost at or below the estimate. Long, many-measurement circuits appear to carry extra per-shot overhead that the schedule length does not show.
 
 ## Folders
 

@@ -1,0 +1,56 @@
+[
+ {
+  "date": "2026-10-04",
+  "job": "01a106f9",
+  "what": "Pilot (active reset between shots)",
+  "shots": 8000,
+  "qpu_s": 1.24,
+  "outcome": "Failed at 1 round: active reset left qubits excited",
+  "archive": "hw_pilot_noreset_dd_activereset_20261004"
+ },
+ {
+  "date": "2026-10-04",
+  "job": "3 control jobs",
+  "what": "Active vs passive reset, DD on/off",
+  "shots": 3000,
+  "qpu_s": 2.87,
+  "outcome": "Passive reset fixes initialization",
+  "archive": "hw_controls_reset_dd_20261004"
+ },
+ {
+  "date": "2026-10-04",
+  "job": "01a10703",
+  "what": "Main sweep, rounds 1, 3, 5, 7",
+  "shots": 16000,
+  "qpu_s": 8.14,
+  "outcome": "Working memory, no saturation",
+  "archive": "hw_d3_noreset_dd_20261004"
+ },
+ {
+  "date": "2026-10-12",
+  "job": "01a12efb-138e",
+  "what": "Current design, odd rounds 1 to 13",
+  "shots": 14000,
+  "qpu_s": 11.17,
+  "outcome": "Reproduced; below random through 13 rounds",
+  "archive": "hw_20261012/A_current_design"
+ },
+ {
+  "date": "2026-10-12",
+  "job": "01a12efb-eece",
+  "what": "Current design without DD",
+  "shots": 6000,
+  "qpu_s": 2.83,
+  "outcome": "DD removes about a third of the error",
+  "archive": "hw_20261012/B_dd_off"
+ },
+ {
+  "date": "2026-10-12",
+  "job": "01a12efc-c1dd",
+  "what": "June design, same qubits",
+  "shots": 3000,
+  "qpu_s": 2.07,
+  "outcome": "Random from 3 rounds, as in June",
+  "archive": "hw_20261012/C_june_design"
+ }
+]

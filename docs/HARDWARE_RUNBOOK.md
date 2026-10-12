@@ -93,6 +93,7 @@ Archive: `baselines/post_hackathon/hw_20261012` (prediction: `hw_20261012_predic
 | Experiment | Command | Shots | ~QPU s | Question |
 | --- | --- | --- | ---: | --- |
 | Feed-forward vs no reset | `--set code.mid_circuit_reset=feedforward --set noise.options.round_duration_s=1.75e-6`, `--rounds 3 7 2` | 4 × 2000 | 4–5 | Do conditional resets help or hurt on Emerald? |
+| One readout block in the last round | merge the final ancilla readout with the data readout | 2 × 2000 | 2–3 | At r = 1 the current circuit's schedule is 2.1 µs longer than the June circuit's (two readout windows instead of one) and its LER was higher on 2026-10-12 (memory_z 0.061 vs 0.014). Free to check with Pulla first. |
 | What DD suppresses | DD on/off at r = 1–9 with more shots, plus per-detector analysis | 6 × 4000 | 12–15 | The model attributes DD to data dephasing; hardware disagrees (2026-10-12) |
 
 Always run `--preflight` (free) first, and `scripts/fetch_calibration.py` after IQM recalibrates.
