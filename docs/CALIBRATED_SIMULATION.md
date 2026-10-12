@@ -80,3 +80,4 @@ python scripts/sweep_rounds.py configs/sim_iqm_emerald_surface_d5_calibrated.yam
 - The fit to r = 1 hardware is poor in absolute terms: uniform scales cannot reproduce the per-detector rates, which range from 0.05 to 0.25.
 - The model has no leakage, crosstalk, drift, measurement-induced dephasing, or pulse-level timing.
 - With the corrected hardware design it predicted 0.039 / 0.059 error per round; hardware gave 0.033 / 0.040 (`baselines/post_hackathon/hw_d3_noreset_dd_20261004/model_comparison`). It is pessimistic for memory_x.
+- It mis-attributes dynamical decoupling: it predicts DD helps only memory_x (idle dephasing of data qubits), but on hardware turning DD off raised memory_z error per round by 58% and memory_x by 31% (`baselines/post_hackathon/hw_20261012`).

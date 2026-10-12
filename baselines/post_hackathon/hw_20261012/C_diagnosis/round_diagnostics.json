@@ -1,0 +1,152 @@
+[
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=500__mid_circuit_reset=reset__group_measurements=false__dynamical_decoupling=false__round_duration_s=7.65e-6__idle_t2=ramsey_rounds_sweep/20261012T072115_973008Z",
+    "job_id": "01a12efc-c1dd-7015-8b73-960dffb5d51b",
+    "basis": "memory_x",
+    "rounds": 1,
+    "shots": 500,
+    "raw_observable_flip_rate": 0.09,
+    "decoded_ler": 0.038,
+    "x_ancilla_one_rate_by_round": [
+      0.069
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.4995
+    ],
+    "detector_rate_by_layer": [
+      0.069,
+      0.0675
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=500__mid_circuit_reset=reset__group_measurements=false__dynamical_decoupling=false__round_duration_s=7.65e-6__idle_t2=ramsey_rounds_sweep/20261012T072115_973008Z",
+    "job_id": "01a12efc-c1dd-7015-8b73-960dffb5d51b",
+    "basis": "memory_z",
+    "rounds": 1,
+    "shots": 500,
+    "raw_observable_flip_rate": 0.08,
+    "decoded_ler": 0.014,
+    "x_ancilla_one_rate_by_round": [
+      0.503
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.0675
+    ],
+    "detector_rate_by_layer": [
+      0.0675,
+      0.0585
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=500__mid_circuit_reset=reset__group_measurements=false__dynamical_decoupling=false__round_duration_s=7.65e-6__idle_t2=ramsey_rounds_sweep/20261012T072115_973008Z",
+    "job_id": "01a12efc-c1dd-7015-8b73-960dffb5d51b",
+    "basis": "memory_x",
+    "rounds": 3,
+    "shots": 500,
+    "raw_observable_flip_rate": 0.51,
+    "decoded_ler": 0.472,
+    "x_ancilla_one_rate_by_round": [
+      0.07050000000000001,
+      0.325,
+      0.369
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.4785,
+      0.475,
+      0.44999999999999996
+    ],
+    "detector_rate_by_layer": [
+      0.0705,
+      0.3695,
+      0.407,
+      0.4155
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=500__mid_circuit_reset=reset__group_measurements=false__dynamical_decoupling=false__round_duration_s=7.65e-6__idle_t2=ramsey_rounds_sweep/20261012T072115_973008Z",
+    "job_id": "01a12efc-c1dd-7015-8b73-960dffb5d51b",
+    "basis": "memory_z",
+    "rounds": 3,
+    "shots": 500,
+    "raw_observable_flip_rate": 0.49,
+    "decoded_ler": 0.446,
+    "x_ancilla_one_rate_by_round": [
+      0.46199999999999997,
+      0.4815,
+      0.4505
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.05550000000000001,
+      0.39999999999999997,
+      0.4335
+    ],
+    "detector_rate_by_layer": [
+      0.0555,
+      0.3795,
+      0.41275,
+      0.2475
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=500__mid_circuit_reset=reset__group_measurements=false__dynamical_decoupling=false__round_duration_s=7.65e-6__idle_t2=ramsey_rounds_sweep/20261012T072115_973008Z",
+    "job_id": "01a12efc-c1dd-7015-8b73-960dffb5d51b",
+    "basis": "memory_x",
+    "rounds": 5,
+    "shots": 500,
+    "raw_observable_flip_rate": 0.498,
+    "decoded_ler": 0.494,
+    "x_ancilla_one_rate_by_round": [
+      0.0635,
+      0.3345,
+      0.3755,
+      0.501,
+      0.445
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.4955,
+      0.486,
+      0.45599999999999996,
+      0.46099999999999997,
+      0.4495
+    ],
+    "detector_rate_by_layer": [
+      0.0635,
+      0.37825,
+      0.382,
+      0.44575,
+      0.44425,
+      0.424
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=500__mid_circuit_reset=reset__group_measurements=false__dynamical_decoupling=false__round_duration_s=7.65e-6__idle_t2=ramsey_rounds_sweep/20261012T072115_973008Z",
+    "job_id": "01a12efc-c1dd-7015-8b73-960dffb5d51b",
+    "basis": "memory_z",
+    "rounds": 5,
+    "shots": 500,
+    "raw_observable_flip_rate": 0.494,
+    "decoded_ler": 0.514,
+    "x_ancilla_one_rate_by_round": [
+      0.4785,
+      0.4775,
+      0.4605,
+      0.4795,
+      0.435
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.0485,
+      0.39649999999999996,
+      0.4295,
+      0.4345,
+      0.4395
+    ],
+    "detector_rate_by_layer": [
+      0.0485,
+      0.3805,
+      0.397,
+      0.463,
+      0.44625,
+      0.26
+    ]
+  }
+]
