@@ -1,0 +1,4 @@
+# Round times and job costs (source records)
+
+- `round_time_pulla_20261012.csv`: time per syndrome round, from IQM's pulse compiler (Pulla) on 2026-10-12 against the live Emerald calibration (`scripts/pulla_schedule_report.py configs/hw_d3_noreset_dd_iqm.yaml --rounds 1 3 [--mid-circuit-reset reset|feedforward] [--set backend.options.group_measurements=false]`), as the schedule increase per extra round. The June circuit was checked to be gate-for-gate the hackathon-tag circuit (same dependency graph, measurement order and qubits).
+- `hardware_jobs.csv`: QPU execution time per IQM job, from IQM's job timeline (`execution_started` to `execution_ended`). The three 2026-10-04 control jobs are one row; their individual times (0.81, 1.01, 1.05 s) are in `hw_controls_reset_dd_20261004/README.md`. The two 2026-06-08 replication jobs are not included (no execution times recorded).

@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Surface code on IQM Emerald</title>
+<meta name="description" content="Junction Quantum Hack 2026 follow-up: why the June d=3 surface-code memory failed on IQM Emerald, and the October 2026 hardware results after the fix.">
+<style>
+  /* Layout: one reading column; the finding first, then one card per question, each citing its data. */
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --ink-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-muted: #b5b3ab;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --ink-muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+      --series-1: #3987e5; --series-2: #d95926; --series-muted: #5d5c58;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --ink-muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+    --series-1: #3987e5; --series-2: #d95926; --series-muted: #5d5c58;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.55; }
+  .page { max-width: 68rem; margin-inline: auto; padding: 2.5rem max(16px, env(safe-area-inset-left, 0px)) 3rem; display: grid; gap: 2.75rem; }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.12; font-weight: 650; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+  h2 { font-size: 1.25rem; font-weight: 600; margin: 0; text-wrap: balance; }
+  h3 { font-size: 1rem; font-weight: 600; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; text-underline-offset: 0.15em; }
+  .head { display: grid; gap: 0.75rem; }
+  .eyebrow { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+  .lede { font-size: 1.2rem; line-height: 1.5; max-width: 46rem; text-wrap: pretty; }
+  .context { color: var(--ink-2); max-width: 46rem; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 1rem; }
+  .tile, .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; display: grid; gap: 0.4rem; align-content: start; min-width: 0; }
+  .label { font-size: 0.8rem; color: var(--ink-2); }
+  .big { font-size: 2.2rem; line-height: 1.1; font-weight: 600; }
+  .sub { font-size: 0.82rem; color: var(--ink-2); }
+  .section { display: grid; gap: 1rem; }
+  .prose { max-width: 46rem; }
+  .list { max-width: 46rem; margin: 0; padding-left: 1.2rem; display: grid; gap: 0.5rem; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1rem; }
+  .card { gap: 0.6rem; }
+  .grid2 > .card { align-self: start; }
+  .big.pair { font-size: 1.9rem; }
+  .note { font-size: 0.85rem; color: var(--ink-2); line-height: 1.45; }
+  .source { font-size: 0.78rem; color: var(--ink-muted); }
+  .multiples { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; }
+  .panel-title { font-size: 0.8rem; color: var(--ink-2); margin-bottom: 0.25rem; }
+  .chart { position: relative; min-height: 230px; }
+  .chart.short { min-height: 190px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; font-size: 0.8rem; color: var(--ink-2); margin: 0; padding: 0; list-style: none; }
+  .legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .swatch { width: 0.9rem; height: 2px; border-radius: 1px; display: inline-block; }
+  .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
+  .tick { font-size: 11.5px; fill: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .tick.strong { fill: var(--ink-2); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); padding: 0.35rem 0.6rem; font-size: 0.78rem; line-height: 1.5; white-space: nowrap; z-index: 2; }
+  .tip-head { color: var(--ink-2); }
+  .tip-row { display: flex; align-items: center; gap: 0.4rem; font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-weight: 600; color: var(--ink-2); padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--axis); white-space: nowrap; }
+  td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  .num { text-align: right; white-space: nowrap; }
+  .mono { font-family: var(--mono); font-size: 0.92em; }
+  .failed { color: var(--ink-2); font-size: 0.85rem; padding: 1rem 0; }
+  footer { color: var(--ink-muted); font-size: 0.8rem; border-top: 1px solid var(--grid); padding-top: 1rem; }
+  :focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="head" id="top">
+    <span class="eyebrow">Junction Quantum Hack 2026 · follow-up</span>
+    <h1>Surface code on IQM Emerald</h1>
+    <p class="lede">The d&nbsp;=&nbsp;3 surface-code memory that turned random by round
+      <span data-src="ler_by_round" data-field="rounds" data-where="run=jun07_june&amp;basis=memory_x&amp;rounds=3" data-fmt="int">—</span>
+      at the hackathon now stays below random for all
+      <span data-src="ler_by_round" data-field="rounds" data-where="run=oct12_current&amp;basis=memory_x" data-agg="max" data-fmt="int">—</span>
+      rounds we ran on the same chip, with a logical error of
+      <span data-src="error_per_round" data-field="eps" data-where="key=oct12_current|memory_x" data-fmt="pct1">—</span> (memory&nbsp;X) to
+      <span data-src="error_per_round" data-field="eps" data-where="key=oct12_current|memory_z" data-fmt="pct1">—</span> (memory&nbsp;Z) per round.</p>
+    <p class="context">A follow-up to team gate_crushers' entry in the IQM error-correction challenge at Junction Quantum Hack 2026 (June 5–7). Same task, same IQM Emerald computer, the same qubits (QB13 to QB45). The main change is the circuit sent to the chip.</p>
+  </header>
+
+  <section class="tiles" aria-label="Headline figures">
+    <div class="tile">
+      <span class="label">Error per round, memory X · Oct 12</span>
+      <span class="big" data-src="error_per_round" data-field="eps" data-where="key=oct12_current|memory_x" data-fmt="pct1">—</span>
+      <span class="sub">Oct 4: <span data-src="error_per_round" data-field="eps" data-where="key=oct04_current|memory_x" data-fmt="pct1">—</span></span>
+    </div>
+    <div class="tile">
+      <span class="label">Error per round, memory Z · Oct 12</span>
+      <span class="big" data-src="error_per_round" data-field="eps" data-where="key=oct12_current|memory_z" data-fmt="pct1">—</span>
+      <span class="sub">Oct 4: <span data-src="error_per_round" data-field="eps" data-where="key=oct04_current|memory_z" data-fmt="pct1">—</span></span>
+    </div>
+    <div class="tile">
+      <span class="label">June circuit after 3 rounds · logical error, memory X</span>
+      <span class="big" data-src="ler_by_round" data-field="ler" data-where="run=oct12_june&amp;basis=memory_x&amp;rounds=3" data-fmt="ler">—</span>
+      <span class="sub">0.5 is a coin flip. Current circuit, same day: <span data-src="ler_by_round" data-field="ler" data-where="run=oct12_current&amp;basis=memory_x&amp;rounds=3" data-fmt="ler">—</span></span>
+    </div>
+    <div class="tile">
+      <span class="label">Time per syndrome round</span>
+      <span class="big pair"><span data-src="round_time" data-field="us" data-where="order=0" data-fmt="us">—</span> → <span data-src="round_time" data-field="us" data-where="order=3" data-fmt="us">—</span>&nbsp;µs</span>
+      <span class="sub">June circuit → current circuit</span>
+    </div>
+  </section>
+
+  <section class="section" id="before-after">
+    <h2>Same chip, same day: the June circuit against the current one</h2>
+    <div class="card">
+      <p class="note">Logical error rate after each number of syndrome rounds, with ~68% intervals. Both Oct 12 runs used the same qubits and the same calibration, two minutes apart; the June circuit was rebuilt gate for gate from the hackathon code. 0.5 means the stored bit is lost. At 1 round the June circuit has no mid-circuit resets yet and does as well or better; the gap opens once rounds repeat.</p>
+      <ul class="legend" id="legend-ler"></ul>
+      <div class="multiples">
+        <div><div class="panel-title">Memory Z</div><div class="chart" id="chart-ler-z"></div></div>
+        <div><div class="panel-title">Memory X</div><div class="chart" id="chart-ler-x"></div></div>
+      </div>
+      <p class="source">Data: <a href="data/ler_by_round.json">ler_by_round.json</a>, built from <a href="https://github.com/kazulak/JunctionHackathon/tree/main/baselines/post_hackathon/hw_20261012">baselines/post_hackathon/hw_20261012</a> and <a href="https://github.com/kazulak/JunctionHackathon/tree/main/baselines/hackathon_2026-06-07/surface_d3_iqm_hardware">baselines/hackathon_2026-06-07</a></p>
+    </div>
+  </section>
+
+  <section class="section" id="why">
+    <h2>Why the June circuit failed</h2>
+    <p class="prose">In June every ancilla measurement was followed by a Qiskit <span class="mono">reset</span>. On IQM hardware a reset is itself a measurement followed by a conditional π pulse, and placed between the readouts it kept them from running in parallel. One round took
+      <span data-src="round_time" data-field="us" data-where="order=0" data-fmt="us">—</span>&nbsp;µs, and the data qubits waited through it without dynamical decoupling. By round 3 the logical bit was gone: even after decoding, the result is a coin flip.</p>
+    <p class="prose">The current circuit reads all ancillas out at once and does not reset them; each check compares an ancilla with its outcome two rounds earlier instead (<a href="https://arxiv.org/abs/2408.00758">Gehér et al.</a>). IQM's dynamical decoupling protects the idle qubits, and a round takes
+      <span data-src="round_time" data-field="us" data-where="order=3" data-fmt="us">—</span>&nbsp;µs.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Time per syndrome round</h3>
+        <p class="note">From IQM's pulse compiler against the Emerald calibration on Oct 12: the schedule time each extra round adds. The data qubits sit idle for most of it.</p>
+        <div class="chart short" id="chart-round-time"></div>
+        <p class="source">Data: <a href="data/round_time.json">round_time.json</a>, from <a href="https://github.com/kazulak/JunctionHackathon/blob/main/baselines/post_hackathon/round_time_pulla_20261012.csv">round_time_pulla_20261012.csv</a></p>
+      </div>
+      <div class="card">
+        <h3>The logical bit before any correction</h3>
+        <p class="note">How often the logical bit has flipped when it is read out, before any correction (Oct 12). Uncorrected errors pile up in every memory. The June circuit reaches a coin flip by round 3; the current circuit gets there much later, and decoding still recovers most of its errors.</p>
+        <ul class="legend" id="legend-raw"></ul>
+        <div class="multiples">
+          <div><div class="panel-title">Memory Z</div><div class="chart short" id="chart-raw-z"></div></div>
+          <div><div class="panel-title">Memory X</div><div class="chart short" id="chart-raw-x"></div></div>
+        </div>
+        <p class="source">Data: <a href="data/raw_observable.json">raw_observable.json</a>, from the round-by-round diagnosis in <a href="https://github.com/kazulak/JunctionHackathon/tree/main/baselines/post_hackathon/hw_20261012">hw_20261012</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="error-per-round">
+    <h2>Error per round, measured and predicted</h2>
+    <div class="card">
+      <p class="note">Logical error per round from a binomial maximum-likelihood fit over all round counts, ±1σ. Filled dots are hardware; hollow dots are the simulator's predictions, pushed to GitHub before each run.</p>
+      <ul class="legend" id="legend-eps"></ul>
+      <div class="multiples">
+        <div><div class="panel-title">Memory Z</div><div class="chart" id="chart-eps-z"></div></div>
+        <div><div class="panel-title">Memory X</div><div class="chart" id="chart-eps-x"></div></div>
+      </div>
+      <p class="source">Data: <a href="data/error_per_round.json">error_per_round.json</a>, from the per-round fits in <a href="https://github.com/kazulak/JunctionHackathon/tree/main/baselines/post_hackathon">baselines/post_hackathon</a></p>
+    </div>
+    <ul class="list">
+      <li><b>It reproduces.</b> Memory X:
+        <span data-src="error_per_round" data-field="eps" data-where="key=oct12_current|memory_x" data-fmt="pct1">—</span> on Oct 12 against
+        <span data-src="error_per_round" data-field="eps" data-where="key=oct04_current|memory_x" data-fmt="pct1">—</span> on Oct 4. Memory Z was worse on Oct 12
+        (<span data-src="error_per_round" data-field="eps" data-where="key=oct12_current|memory_z" data-fmt="pct1">—</span> against
+        <span data-src="error_per_round" data-field="eps" data-where="key=oct04_current|memory_z" data-fmt="pct1">—</span>); that day's calibration showed higher readout error on these qubits.</li>
+      <li><b>Dynamical decoupling matters.</b> Without it the error per round rises to
+        <span data-src="error_per_round" data-field="eps" data-where="key=oct12_nodd|memory_z" data-fmt="pct1">—</span> (Z) and
+        <span data-src="error_per_round" data-field="eps" data-where="key=oct12_nodd|memory_x" data-fmt="pct1">—</span> (X). The simulator expected the damage to fall on memory X only, so its noise model is missing something that decoupling suppresses.</li>
+      <li><b>A better decoder helps.</b> Correlated matching on the same Oct 12 data gives
+        <span data-src="error_per_round" data-field="eps" data-where="key=oct12_current_corr|memory_z" data-fmt="pct1">—</span> (Z) and
+        <span data-src="error_per_round" data-field="eps" data-where="key=oct12_current_corr|memory_x" data-fmt="pct1">—</span> (X).</li>
+    </ul>
+  </section>
+
+  <section class="section" id="runs">
+    <h2>Hardware runs in October</h2>
+    <div class="card">
+      <p class="note">QPU execution time per job, from IQM's job records. In these runs IQM Resonance charged about one credit per second of execution. Total:
+        <span data-src="totals" data-field="qpu_s" data-fmt="s1">—</span>&nbsp;s over
+        <span data-src="totals" data-field="shots" data-fmt="int">—</span> shots.</p>
+      <div class="table-wrap">
+        <table id="table-jobs">
+          <thead><tr><th scope="col">Date</th><th scope="col">IQM job</th><th scope="col">What ran</th><th scope="col" class="num">Shots</th><th scope="col" class="num">QPU time</th><th scope="col">Outcome</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="source">Data: <a href="data/hardware_jobs.json">hardware_jobs.json</a>, from <a href="https://github.com/kazulak/JunctionHackathon/blob/main/baselines/post_hackathon/hardware_jobs.csv">hardware_jobs.csv</a></p>
+    </div>
+  </section>
+
+  <section class="section" id="method">
+    <h2>How these numbers were made</h2>
+    <p class="prose">Each run stores a logical bit in a d&nbsp;=&nbsp;3 rotated surface code (17 qubits), repeats the stabilizer checks for a given number of rounds, reads the bit out and decodes it with minimum-weight matching built from IQM's calibration data. Memory Z and memory X test the two kinds of logical error. Before each main run the simulator's prediction was pushed to GitHub, so a wrong prediction stays visible, as with the decoupling result above.</p>
+    <p class="prose">Code, configurations and every archived result: <a href="https://github.com/kazulak/JunctionHackathon">github.com/kazulak/JunctionHackathon</a>. The June 7 curve is the hackathon's own hardware run; the submission is frozen under the tag <span class="mono">junction-quantum-hackathon-final-2026</span>, and everything else on this page came after the event.</p>
+  </section>
+
+  <footer>Every number on this page is read from <a href="data/">data/</a>, which <span class="mono">scripts/build_site_data.py</span> builds from the archived results in the repository; the test suite fails if the two disagree.</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(() => {
+  const COL = { current: 'var(--series-1)', june: 'var(--series-2)', hackathon: 'var(--series-muted)' };
+  const FMT = { pct1: d3.format('.1%'), ler: d3.format('.2f'), us: d3.format('~g'), s1: d3.format('.1f'), int: d3.format(',') };
+  const DATASETS = ['ler_by_round', 'error_per_round', 'raw_observable', 'round_time', 'hardware_jobs'];
+  const DATA = {};
+
+  const matches = (row, where) => where.split('&').every((part) => {
+    const [k, v] = part.split('=').map(decodeURIComponent);
+    return String(row[k]) === v;
+  });
+
+  function fillValues() {
+    document.querySelectorAll('[data-src]').forEach((el) => {
+      const rows = DATA[el.dataset.src];
+      if (!rows) return;
+      const hits = el.dataset.where ? rows.filter((r) => matches(r, el.dataset.where)) : rows.slice(0, 1);
+      const values = hits.map((r) => Number(r[el.dataset.field])).filter(Number.isFinite);
+      const value = el.dataset.agg === 'max' ? d3.max(values) : values[0];
+      el.textContent = value === undefined ? '—' : FMT[el.dataset.fmt](value);
+    });
+  }
+
+  function legend(id, items) {
+    document.getElementById(id).replaceChildren(...items.map((item) => {
+      const li = document.createElement('li');
+      const sw = document.createElement('span');
+      sw.className = item.dot ? 'dot' : 'swatch';
+      if (item.hollow) sw.style.border = `2px solid ${item.color}`; else sw.style.background = item.color;
+      const text = document.createElement('span');
+      text.textContent = item.label;
+      li.append(sw, text);
+      return li;
+    }));
+  }
+
+  function measure(svg, texts) {
+    const probe = svg.append('text').attr('class', 'tick');
+    let widest = 0;
+    texts.forEach((t) => { probe.text(t); widest = Math.max(widest, probe.node().getComputedTextLength()); });
+    probe.remove();
+    return widest;
+  }
+
+  function tooltip(el) {
+    const tip = document.createElement('div');
+    tip.className = 'tip';
+    tip.hidden = true;
+    el.append(tip);
+    return {
+      show(event, head, lines) {
+        tip.replaceChildren();
+        const h = document.createElement('div');
+        h.className = 'tip-head';
+        h.textContent = head;
+        tip.append(h);
+        lines.forEach((line) => {
+          const row = document.createElement('div');
+          row.className = 'tip-row';
+          if (line.color) {
+            const sw = document.createElement('span');
+            sw.className = 'dot';
+            sw.style.background = line.color;
+            row.append(sw);
+          }
+          const t = document.createElement('span');
+          t.textContent = line.text;
+          row.append(t);
+          tip.append(row);
+        });
+        tip.hidden = false;
+        const box = el.getBoundingClientRect();
+        const px = event.clientX - box.left;
+        const py = event.clientY - box.top;
+        const w = tip.offsetWidth;
+        tip.style.left = `${px + 14 + w > box.width ? Math.max(0, px - 14 - w) : px + 14}px`;
+        tip.style.top = `${Math.max(0, Math.min(py - 10, box.height - tip.offsetHeight))}px`;
+      },
+      hide() { tip.hidden = true; },
+    };
+  }
+
+  // Lines against rounds, one per series, optional interval whiskers, crosshair tooltip.
+  function roundsChart(el, rows, opts) {
+    el.replaceChildren();
+    const width = Math.max(240, el.clientWidth);
+    const height = opts.height;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('role', 'img').attr('aria-label', opts.aria);
+    const yTicks = d3.ticks(0, opts.yMax, 6);
+    const m = { top: 10, right: 12, bottom: 26, left: measure(svg, yTicks.map(opts.yFormat)) + 10 };
+    const allRounds = Array.from(new Set(rows.map((r) => r.rounds))).sort((a, b) => a - b);
+    const x = d3.scaleLinear([d3.min(allRounds) - 0.5, d3.max(allRounds) + 0.5], [m.left, width - m.right]);
+    const y = d3.scaleLinear([0, opts.yMax], [height - m.bottom, m.top]);
+    svg.append('g').selectAll('line').data(yTicks).join('line')
+      .attr('x1', m.left).attr('x2', width - m.right).attr('y1', (d) => y(d)).attr('y2', (d) => y(d))
+      .style('stroke', (d) => (d === 0 ? 'var(--axis)' : 'var(--grid)')).style('stroke-width', 1);
+    svg.append('g').selectAll('text').data(yTicks).join('text').attr('class', 'tick')
+      .attr('x', m.left - 6).attr('y', (d) => y(d)).attr('dy', '0.32em').attr('text-anchor', 'end').text(opts.yFormat);
+    const step = width < 360 && allRounds.length > 7 ? 2 : 1;
+    svg.append('g').selectAll('text').data(allRounds.filter((_, i) => i % step === 0)).join('text').attr('class', 'tick')
+      .attr('x', (d) => x(d)).attr('y', height - 6).attr('text-anchor', 'middle').text((d) => d);
+    svg.append('line').attr('x1', m.left).attr('x2', width - m.right).attr('y1', y(0.5)).attr('y2', y(0.5))
+      .style('stroke', 'var(--axis)').style('stroke-width', 1).style('stroke-dasharray', '4 4');
+    svg.append('text').attr('class', 'tick strong').attr('x', width - m.right).attr('y', y(0.5) - 5).attr('text-anchor', 'end').text(opts.refLabel);
+
+    const drawn = [];
+    opts.series.forEach((s) => {
+      const pts = rows.filter((r) => r.run === s.run).sort((a, b) => a.rounds - b.rounds);
+      if (!pts.length) return;
+      drawn.push({ ...s, pts });
+      const g = svg.append('g');
+      if (opts.lo) {
+        g.selectAll('line').data(pts).join('line').attr('x1', (d) => x(d.rounds)).attr('x2', (d) => x(d.rounds))
+          .attr('y1', (d) => y(d[opts.lo])).attr('y2', (d) => y(d[opts.hi]))
+          .style('stroke', s.color).style('stroke-width', 1.5).style('opacity', 0.5);
+      }
+      g.append('path').datum(pts).attr('d', d3.line((d) => x(d.rounds), (d) => y(d[opts.key])))
+        .style('fill', 'none').style('stroke', s.color).style('stroke-width', s.thin ? 1.5 : 2)
+        .style('stroke-linecap', 'round').style('stroke-linejoin', 'round');
+      g.selectAll('circle').data(pts).join('circle').attr('cx', (d) => x(d.rounds)).attr('cy', (d) => y(d[opts.key])).attr('r', 4)
+        .style('fill', s.color).style('stroke', 'var(--surface)').style('stroke-width', 2);
+    });
+
+    const rule = svg.append('line').attr('y1', m.top).attr('y2', height - m.bottom).style('stroke', 'var(--axis)').style('opacity', 0);
+    const tip = tooltip(el);
+    svg.append('rect').attr('x', m.left).attr('y', m.top).attr('width', width - m.left - m.right).attr('height', height - m.top - m.bottom)
+      .style('fill', 'transparent').style('cursor', 'crosshair')
+      .on('pointermove', (event) => {
+        const [px] = d3.pointer(event);
+        const r = allRounds.reduce((best, v) => (Math.abs(x(v) - px) < Math.abs(x(best) - px) ? v : best), allRounds[0]);
+        rule.attr('x1', x(r)).attr('x2', x(r)).style('opacity', 1);
+        const lines = drawn.map((s) => {
+          const p = s.pts.find((q) => q.rounds === r);
+          return p ? { color: s.color, text: `${s.label}: ${opts.tipFormat(p)}` } : null;
+        }).filter(Boolean);
+        tip.show(event, `${r} round${r === 1 ? '' : 's'}`, lines.length ? lines : [{ text: 'Not measured at this round count' }]);
+      })
+      .on('pointerleave', () => { rule.style('opacity', 0); tip.hide(); });
+  }
+
+  // Horizontal bars with the value at the bar end; labels move above the bars when narrow.
+  function barChart(el, rows) {
+    el.replaceChildren();
+    const width = Math.max(240, el.clientWidth);
+    const data = [...rows].sort((a, b) => a.order - b.order);
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('role', 'img').attr('aria-label', 'Time per syndrome round for four circuit variants');
+    const textW = measure(svg, data.map((d) => d.short)) + 12;
+    const stacked = textW > width * 0.42;
+    const band = stacked ? 52 : 40;
+    const barY = stacked ? 24 : band / 2 - 12;
+    const height = data.length * band + 8;
+    svg.attr('viewBox', `0 0 ${width} ${height}`);
+    const labelW = stacked ? 0 : textW;
+    const valueW = measure(svg, data.map((d) => `${FMT.us(d.us)} µs`)) + 10;
+    const x = d3.scaleLinear([0, d3.max(data, (d) => d.us)], [labelW, width - valueW]);
+    const tip = tooltip(el);
+    const row = svg.selectAll('g').data(data).join('g').attr('transform', (d, i) => `translate(0, ${i * band + 4})`);
+    row.append('text').attr('class', 'tick strong').attr('x', stacked ? 0 : labelW - 10).attr('y', stacked ? 12 : band / 2 - 2)
+      .attr('dy', '0.32em').attr('text-anchor', stacked ? 'start' : 'end').text((d) => d.short);
+    row.append('rect').attr('x', labelW).attr('y', barY).attr('height', 20).attr('rx', 4)
+      .attr('width', (d) => Math.max(2, x(d.us) - labelW))
+      .style('fill', (d) => (d.order === 3 ? COL.current : 'var(--series-muted)'));
+    row.append('text').attr('class', 'tick').attr('x', (d) => x(d.us) + 6).attr('y', barY + 10).attr('dy', '0.32em').text((d) => `${FMT.us(d.us)} µs`);
+    row.append('rect').attr('width', width).attr('height', band).style('fill', 'transparent')
+      .on('pointermove', (event, d) => tip.show(event, d.variant, [{ text: `${FMT.us(d.us)} µs per round` }]))
+      .on('pointerleave', () => tip.hide());
+  }
+
+  // Dot plot of error per round for one basis: filled = hardware, hollow = prediction, whiskers = ±1σ.
+  function epsChart(el, rows, basisName) {
+    el.replaceChildren();
+    const width = Math.max(240, el.clientWidth);
+    const data = [...rows].sort((a, b) => a.order - b.order);
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('role', 'img').attr('aria-label', `Logical error per round, ${basisName}`);
+    const textW = measure(svg, data.map((d) => d.label)) + 12;
+    const stacked = textW > width * 0.48;
+    const band = stacked ? 44 : 30;
+    const dotY = stacked ? 29 : band / 2;
+    const height = data.length * band + 28;
+    svg.attr('viewBox', `0 0 ${width} ${height}`);
+    const labelW = stacked ? 8 : textW;
+    const x = d3.scaleLinear([0, d3.max(data, (d) => d.eps + d.sigma) * 1.08], [labelW, width - 14]).nice();
+    const xTicks = x.ticks(width < 420 ? 4 : 6);
+    svg.append('g').selectAll('line').data(xTicks).join('line').attr('x1', (d) => x(d)).attr('x2', (d) => x(d))
+      .attr('y1', 0).attr('y2', data.length * band).style('stroke', (d) => (d === 0 ? 'var(--axis)' : 'var(--grid)'));
+    svg.append('g').selectAll('text').data(xTicks).join('text').attr('class', 'tick')
+      .attr('x', (d) => x(d)).attr('y', data.length * band + 18).attr('text-anchor', 'middle').text(d3.format('.0%'));
+    const tip = tooltip(el);
+    const row = svg.selectAll('g.row').data(data).join('g').attr('class', 'row').attr('transform', (d, i) => `translate(0, ${i * band})`);
+    row.append('text').attr('class', (d) => (d.kind === 'prediction' ? 'tick' : 'tick strong'))
+      .attr('x', stacked ? 0 : labelW - 10).attr('y', stacked ? 11 : dotY).attr('dy', '0.32em')
+      .attr('text-anchor', stacked ? 'start' : 'end').text((d) => d.label);
+    row.append('line').attr('x1', (d) => x(d.eps - d.sigma)).attr('x2', (d) => x(d.eps + d.sigma)).attr('y1', dotY).attr('y2', dotY)
+      .style('stroke', COL.current).style('stroke-width', 1.5).style('opacity', 0.6);
+    row.append('circle').attr('cx', (d) => x(d.eps)).attr('cy', dotY).attr('r', 4.5)
+      .style('fill', (d) => (d.kind === 'prediction' ? 'var(--surface)' : COL.current))
+      .style('stroke', (d) => (d.kind === 'prediction' ? COL.current : 'var(--surface)')).style('stroke-width', 2);
+    row.append('rect').attr('width', width).attr('height', band).style('fill', 'transparent')
+      .on('pointermove', (event, d) => tip.show(event, d.label, [{ text: `${basisName}: ${FMT.pct1(d.eps)} ± ${FMT.pct1(d.sigma)} per round` }]))
+      .on('pointerleave', () => tip.hide());
+  }
+
+  function fillJobs() {
+    const tbody = document.querySelector('#table-jobs tbody');
+    tbody.replaceChildren(...DATA.hardware_jobs.map((r) => {
+      const tr = document.createElement('tr');
+      [[d3.utcFormat('%b %-d')(new Date(r.date)), ''], [r.job, 'mono'], [r.what, ''], [FMT.int(r.shots), 'num'],
+        [`${d3.format('.2f')(r.qpu_s)} s`, 'num'], [r.outcome, '']].forEach(([text, cls]) => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        if (cls) td.className = cls;
+        tr.append(td);
+      });
+      return tr;
+    }));
+  }
+
+  const LER_SERIES = [
+    { run: 'oct12_current', label: 'Current circuit, Oct 12', color: COL.current },
+    { run: 'oct12_june', label: 'June circuit, Oct 12', color: COL.june },
+    { run: 'jun07_june', label: 'June circuit, hackathon (Jun 7)', color: COL.hackathon, thin: true },
+  ];
+  const RAW_SERIES = [
+    { run: 'oct12_current', label: 'Current circuit', color: COL.current },
+    { run: 'oct12_june', label: 'June circuit', color: COL.june },
+  ];
+
+  function render() {
+    for (const b of ['z', 'x']) {
+      const basis = `memory_${b}`;
+      roundsChart(document.getElementById(`chart-ler-${b}`), DATA.ler_by_round.filter((r) => r.basis === basis), {
+        series: LER_SERIES, key: 'ler', lo: 'ci_low', hi: 'ci_high', yMax: 0.6, height: 230, yFormat: d3.format('.1f'),
+        refLabel: 'random', aria: `Logical error rate against rounds, memory ${b.toUpperCase()}`,
+        tipFormat: (p) => `${FMT.ler(p.ler)} (${FMT.int(p.failures)} of ${FMT.int(p.shots)})`,
+      });
+      roundsChart(document.getElementById(`chart-raw-${b}`), DATA.raw_observable.filter((r) => r.basis === basis), {
+        series: RAW_SERIES, key: 'raw_flip', yMax: 0.6, height: 190, yFormat: d3.format('.1f'),
+        refLabel: 'random', aria: `Uncorrected logical flip rate against rounds, memory ${b.toUpperCase()}`,
+        tipFormat: (p) => FMT.ler(p.raw_flip),
+      });
+      epsChart(document.getElementById(`chart-eps-${b}`), DATA.error_per_round.filter((r) => r.basis === basis), `Memory ${b.toUpperCase()}`);
+    }
+    barChart(document.getElementById('chart-round-time'), DATA.round_time);
+  }
+
+  legend('legend-ler', LER_SERIES);
+  legend('legend-raw', RAW_SERIES);
+  legend('legend-eps', [
+    { label: 'Hardware', color: COL.current, dot: true },
+    { label: 'Prediction', color: COL.current, dot: true, hollow: true },
+  ]);
+
+  Promise.all(DATASETS.map((name) => fetch(`data/${name}.json`).then((r) => {
+    if (!r.ok) throw new Error(`data/${name}.json: ${r.status}`);
+    return r.json();
+  }))).then((all) => {
+    DATASETS.forEach((name, i) => { DATA[name] = all[i]; });
+    DATA.totals = [{
+      qpu_s: d3.sum(DATA.hardware_jobs, (j) => j.qpu_s),
+      shots: d3.sum(DATA.hardware_jobs, (j) => j.shots),
+    }];
+    fillValues();
+    fillJobs();
+    render();
+    let timer;
+    window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(render, 150); });
+  }).catch((error) => {
+    document.querySelectorAll('.chart').forEach((el) => {
+      const p = document.createElement('p');
+      p.className = 'failed';
+      p.textContent = `Could not load the data (${error.message}).`;
+      el.replaceChildren(p);
+    });
+  });
+})();
+</script>
+</body>
+</html>

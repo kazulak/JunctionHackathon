@@ -1,0 +1,7 @@
+date,job,job_id,what,shots,qpu_execution_s,outcome,archive
+2026-10-04,01a106f9,01a106f9-5c87-70c2-acf7-c9ebbdbd83e1,Pilot (active reset between shots),8000,1.24,Failed at 1 round: active reset left qubits excited,hw_pilot_noreset_dd_activereset_20261004
+2026-10-04,3 control jobs,,"Active vs passive reset, DD on/off",3000,2.87,Passive reset fixes initialization,hw_controls_reset_dd_20261004
+2026-10-04,01a10703,01a10703-0fd1-7293-b12b-41e731d1126c,"Main sweep, rounds 1, 3, 5, 7",16000,8.14,"Working memory, no saturation",hw_d3_noreset_dd_20261004
+2026-10-12,01a12efb-138e,01a12efb-138e-7697-98ca-1fd3a05bb42e,"Current design, odd rounds 1 to 13",14000,11.17,Reproduced; below random through 13 rounds,hw_20261012/A_current_design
+2026-10-12,01a12efb-eece,01a12efb-eece-77aa-b352-1743a1ed5228,Current design without DD,6000,2.83,DD removes about a third of the error,hw_20261012/B_dd_off
+2026-10-12,01a12efc-c1dd,01a12efc-c1dd-7015-8b73-960dffb5d51b,"June design, same qubits",3000,2.07,"Random from 3 rounds, as in June",hw_20261012/C_june_design

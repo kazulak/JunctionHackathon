@@ -1,0 +1,182 @@
+[
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 1,
+  "raw_flip": 0.216,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 3,
+  "raw_flip": 0.342,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 5,
+  "raw_flip": 0.429,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 7,
+  "raw_flip": 0.449,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 9,
+  "raw_flip": 0.466,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 11,
+  "raw_flip": 0.5,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 13,
+  "raw_flip": 0.499,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 1,
+  "raw_flip": 0.147,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 3,
+  "raw_flip": 0.224,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 5,
+  "raw_flip": 0.273,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 7,
+  "raw_flip": 0.366,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 9,
+  "raw_flip": 0.374,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 11,
+  "raw_flip": 0.428,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_current",
+  "label": "Current circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 13,
+  "raw_flip": 0.453,
+  "shots": 1000,
+  "source": "baselines/post_hackathon/hw_20261012/A_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_june",
+  "label": "June circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 1,
+  "raw_flip": 0.09,
+  "shots": 500,
+  "source": "baselines/post_hackathon/hw_20261012/C_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_june",
+  "label": "June circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 3,
+  "raw_flip": 0.51,
+  "shots": 500,
+  "source": "baselines/post_hackathon/hw_20261012/C_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_june",
+  "label": "June circuit, Oct 12",
+  "basis": "memory_x",
+  "rounds": 5,
+  "raw_flip": 0.498,
+  "shots": 500,
+  "source": "baselines/post_hackathon/hw_20261012/C_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_june",
+  "label": "June circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 1,
+  "raw_flip": 0.08,
+  "shots": 500,
+  "source": "baselines/post_hackathon/hw_20261012/C_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_june",
+  "label": "June circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 3,
+  "raw_flip": 0.49,
+  "shots": 500,
+  "source": "baselines/post_hackathon/hw_20261012/C_diagnosis/round_diagnostics.csv"
+ },
+ {
+  "run": "oct12_june",
+  "label": "June circuit, Oct 12",
+  "basis": "memory_z",
+  "rounds": 5,
+  "raw_flip": 0.494,
+  "shots": 500,
+  "source": "baselines/post_hackathon/hw_20261012/C_diagnosis/round_diagnostics.csv"
+ }
+]

@@ -1,0 +1,5 @@
+variant,short,mid_circuit_reset,grouped_readout,us_per_round,order
+"June: measure + Qiskit reset per ancilla, readouts not grouped",June circuit,reset,false,7.65,0
+"Readouts grouped, Qiskit reset",Grouped + reset,reset,true,5.76,1
+"Readouts grouped, feed-forward X instead of reset",Grouped + feed-forward,feedforward,true,1.75,2
+"Readouts grouped, no reset (current design)",Current design,none,true,1.29,3

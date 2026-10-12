@@ -1,0 +1,30 @@
+[
+ {
+  "variant": "June: measure + Qiskit reset per ancilla, readouts not grouped",
+  "short": "June circuit",
+  "us": 7.65,
+  "order": 0,
+  "source": "baselines/post_hackathon/round_time_pulla_20261012.csv"
+ },
+ {
+  "variant": "Readouts grouped, Qiskit reset",
+  "short": "Grouped + reset",
+  "us": 5.76,
+  "order": 1,
+  "source": "baselines/post_hackathon/round_time_pulla_20261012.csv"
+ },
+ {
+  "variant": "Readouts grouped, feed-forward X instead of reset",
+  "short": "Grouped + feed-forward",
+  "us": 1.75,
+  "order": 2,
+  "source": "baselines/post_hackathon/round_time_pulla_20261012.csv"
+ },
+ {
+  "variant": "Readouts grouped, no reset (current design)",
+  "short": "Current design",
+  "us": 1.29,
+  "order": 3,
+  "source": "baselines/post_hackathon/round_time_pulla_20261012.csv"
+ }
+]
