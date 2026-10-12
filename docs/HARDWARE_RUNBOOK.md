@@ -68,10 +68,23 @@ June hardware gave 0.49 at r = 3.
 
 Archives: `hw_pilot_noreset_dd_activereset_20261004`, `hw_controls_reset_dd_20261004`, `hw_d3_noreset_dd_20261004`.
 
+## What happened on 2026-10-12 (3 jobs, 16.1 s of QPU execution)
+
+Fresh calibration (readout on the patch worse than on 2026-10-04), predictions pushed before submission.
+
+| Job | What | Outcome |
+| --- | --- | --- |
+| A | current design, r = 1–13, 1000 shots | **ε = 0.049 (Z), 0.038 (X)**; no saturation to r = 13 |
+| B | A with DD off, r = 1, 5, 9 | ε = 0.078 (Z), 0.050 (X): DD removes about a third of the error, mostly in memory_z (the model predicted memory_x only) |
+| C | June design on the same qubits, r = 1, 3, 5, 500 shots | LER 0.45–0.51 from r = 3: the June failure, reproduced side by side |
+
+Archive: `baselines/post_hackathon/hw_20261012` (prediction: `hw_20261012_prediction`).
+
 ## Cost model (measured)
 
 - Each job carries **~0.6–0.8 s of fixed QPU execution** and ~3 s end to end.
 - With passive reset each shot costs ~0.41 ms of schedule (≈0.5 ms measured), so 16 000 shots ≈ 8 s of execution.
+- **Long circuits can cost more than the schedule shows.** On 2026-10-12 the r = 1–13 sweep (14 circuits, up to 113 measurements each) cost 0.80 ms per shot, nearly twice the Pulla estimate. Budget ~1 ms per shot for circuits beyond ~7 rounds.
 - Prefer few large jobs. One sweep job (all rounds × both bases) is much cheaper than many small ones.
 - Check the exact credits charged in the Resonance dashboard (Jobs).
 
@@ -79,9 +92,8 @@ Archives: `hw_pilot_noreset_dd_activereset_20261004`, `hw_controls_reset_dd_2026
 
 | Experiment | Command | Shots | ~QPU s | Question |
 | --- | --- | --- | ---: | --- |
-| DD effect at depth | main sweep with `--set backend.options.dynamical_decoupling=false`, `--rounds 3 7 2` | 4 × 2000 | 4–5 | The model predicts DD roughly halves memory_x error per round |
 | Feed-forward vs no reset | `--set code.mid_circuit_reset=feedforward --set noise.options.round_duration_s=1.75e-6`, `--rounds 3 7 2` | 4 × 2000 | 4–5 | Do conditional resets help or hurt on Emerald? |
-| Longer memory | main sweep `--rounds 1 13 4` | 8 × 2000 | 8–9 | Fit quality and drift at higher r |
+| What DD suppresses | DD on/off at r = 1–9 with more shots, plus per-detector analysis | 6 × 4000 | 12–15 | The model attributes DD to data dephasing; hardware disagrees (2026-10-12) |
 
 Always run `--preflight` (free) first, and `scripts/fetch_calibration.py` after IQM recalibrates.
 
@@ -104,5 +116,6 @@ python scripts/fit_noise_to_hardware.py export-targets --config configs/hw_d3_no
 ## Known limits
 
 - The noise model is still approximate: no leakage, crosstalk, or measurement-induced dephasing.
+- It mis-attributes the DD effect: it predicts DD helps only memory_x (idle dephasing), but on hardware DD helps memory_z more (2026-10-12).
 - The two-qubit scale (1.5) was fitted to June r=1 data. A refit on the October r=1 data (2q 1.5, readout ×3) over-predicted higher rounds and was not adopted.
 - A d=5 patch needs routing on Emerald and is above threshold in simulation, so it is not worth credits yet.

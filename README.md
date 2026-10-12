@@ -32,6 +32,17 @@ without dynamical decoupling. The current design uses no mid-circuit reset (Geh�
 grouped readout and IQM's native dynamical decoupling, which gives a 1.3 µs round. Details:
 [docs/HARDWARE_RUNBOOK.md](docs/HARDWARE_RUNBOOK.md), data: [`baselines/post_hackathon/hw_d3_noreset_dd_20261004`](baselines/post_hackathon/hw_d3_noreset_dd_20261004/).
 
+**Side by side on 2026-10-12** (same qubits, same calibration, jobs two minutes apart; [`hw_20261012`](baselines/post_hackathon/hw_20261012/)):
+
+| | Error per round memory_z | memory_x | LER at r = 5 (Z / X) |
+| --- | ---: | ---: | ---: |
+| June design (Qiskit reset, ungrouped readout, no DD) | saturated | saturated | 0.51 / 0.49 |
+| Current design without DD | 0.078 ± 0.005 | 0.050 ± 0.003 | 0.27 / 0.21 |
+| **Current design** | **0.049 ± 0.002** | **0.038 ± 0.002** | 0.20 / 0.15 |
+| Current design, correlated matching | 0.040 ± 0.002 | 0.034 ± 0.002 | |
+
+The current design stays below random out to 13 rounds (LER 0.38 / 0.33).
+
 ## Setup
 
 ```powershell

@@ -26,6 +26,8 @@ Timeline: [PROVENANCE.md](../PROVENANCE.md). Known issues: [ERRATA.md](../ERRATA
 | `hw_pilot_noreset_dd_activereset_20261004/` | IQM job `01a106f9…`, 12:52 | Pilot: IQM active reset between shots leaves qubits excited (r = 1 LER 0.29). |
 | `hw_controls_reset_dd_20261004/` | 13:00 | Three controls: passive reset fixes it (r = 1 LER 0.027); DD neutral at r = 1. |
 | `hw_d3_noreset_dd_20261004/` | IQM job `01a10703…`, 13:03 | **Main result**: 0.033 (memory_z) / 0.040 (memory_x) error per round. Includes round diagnosis, p_ij re-decode and model comparison. |
+| `hw_20261012_prediction/` | 2026-10-12 07:05 | Simulator predictions for the three jobs below, pushed before submission. |
+| `hw_20261012/` | IQM jobs `01a12efb…`/`01a12efc…`, 2026-10-12 07:19–07:21 | Reproduction to 13 rounds (0.049 / 0.038 per round), DD off (0.078 / 0.050), and the June design on the same qubits (random from r = 3). |
 
 **Hardware, June 2026 (diagnosing the failure)**
 

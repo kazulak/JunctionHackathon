@@ -5,7 +5,7 @@
 # - grouped readout, IQM native dynamical decoupling, passive reset between shots.
 #   (IQM active reset between shots left ~10-20% initialization error on 2026-10-04,
 #   see baselines/post_hackathon/hw_controls_reset_dd_20261004.)
-# - calibration fetched 2026-10-04 (scripts/fetch_calibration.py); patch is still the best native d3 patch.
+# - calibration fetched 2026-10-12 (scripts/fetch_calibration.py); patch is still the best native d3 patch.
 # - noise: two_qubit_scale 1.5 fitted to r=1 hardware; round 1.29 us measured with Pulla.
 #
 # Run:
@@ -38,7 +38,7 @@ backend:
     dynamical_decoupling: true
 noise:
   model: iqm_calibration
-  calibration_file: configs/calibration/emerald_2026-10-04T05_09_03Z.json
+  calibration_file: configs/calibration/emerald_2026-10-12T05_18_50Z.json
   options:
     apply_idle: true
     route_error_multiplier: 1.0
@@ -50,7 +50,7 @@ decoder:
   options: {}
 mapping:
   strategy: calibration_best_patch
-  calibration_file: configs/calibration/emerald_2026-10-04T05_09_03Z.json
+  calibration_file: configs/calibration/emerald_2026-10-12T05_18_50Z.json
   weights:
     one_qubit: 1.0
     two_qubit: 1.0

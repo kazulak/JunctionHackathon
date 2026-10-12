@@ -1,0 +1,520 @@
+[
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_x",
+    "rounds": 1,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.216,
+    "decoded_ler": 0.041,
+    "x_ancilla_one_rate_by_round": [
+      0.07225000000000001
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.507
+    ],
+    "detector_rate_by_layer": [
+      0.07225,
+      0.1325
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_z",
+    "rounds": 1,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.147,
+    "decoded_ler": 0.061,
+    "x_ancilla_one_rate_by_round": [
+      0.49375
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.058499999999999996
+    ],
+    "detector_rate_by_layer": [
+      0.0585,
+      0.13425
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_x",
+    "rounds": 11,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.5,
+    "decoded_ler": 0.319,
+    "x_ancilla_one_rate_by_round": [
+      0.07075000000000001,
+      0.12575,
+      0.17675,
+      0.20750000000000002,
+      0.25325000000000003,
+      0.258,
+      0.30524999999999997,
+      0.32025,
+      0.345,
+      0.35975,
+      0.3735
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.48850000000000005,
+      0.1575,
+      0.47425000000000006,
+      0.23775000000000002,
+      0.47150000000000003,
+      0.29900000000000004,
+      0.47174999999999995,
+      0.35224999999999995,
+      0.47650000000000003,
+      0.38175,
+      0.46274999999999994
+    ],
+    "detector_rate_by_layer": [
+      0.07075,
+      0.141625,
+      0.143625,
+      0.14175,
+      0.166875,
+      0.154625,
+      0.164625,
+      0.172,
+      0.177,
+      0.17725,
+      0.185625,
+      0.17725
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_z",
+    "rounds": 11,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.428,
+    "decoded_ler": 0.334,
+    "x_ancilla_one_rate_by_round": [
+      0.48925,
+      0.14600000000000002,
+      0.47475,
+      0.23675000000000002,
+      0.47200000000000003,
+      0.29875,
+      0.476,
+      0.3365,
+      0.46349999999999997,
+      0.373,
+      0.4605
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.050749999999999997,
+      0.14275,
+      0.17650000000000002,
+      0.21599999999999997,
+      0.2525,
+      0.273,
+      0.30925,
+      0.32575,
+      0.34875,
+      0.35225,
+      0.37625
+    ],
+    "detector_rate_by_layer": [
+      0.05075,
+      0.144375,
+      0.146375,
+      0.1475,
+      0.164375,
+      0.16,
+      0.167125,
+      0.1705,
+      0.1785,
+      0.18425,
+      0.1795,
+      0.17575
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_x",
+    "rounds": 13,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.499,
+    "decoded_ler": 0.331,
+    "x_ancilla_one_rate_by_round": [
+      0.0665,
+      0.13924999999999998,
+      0.1815,
+      0.2175,
+      0.25075,
+      0.28475,
+      0.308,
+      0.3285,
+      0.34975,
+      0.37074999999999997,
+      0.37625,
+      0.38899999999999996,
+      0.39425000000000004
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.47450000000000003,
+      0.1475,
+      0.46499999999999997,
+      0.2415,
+      0.45825,
+      0.30375,
+      0.45874999999999994,
+      0.34975,
+      0.46225,
+      0.38249999999999995,
+      0.47624999999999995,
+      0.402,
+      0.47675
+    ],
+    "detector_rate_by_layer": [
+      0.0665,
+      0.143375,
+      0.15075,
+      0.155125,
+      0.14875,
+      0.15925,
+      0.167625,
+      0.168125,
+      0.179625,
+      0.18625,
+      0.18525,
+      0.187625,
+      0.187,
+      0.19325
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_z",
+    "rounds": 13,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.453,
+    "decoded_ler": 0.376,
+    "x_ancilla_one_rate_by_round": [
+      0.48875,
+      0.14425000000000002,
+      0.484,
+      0.23875000000000002,
+      0.47725,
+      0.30575,
+      0.47050000000000003,
+      0.35625,
+      0.4625,
+      0.38775,
+      0.46575,
+      0.40475,
+      0.47550000000000003
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.059250000000000004,
+      0.155,
+      0.169,
+      0.23275,
+      0.24825,
+      0.2955,
+      0.308,
+      0.33525,
+      0.35500000000000004,
+      0.37950000000000006,
+      0.38075000000000003,
+      0.39525,
+      0.40374999999999994
+    ],
+    "detector_rate_by_layer": [
+      0.05925,
+      0.149625,
+      0.1425,
+      0.149875,
+      0.1575,
+      0.167625,
+      0.17675,
+      0.170375,
+      0.18825,
+      0.192125,
+      0.1915,
+      0.191125,
+      0.189875,
+      0.18675
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_x",
+    "rounds": 3,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.342,
+    "decoded_ler": 0.123,
+    "x_ancilla_one_rate_by_round": [
+      0.05374999999999999,
+      0.1325,
+      0.158
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.512,
+      0.1525,
+      0.509
+    ],
+    "detector_rate_by_layer": [
+      0.05375,
+      0.1425,
+      0.142375,
+      0.146
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_z",
+    "rounds": 3,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.224,
+    "decoded_ler": 0.141,
+    "x_ancilla_one_rate_by_round": [
+      0.47075,
+      0.14375,
+      0.47225
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.063,
+      0.14350000000000002,
+      0.169
+    ],
+    "detector_rate_by_layer": [
+      0.063,
+      0.143625,
+      0.14225,
+      0.145
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_x",
+    "rounds": 5,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.429,
+    "decoded_ler": 0.153,
+    "x_ancilla_one_rate_by_round": [
+      0.0605,
+      0.135,
+      0.161,
+      0.21775,
+      0.241
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.4875,
+      0.1515,
+      0.465,
+      0.2415,
+      0.475
+    ],
+    "detector_rate_by_layer": [
+      0.0605,
+      0.14325,
+      0.14775,
+      0.145625,
+      0.15425,
+      0.151
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_z",
+    "rounds": 5,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.273,
+    "decoded_ler": 0.203,
+    "x_ancilla_one_rate_by_round": [
+      0.48424999999999996,
+      0.15225,
+      0.47275,
+      0.22775,
+      0.47475
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.05399999999999999,
+      0.14225,
+      0.158,
+      0.21050000000000002,
+      0.24175
+    ],
+    "detector_rate_by_layer": [
+      0.054,
+      0.14725,
+      0.14425,
+      0.147875,
+      0.158875,
+      0.14675
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_x",
+    "rounds": 7,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.449,
+    "decoded_ler": 0.215,
+    "x_ancilla_one_rate_by_round": [
+      0.06775,
+      0.12925,
+      0.177,
+      0.20900000000000002,
+      0.24075000000000002,
+      0.26575,
+      0.29624999999999996
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.48675,
+      0.15725,
+      0.475,
+      0.24325000000000002,
+      0.46475,
+      0.30200000000000005,
+      0.46649999999999997
+    ],
+    "detector_rate_by_layer": [
+      0.06775,
+      0.14325,
+      0.14825,
+      0.150375,
+      0.14825,
+      0.16025,
+      0.171375,
+      0.15525
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_z",
+    "rounds": 7,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.366,
+    "decoded_ler": 0.278,
+    "x_ancilla_one_rate_by_round": [
+      0.48050000000000004,
+      0.135,
+      0.4685,
+      0.23375,
+      0.46975,
+      0.2875,
+      0.46725
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.058,
+      0.13075,
+      0.177,
+      0.21825,
+      0.25125,
+      0.26975,
+      0.29700000000000004
+    ],
+    "detector_rate_by_layer": [
+      0.058,
+      0.132875,
+      0.14775,
+      0.151375,
+      0.158,
+      0.153625,
+      0.162375,
+      0.15475
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_x",
+    "rounds": 9,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.466,
+    "decoded_ler": 0.234,
+    "x_ancilla_one_rate_by_round": [
+      0.07075,
+      0.125,
+      0.1765,
+      0.20550000000000002,
+      0.23675000000000002,
+      0.27225,
+      0.30325,
+      0.31625000000000003,
+      0.34299999999999997
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.509,
+      0.1475,
+      0.49075,
+      0.23249999999999998,
+      0.476,
+      0.2965,
+      0.47024999999999995,
+      0.34824999999999995,
+      0.4655
+    ],
+    "detector_rate_by_layer": [
+      0.07075,
+      0.13625,
+      0.148,
+      0.14475,
+      0.1505,
+      0.164125,
+      0.167625,
+      0.170875,
+      0.16725,
+      0.1625
+    ]
+  },
+  {
+    "sweep": "results/hw_d3_noreset_dd_iqm__shots=1000_rounds_sweep/20261012T071921_905006Z",
+    "job_id": "01a12efb-138e-7697-98ca-1fd3a05bb42e",
+    "basis": "memory_z",
+    "rounds": 9,
+    "shots": 1000,
+    "raw_observable_flip_rate": 0.374,
+    "decoded_ler": 0.308,
+    "x_ancilla_one_rate_by_round": [
+      0.49850000000000005,
+      0.14250000000000002,
+      0.48524999999999996,
+      0.2415,
+      0.48924999999999996,
+      0.3005,
+      0.47475,
+      0.34075,
+      0.4805
+    ],
+    "z_ancilla_one_rate_by_round": [
+      0.062,
+      0.13424999999999998,
+      0.18025,
+      0.23200000000000004,
+      0.25025000000000003,
+      0.29775,
+      0.29675,
+      0.32875,
+      0.33999999999999997
+    ],
+    "detector_rate_by_layer": [
+      0.062,
+      0.138375,
+      0.1435,
+      0.160375,
+      0.165,
+      0.157375,
+      0.16675,
+      0.173875,
+      0.17225,
+      0.16525
+    ]
+  }
+]
